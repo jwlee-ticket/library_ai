@@ -18,17 +18,17 @@
         }
     </style>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center">
-    <div class="w-full max-w-md px-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+<body class="bg-white min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow">
             <!-- 브랜드명 -->
-            <h1 class="text-2xl font-semibold text-[#f65938] text-center mb-8">
+            <h1 class="text-3xl font-semibold text-[#f65938] text-center mb-10">
                 Library AI
             </h1>
             
             <!-- 에러 메시지 -->
             {% if form.errors %}
-                <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                <div class="mb-6 p-4 bg-red-50 border-2 border-red-100 rounded-lg text-red-600 text-sm">
                     {{ form.non_field_errors|first|default:"이메일 또는 비밀번호가 올바르지 않습니다." }}
                 </div>
             {% endif %}
@@ -38,29 +38,29 @@
                 {% csrf_token %}
                 
                 <!-- 이메일 입력 -->
-                <div class="mb-4">
-                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                <div class="mb-6">
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-black mb-3">
                         {{ form.username.label }}
                     </label>
                     {{ form.username }}
                     {% if form.username.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.username.errors|first }}</p>
+                        <p class="mt-2 text-sm text-red-600">{{ form.username.errors|first }}</p>
                     {% endif %}
                 </div>
                 
                 <!-- 비밀번호 입력 -->
-                <div class="mb-6">
-                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                <div class="mb-8">
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-black mb-3">
                         {{ form.password.label }}
                     </label>
                     {{ form.password }}
                     {% if form.password.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.password.errors|first }}</p>
+                        <p class="mt-2 text-sm text-red-600">{{ form.password.errors|first }}</p>
                     {% endif %}
                 </div>
                 
                 <!-- 로그인 버튼 -->
-                <button type="submit" class="w-full bg-blue-500 text-white px-4 py-2 rounded font-medium hover:bg-blue-600 active:bg-blue-700">
+                <button type="submit" class="w-full bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 active:bg-blue-700 transition-colors shadow-sm">
                     로그인
                 </button>
             </form>

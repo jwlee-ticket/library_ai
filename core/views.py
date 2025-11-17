@@ -13,9 +13,7 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
     
     def get_success_url(self):
-        # settings.py의 LOGIN_REDIRECT_URL 사용 (현재는 '/')
-        # dashboard URL 설정 후 변경 필요
-        return super().get_success_url()
+        return reverse_lazy('dashboard:index')
 
 
 @login_required
