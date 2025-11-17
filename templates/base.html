@@ -23,19 +23,58 @@
 <body class="bg-white text-black">
     <div class="min-h-screen bg-white flex">
         <!-- 좌측 사이드바 (고정) -->
-        <aside class="w-64 bg-primary-50 border-r border-[#2a3038]/10 fixed left-0 top-0 h-screen shadow-sm">
+        <aside class="w-60 bg-primary-50 border-r border-[#2a3038]/10 fixed left-0 top-0 h-screen shadow-sm">
             <div class="p-8">
-                <h2 class="text-xl font-semibold text-brand mb-6 pb-6 border-b border-[#2a3038]/10">Library AI</h2>
+                <h2 class="text-2xl font-semibold text-brand mb-6 pb-6 border-b border-[#2a3038]/10">Library AI</h2>
                 <nav class="space-y-1">
-                    <a href="{% url 'dashboard:index' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.url_name == 'index' and request.resolver_match.app_name == 'dashboard' %}bg-primary-100 text-primary{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-all duration-200 hover:shadow-sm">대시보드</a>
-                    <a href="#" class="block px-4 py-3 rounded-xl hover:bg-primary-100 hover:text-primary text-sm text-black transition-all duration-200 hover:shadow-sm">성과 분석</a>
-                    <a href="#" class="block px-4 py-3 rounded-xl hover:bg-primary-100 hover:text-primary text-sm text-black transition-all duration-200 hover:shadow-sm">판매 데이터</a>
+                    <!-- 전체 -->
+                    <a href="{% url 'dashboard:index' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.url_name == 'index' and request.resolver_match.app_name == 'dashboard' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-all duration-200 hover:shadow-sm">전체</a>
+                    
+                    <!-- 장르별 대시보드 드롭다운 -->
+                    <div class="relative">
+                        <button onclick="toggleGenreDropdown()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-all duration-200 hover:shadow-sm">
+                            <span>장르별 대시보드</span>
+                            <svg id="genre-arrow" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="genre-dropdown" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                            <div class="mt-1 space-y-1">
+                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">연극</a>
+                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">뮤지컬</a>
+                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">콘서트</a>
+                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">전시</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 공연별 대시보드 -->
+                    <a href="#" class="block px-4 py-3 rounded-xl hover:bg-primary-100 hover:text-primary text-sm text-black transition-all duration-200 hover:shadow-sm">공연별 대시보드</a>
+                    
+                    <!-- 공연 관리 -->
+                    <a href="#" class="block px-4 py-3 rounded-xl hover:bg-primary-100 hover:text-primary text-sm text-black transition-all duration-200 hover:shadow-sm">공연 관리</a>
+                    
+                    <!-- 데이터 관리 드롭다운 -->
+                    <div class="relative">
+                        <button onclick="toggleDataDropdown()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-all duration-200 hover:shadow-sm">
+                            <span>데이터 관리</span>
+                            <svg id="data-arrow" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="data-dropdown" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                            <div class="mt-1 space-y-1">
+                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">매출</a>
+                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">마케팅</a>
+                            </div>
+                        </div>
+                    </div>
                 </nav>
             </div>
         </aside>
         
         <!-- 메인 영역 (사이드바 너비만큼 왼쪽 마진) -->
-        <div class="flex-1 flex flex-col ml-64">
+        <div class="flex-1 flex flex-col ml-60">
             <!-- 상단 헤더 -->
             <header class="bg-primary-50 border-b border-[#2a3038]/10 px-8 py-3 sticky top-0 z-10 shadow-sm">
                 <div class="flex items-center justify-between">
@@ -69,6 +108,34 @@
     </div>
     
     {% block extra_js %}{% endblock %}
+    
+    <script>
+        function toggleGenreDropdown() {
+            const dropdown = document.getElementById('genre-dropdown');
+            const arrow = document.getElementById('genre-arrow');
+            if (dropdown.classList.contains('max-h-0')) {
+                dropdown.classList.remove('max-h-0');
+                dropdown.classList.add('max-h-96');
+            } else {
+                dropdown.classList.remove('max-h-96');
+                dropdown.classList.add('max-h-0');
+            }
+            arrow.classList.toggle('rotate-180');
+        }
+        
+        function toggleDataDropdown() {
+            const dropdown = document.getElementById('data-dropdown');
+            const arrow = document.getElementById('data-arrow');
+            if (dropdown.classList.contains('max-h-0')) {
+                dropdown.classList.remove('max-h-0');
+                dropdown.classList.add('max-h-96');
+            } else {
+                dropdown.classList.remove('max-h-96');
+                dropdown.classList.add('max-h-0');
+            }
+            arrow.classList.toggle('rotate-180');
+        }
+    </script>
 </body>
 </html>
 
