@@ -13,18 +13,24 @@ admin.site.unregister(User)
 class CustomUserAdmin(BaseUserAdmin):
     """커스텀 User 어드민 - 이름 필드 추가"""
     
-    # 사용자 추가 폼에 first_name, last_name 필드 추가
+    # 사용자 추가 폼에 이름 필드 추가
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'first_name', 'last_name', 'password1', 'password2'),
+            'fields': ('username', 'email', 'first_name', 'password1', 'password2'),
         }),
     )
     
-    # 사용자 수정 폼에 first_name, last_name 필드 추가
+    # 사용자 수정 폼에 이름 필드 추가
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        ('개인 정보', {'fields': ('first_name', 'last_name', 'email')}),
+        ('개인 정보', {'fields': ('first_name', 'email')}),
         ('권한', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('중요한 날짜', {'fields': ('last_login', 'date_joined')}),
     )
+    
+    def get_form(self, request, obj=None, **kwargs):
+        """폼에서 first_name 라벨을 '이름'으로 변경"""
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields['first_name'].label = '이름'
+        return form

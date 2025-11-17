@@ -58,10 +58,10 @@ Library AI 프로젝트의 디자인 시스템 가이드입니다.
   - Tailwind: `bg-[#f65938]` 또는 커스텀 클래스
 
 ### 액션 컬러
-- **Primary**: `#3b82f6` <span style="display: inline-block; width: 20px; height: 20px; background-color: #3b82f6; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
+- **Primary**: `#2a3038` <span style="display: inline-block; width: 20px; height: 20px; background-color: #2a3038; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
   - 주요 액션 버튼 (확인, 저장, 제출 등)
-  - 부드럽고 친근한 느낌의 파란색
-  - Tailwind: `bg-blue-500`
+  - 브랜드 컬러와 조화로운 어두운 슬레이트 색상
+  - Tailwind: `bg-[#2a3038]`
 
 - **Success**: `#10b981` <span style="display: inline-block; width: 20px; height: 20px; background-color: #10b981; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
   - 성공 메시지, 완료 버튼
@@ -79,14 +79,21 @@ Library AI 프로젝트의 디자인 시스템 가이드입니다.
   - Tailwind: `bg-gray-500`
 
 ### 링크 컬러
-- **Link**: `#2563eb` <span style="display: inline-block; width: 20px; height: 20px; background-color: #2563eb; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
+- **Link**: `#2a3038` <span style="display: inline-block; width: 20px; height: 20px; background-color: #2a3038; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
   - 텍스트 링크, 네비게이션 링크
-  - Tailwind: `text-blue-600`
+  - Primary 컬러와 동일하게 사용
+  - Tailwind: `text-[#2a3038]`
 
 ### 배경
 - **White**: `#ffffff` <span style="display: inline-block; width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
   - 기본 배경색
   - Tailwind: `bg-white`
+
+- **Dark Slate**: `#2a3038` <span style="display: inline-block; width: 20px; height: 20px; background-color: #2a3038; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
+  - 어두운 배경, 강조 영역, 구분선
+  - 브랜드 컬러(`#f65938`)와 잘 어울리는 어두운 색상
+  - 사이드바 배경, 카드 강조, 헤더 구분 등에 사용
+  - Tailwind: `bg-[#2a3038]` 또는 커스텀 클래스
 
 ### 텍스트
 - **Primary Text**: `#000000` <span style="display: inline-block; width: 20px; height: 20px; background-color: #000000; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
@@ -97,13 +104,29 @@ Library AI 프로젝트의 디자인 시스템 가이드입니다.
   - 보조 텍스트, 설명, 라벨
   - Tailwind: `text-gray-600`
 
+- **Dark Text**: `#2a3038` <span style="display: inline-block; width: 20px; height: 20px; background-color: #2a3038; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
+  - 강조 텍스트, 어두운 배경 위의 텍스트
+  - 브랜드 컬러와 조화로운 어두운 텍스트 색상
+  - Tailwind: `text-[#2a3038]` 또는 커스텀 클래스
+
 ### 사용 예시
 ```html
 <!-- 브랜드 컬러 (로고, 브랜드명) -->
 <div class="text-[#f65938] font-semibold text-lg">Library AI</div>
 
+<!-- Dark Slate 배경 (사이드바, 강조 영역) -->
+<div class="bg-[#2a3038] text-white p-6 rounded-xl">
+  <h3 class="text-white font-semibold">강조 영역</h3>
+</div>
+
+<!-- Dark Slate 텍스트 (강조 텍스트) -->
+<h2 class="text-[#2a3038] text-2xl font-semibold">강조 제목</h2>
+
+<!-- Dark Slate 구분선 -->
+<div class="border-t border-[#2a3038] opacity-20 my-6"></div>
+
 <!-- Primary 버튼 (확인, 저장) -->
-<button class="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors shadow-sm">
+<button class="bg-[#2a3038] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#2a3038]/90 active:bg-[#2a3038]/80 transition-colors shadow-sm">
   확인
 </button>
 
@@ -118,7 +141,7 @@ Library AI 프로젝트의 디자인 시스템 가이드입니다.
 </button>
 
 <!-- 링크 -->
-<a href="#" class="text-blue-600 hover:text-blue-700 hover:underline transition-colors">링크 텍스트</a>
+<a href="#" class="text-[#2a3038] hover:text-[#2a3038]/80 hover:underline transition-colors">링크 텍스트</a>
 
 <!-- Primary 텍스트 -->
 <h1 class="text-black text-2xl font-semibold mb-2">제목</h1>
@@ -190,9 +213,9 @@ Tailwind CSS의 간격 시스템을 사용합니다.
 ### 버튼
 
 #### Primary Button (확인, 저장, 제출)
-부드럽고 친근한 느낌의 주요 액션 버튼입니다.
+브랜드 컬러와 조화로운 어두운 슬레이트 색상의 주요 액션 버튼입니다.
 ```html
-<button class="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 active:bg-blue-700 transition-colors shadow-sm">
+<button class="bg-[#2a3038] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#2a3038]/90 active:bg-[#2a3038]/80 transition-colors shadow-sm">
   확인
 </button>
 ```
@@ -236,7 +259,7 @@ Tailwind CSS의 간격 시스템을 사용합니다.
 ```html
 <div class="mb-4">
   <label class="block text-sm font-medium text-black mb-2">라벨</label>
-  <input type="text" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors">
+  <input type="text" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#2a3038] focus:ring-2 focus:ring-[#2a3038]/20 transition-colors">
 </div>
 ```
 
@@ -245,7 +268,7 @@ Tailwind CSS의 간격 시스템을 사용합니다.
 ```html
 <div class="mb-4">
   <label class="block text-sm font-medium text-black mb-2">비밀번호</label>
-  <input type="password" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors">
+  <input type="password" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#2a3038] focus:ring-2 focus:ring-[#2a3038]/20 transition-colors">
 </div>
 ```
 
@@ -302,7 +325,7 @@ Tailwind CSS의 간격 시스템을 사용합니다.
 Chart.js를 사용하며, 다음 스타일을 적용합니다:
 
 #### 컬러 팔레트
-- Primary (액션): `#3b82f6` <span style="display: inline-block; width: 20px; height: 20px; background-color: #3b82f6; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
+- Primary (액션): `#2a3038` <span style="display: inline-block; width: 20px; height: 20px; background-color: #2a3038; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
 - Success: `#10b981` <span style="display: inline-block; width: 20px; height: 20px; background-color: #10b981; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
 - Danger: `#ef4444` <span style="display: inline-block; width: 20px; height: 20px; background-color: #ef4444; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
 - Background: `#ffffff` <span style="display: inline-block; width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
@@ -312,8 +335,8 @@ Chart.js를 사용하며, 다음 스타일을 적용합니다:
 ```javascript
 const chartConfig = {
   backgroundColor: '#ffffff',
-  borderColor: '#3b82f6',  // Primary 액션 컬러
-  pointBackgroundColor: '#3b82f6',
+  borderColor: '#2a3038',  // Primary 액션 컬러
+  pointBackgroundColor: '#2a3038',
   gridColor: '#e5e5e5',
   textColor: '#000000',
   fontFamily: 'Pretendard, sans-serif',
@@ -335,11 +358,15 @@ const chartConfig = {
 
 #### 좌측 사이드바
 - 고정 위치 (fixed)
-- 흰색 배경
-- 오른쪽 테두리로 구분 (`border-r border-gray-100`)
+- 배경 옵션:
+  - 흰색 배경 (`bg-white`) - 기본 스타일
+  - 어두운 배경 (`bg-[#2a3038]`) - 브랜드 컬러와 조화로운 강조 스타일
+- 오른쪽 테두리로 구분 (`border-r border-gray-100` 또는 어두운 배경 시 `border-r border-[#1f252b]`)
 - 전체 화면 높이
 - 네비게이션 메뉴 포함
-- 부드러운 호버 효과 (`hover:bg-gray-50`)
+- 부드러운 호버 효과:
+  - 흰색 배경: `hover:bg-gray-50`
+  - 어두운 배경: `hover:bg-[#1f252b]` (더 어두운 톤)
 
 #### 상단 헤더
 - Sticky 위치 (스크롤 시 상단 고정)
@@ -377,7 +404,7 @@ const chartConfig = {
 
 **버튼 스타일:**
 - 기본 버튼: `px-4 py-2 rounded-lg border-2 border-gray-200 hover:bg-gray-50`
-- 활성 버튼: `bg-blue-50 border-blue-300 text-blue-600`
+- 활성 버튼: `bg-[#2a3038]/10 border-[#2a3038]/30 text-[#2a3038]`
 - 부드러운 전환: `transition-colors`
 
 #### 브레드크럼

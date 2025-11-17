@@ -1,6 +1,36 @@
 @import "tailwindcss";
 
 /**
+  * 디자인 시스템 컬러 변수 정의
+  * 한 곳에서 컬러를 관리하여 재사용 가능하도록 설정
+  */
+@theme {
+  /* 브랜드 컬러 */
+  --color-brand: #f65938;
+  
+  /* Primary 컬러 (액션 컬러) */
+  --color-primary: #2a3038;
+  --color-primary-50: color-mix(in srgb, var(--color-primary) 5%, white);
+  --color-primary-100: color-mix(in srgb, var(--color-primary) 10%, white);
+  --color-primary-200: color-mix(in srgb, var(--color-primary) 20%, white);
+  --color-primary-300: color-mix(in srgb, var(--color-primary) 30%, white);
+  --color-primary-800: color-mix(in srgb, var(--color-primary) 80%, black);
+  --color-primary-900: color-mix(in srgb, var(--color-primary) 90%, black);
+  
+  /* Success 컬러 */
+  --color-success: #10b981;
+  
+  /* Danger 컬러 */
+  --color-danger: #ef4444;
+  
+  /* Secondary 컬러 */
+  --color-secondary: #6b7280;
+  
+  /* Link 컬러 (Primary와 동일) */
+  --color-link: var(--color-primary);
+}
+
+/**
   * A catch-all path to Django template files, JavaScript, and Python files
   * that contain Tailwind CSS classes and will be scanned by Tailwind to generate the final CSS file.
   *

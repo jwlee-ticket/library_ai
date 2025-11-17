@@ -7,7 +7,7 @@ class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(
         label='이메일',
         widget=forms.EmailInput(attrs={
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
             'placeholder': '이메일을 입력하세요',
             'autofocus': True,
         })
@@ -15,7 +15,7 @@ class EmailAuthenticationForm(AuthenticationForm):
     password = forms.CharField(
         label='비밀번호',
         widget=forms.PasswordInput(attrs={
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
             'placeholder': '비밀번호를 입력하세요',
         })
     )
