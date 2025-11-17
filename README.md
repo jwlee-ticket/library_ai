@@ -10,6 +10,7 @@ config/                   # Django 프로젝트 루트
 ├── core/                 # 공통 기능
 ├── performance/          # 공연 관리
 ├── sales/                # 판매 데이터 업로드
+├── dashboard/            # 대시보드 (통합/장르별/공연별)
 ├── templates/            # 공통 템플릿 (base.html 등)
 ├── static/               # 정적 파일 (CSS, JS)
 └── media/                # 업로드 파일
@@ -30,8 +31,9 @@ config/                   # Django 프로젝트 루트
 ### MVP
 - 공연 관리
 - 판매 데이터 엑셀 업로드
-- 카테고리별 대시보드 (통합/연극/뮤지컬/콘서트)
-- 단일 공연 대시보드
+- 통합 대시보드
+- 장르별 대시보드 (연극/뮤지컬/콘서트/전시 등)
+- 공연별 대시보드
 
 ## URL 구조
 
@@ -40,9 +42,10 @@ config/                   # Django 프로젝트 루트
 /dashboard/theater/          → 연극 대시보드
 /dashboard/musical/          → 뮤지컬 대시보드
 /dashboard/concert/          → 콘서트 대시보드
+/dashboard/exhibition/       → 전시 대시보드
 /performance/                → 공연 목록
 /performance/create/         → 공연 등록
-/performance/<id>/dashboard/ → 단일 공연 대시보드
+/performance/<id>/dashboard/ → 공연별 대시보드
 /sales/upload/               → 판매 데이터 업로드
 ```
 

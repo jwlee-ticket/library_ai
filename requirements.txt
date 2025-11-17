@@ -1,0 +1,19 @@
+# Django
+Django>=5.2.8
+
+# Database
+psycopg2-binary>=2.9.9
+
+# Environment
+django-environ>=0.11.2
+
+# Tailwind CSS
+django-tailwind>=3.8.0
+
+# Data Processing
+pandas>=2.2.0
+openpyxl>=3.1.2
+
+# Utilities
+python-dateutil>=2.9.0
+
