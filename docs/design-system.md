@@ -241,6 +241,31 @@ Tailwind CSS의 간격 시스템을 사용합니다.
 </div>
 ```
 
+#### 데이터 카드 (섹션 내)
+섹션 내에서 사용하는 데이터 카드입니다. 최소 높이를 설정하여 일관된 레이아웃을 유지합니다.
+
+```html
+<div class="bg-white rounded-lg border border-gray-200 p-6 min-h-[200px] flex flex-col">
+  <h4 class="text-lg font-semibold text-black mb-4">카드 제목</h4>
+  <!-- 차트 또는 데이터 -->
+</div>
+```
+
+#### 잠금 상태 카드
+권한이 없는 데이터를 표시할 때 사용하는 카드입니다.
+
+```html
+<div class="bg-white rounded-lg border border-gray-200 p-6 min-h-[200px] flex flex-col">
+  <h4 class="text-lg font-semibold text-black mb-4">카드 제목</h4>
+  <div class="flex-1 flex items-center justify-center flex-col text-gray-400">
+    <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+    </svg>
+    <p class="text-sm">Unauthorized for report's data view</p>
+  </div>
+</div>
+```
+
 ### 차트 스타일
 
 Chart.js를 사용하며, 다음 스타일을 적용합니다:
@@ -266,39 +291,218 @@ const chartConfig = {
 
 ## 레이아웃
 
+### 대시보드 메인 레이아웃 구조
+
+Mixpanel 스타일의 대시보드 메인 페이지 레이아웃입니다.
+
+#### 전체 구조
+```html
+<div class="min-h-screen bg-white flex">
+  <!-- 좌측 사이드바 (고정) -->
+  <aside class="w-64 bg-gray-800 text-white fixed left-0 top-0 h-screen">
+    <!-- 사이드바 내용 -->
+  </aside>
+  
+  <!-- 메인 영역 (사이드바 너비만큼 왼쪽 마진) -->
+  <div class="flex-1 flex flex-col ml-64">
+    <!-- 상단 헤더 -->
+    <header class="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
+      <!-- 브레드크럼, 날짜 선택기, 액션 버튼 -->
+    </header>
+    
+    <!-- 메인 콘텐츠 -->
+    <main class="flex-1 overflow-y-auto p-6 bg-white">
+      <!-- 페이지 제목 -->
+      <h1 class="text-3xl font-semibold text-black mb-8">페이지 제목</h1>
+      
+      <!-- 섹션들 -->
+      <!-- 페이지 내용 -->
+    </main>
+  </div>
+</div>
+```
+
+### 섹션 레이아웃 패턴
+
+#### 좌우 분할 레이아웃 (텍스트 + 카드 그리드)
+각 섹션은 좌측에 설명 텍스트, 우측에 데이터 카드 그리드로 구성됩니다. 섹션 간 충분한 간격을 유지합니다.
+
+```html
+<!-- 섹션 컨테이너 -->
+<div class="mb-16">
+  <!-- 섹션 제목 -->
+  <h2 class="text-2xl font-semibold text-black mb-8">섹션 제목</h2>
+  
+  <!-- 좌우 분할 레이아웃 -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- 좌측: 설명 텍스트 -->
+    <div class="lg:col-span-1">
+      <h3 class="text-xl font-semibold text-black mb-4">설명 제목</h3>
+      <p class="text-base text-gray-600 mb-4 leading-relaxed">설명 텍스트가 여기에 표시됩니다. 여러 문단으로 구성될 수 있습니다.</p>
+      
+      <!-- 불릿 포인트 -->
+      <ul class="list-disc list-inside text-base text-gray-600 mb-4 space-y-2">
+        <li>첫 번째 포인트</li>
+        <li>두 번째 포인트</li>
+        <li>세 번째 포인트</li>
+      </ul>
+      
+      <!-- Tip 섹션 -->
+      <div class="bg-blue-50 border border-blue-200 rounded p-4">
+        <p class="text-sm font-medium text-blue-900 mb-1">Tip</p>
+        <p class="text-sm text-blue-800">유용한 팁이나 추가 정보가 여기에 표시됩니다.</p>
+      </div>
+    </div>
+    
+    <!-- 우측: 카드 그리드 (2x2 또는 2x1) -->
+    <div class="lg:col-span-2">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- 카드 1 -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 min-h-[200px] flex flex-col">
+          <h4 class="text-lg font-semibold text-black mb-4">카드 제목</h4>
+          <!-- 차트 또는 데이터 -->
+          <!-- 잠금 상태 예시 -->
+          <div class="flex-1 flex items-center justify-center flex-col text-gray-400">
+            <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <p class="text-sm">Unauthorized for report's data view</p>
+          </div>
+        </div>
+        
+        <!-- 카드 2 -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 min-h-[200px] flex flex-col">
+          <h4 class="text-lg font-semibold text-black mb-4">카드 제목</h4>
+          <!-- 차트 또는 데이터 -->
+        </div>
+        
+        <!-- 카드 3 (2x1 레이아웃의 경우) -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 min-h-[200px] flex flex-col md:col-span-2">
+          <h4 class="text-lg font-semibold text-black mb-4">카드 제목</h4>
+          <!-- 차트 또는 데이터 -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+#### 좌측 사이드바
+```html
+<aside class="w-64 bg-gray-800 text-white flex flex-col h-screen fixed left-0 top-0">
+  <!-- 상단: Create New 버튼 -->
+  <div class="p-4 border-b border-gray-700">
+    <button class="w-full bg-blue-500 text-white px-4 py-2 rounded font-medium hover:bg-blue-600">
+      Create New
+    </button>
+  </div>
+  
+  <!-- 네비게이션 메뉴 -->
+  <nav class="flex-1 p-4 overflow-y-auto">
+    <ul class="space-y-1 mb-6">
+      <li>
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 text-sm">
+          Search
+        </a>
+      </li>
+      <li>
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 text-sm">
+          Discover
+        </a>
+      </li>
+      <li>
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 text-sm">
+          Data
+        </a>
+      </li>
+      <li>
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 text-sm">
+          Session Replay
+        </a>
+      </li>
+    </ul>
+    
+    <!-- 템플릿 섹션 -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between px-3 py-2 mb-2">
+        <span class="text-xs font-semibold text-gray-400 uppercase">Templates</span>
+        <button class="text-gray-400 hover:text-white">▼</button>
+      </div>
+      <ul class="space-y-1">
+        <li>
+          <a href="#" class="flex items-center gap-2 px-3 py-2 rounded bg-gray-700 text-sm font-medium">
+            Marketing KPIs Sample Template
+          </a>
+        </li>
+        <!-- 추가 템플릿들 -->
+      </ul>
+    </div>
+    
+    <!-- 학습 섹션 -->
+    <div class="px-3 py-2 border-t border-gray-700">
+      <a href="#" class="text-sm text-gray-400 hover:text-white">Learning Center</a>
+    </div>
+  </nav>
+  
+  <!-- 하단: 설정, 프로필 -->
+  <div class="p-4 border-t border-gray-700">
+    <div class="flex items-center justify-between">
+      <button class="text-gray-400 hover:text-white">
+        <!-- 설정 아이콘 -->
+      </button>
+      <button class="text-gray-400 hover:text-white">
+        <!-- 프로필 아이콘 -->
+      </button>
+    </div>
+  </div>
+</aside>
+```
+
+#### 상단 헤더
+```html
+<header class="bg-white border-b border-gray-200 px-6 py-4 ml-64">
+  <!-- 상단: 브레드크럼, 액션 버튼 -->
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <span>E-Commerce</span>
+      <span>/</span>
+      <span class="text-black font-medium">Marketing KPIs Sample Template</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <button class="text-gray-600 hover:text-black text-sm">Subscribe</button>
+      <button class="text-gray-600 hover:text-black text-sm">Share</button>
+      <button class="text-gray-600 hover:text-black text-sm">Favorite</button>
+      <button class="text-gray-600 hover:text-black text-sm">More</button>
+    </div>
+  </div>
+  
+  <!-- 하단: 날짜 선택기 -->
+  <div class="flex items-center gap-2 flex-wrap">
+    <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">Custom</button>
+    <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">Today</button>
+    <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">Yesterday</button>
+    <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">7D</button>
+    <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">30D</button>
+    <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">3M</button>
+    <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">6M</button>
+    <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">YTD</button>
+    <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">Default</button>
+    <button class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 ml-auto">
+      Use this board
+    </button>
+  </div>
+  
+  <!-- 알림 배너 (선택사항) -->
+  <div class="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+    Welcome! You are viewing a demo project
+  </div>
+</header>
+```
+
 ### 그리드 시스템
 - Tailwind CSS Grid 사용
-- 반응형: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`
-
-### 페이지 레이아웃
-
-#### 기본 레이아웃
-```html
-<div class="min-h-screen bg-white">
-  <!-- 헤더 -->
-  <header class="border-b border-gray-200">
-    <!-- 헤더 내용 -->
-  </header>
-  
-  <!-- 메인 컨텐츠 -->
-  <main class="container mx-auto px-4 py-8">
-    <!-- 페이지 내용 -->
-  </main>
-</div>
-```
-
-#### 대시보드 레이아웃
-```html
-<div class="min-h-screen bg-white">
-  <!-- 사이드바 (필요 시) -->
-  <!-- 메인 컨텐츠 -->
-  <main class="p-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- 대시보드 카드들 -->
-    </div>
-  </main>
-</div>
-```
+- 카드 그리드: `grid-cols-1 md:grid-cols-2` (2열)
+- 좌우 분할: `grid-cols-1 lg:grid-cols-3` (좌측 1/3, 우측 2/3)
 
 ### 반응형 브레이크포인트
 - **sm**: 640px 이상

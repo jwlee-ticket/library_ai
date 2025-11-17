@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     
     # Third party apps
     'tailwind',
+    'theme',
     
     # Local apps
     'core',
@@ -137,3 +138,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Authentication
+LOGIN_URL = 'core:login'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = 'core:login'
+
+# Tailwind CSS
+TAILWIND_APP_NAME = 'theme'
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
