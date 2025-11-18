@@ -1,7 +1,5 @@
 # Library AI
 
-공연 판매 데이터 분석 및 시각화 시스템
-
 ## 기술 스택
 
 - **Backend**: Django
@@ -25,19 +23,6 @@
 9. Tailwind CSS 개발 모드 (별도 터미널): `python manage.py tailwind dev`
 
 ## 데이터 흐름
-
-1. **공연 관리**: 공연을 생성하고 장르별로 분류
-   - 연극, 뮤지컬, 콘서트, 전시 등
-
-2. **데이터 관리**: 각 공연에 대해 데이터 입력
-   - 매출 데이터: 공연별 매출 정보
-   - 마케팅 데이터: 공연별 마케팅 정보
-   - 리뷰 데이터: 공연별 리뷰 정보
-
-3. **대시보드**: 공연에 연결된 모든 데이터를 통합하여 시각화
-   - 통합 대시보드: 전체 공연 데이터 종합
-   - 장르별 대시보드: 장르별 공연 데이터
-   - 공연별 대시보드: 특정 공연의 매출/마케팅/리뷰 데이터 통합
 
 ### 데이터 관계 다이어그램
 
@@ -82,6 +67,19 @@ erDiagram
     }
 ```
 
+1. **공연 관리**: 공연을 생성하고 장르별로 분류
+   - 연극, 뮤지컬, 콘서트, 전시 등
+
+2. **데이터 관리**: 각 공연에 대해 데이터 입력
+   - 매출 데이터: 공연별 매출 정보
+   - 마케팅 데이터: 공연별 마케팅 정보
+   - 리뷰 데이터: 공연별 리뷰 정보
+
+3. **대시보드**: 공연에 연결된 모든 데이터를 통합하여 시각화
+   - 통합 대시보드: 전체 공연 데이터 종합
+   - 장르별 대시보드: 장르별 공연 데이터
+   - 공연별 대시보드: 특정 공연의 매출/마케팅/리뷰 데이터 통합
+
 ### 데이터 관리 방식
 
 - **공연 정보**: 웹 폼을 통한 수동 입력 (공연 관리)
@@ -89,10 +87,10 @@ erDiagram
 
 ## 디자인 시스템
 
-- **브랜드 컬러**: #f65938 (로고, 브랜드명에만 사용)
-- **Primary 컬러**: #2a3038 (액션 버튼, 링크, 강조 요소)
-- **배경**: 흰색 (#ffffff), Primary 연한 버전 (#2a3038/5)
-- **텍스트**: 검은색 (#000000), 회색 (#666666)
+- **브랜드 컬러**: #f65938 <span style="display: inline-block; width: 20px; height: 20px; background-color: #f65938; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span> (로고, 브랜드명에만 사용)
+- **Primary 컬러**: #2a3038 <span style="display: inline-block; width: 20px; height: 20px; background-color: #2a3038; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span> (액션 버튼, 링크, 강조 요소)
+- **배경**: 흰색 (#ffffff) <span style="display: inline-block; width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>, Primary 연한 버전 (#2a3038/5)
+- **텍스트**: 검은색 (#000000) <span style="display: inline-block; width: 20px; height: 20px; background-color: #000000; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>, 회색 (#666666) <span style="display: inline-block; width: 20px; height: 20px; background-color: #666666; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
 - **폰트**: Pretendard
 - **스타일**: 토스 디자인 철학 + Mixpanel 데이터 대시보드 구조
 - **상세 가이드**: `docs/design-system.md` 참고
@@ -101,14 +99,14 @@ erDiagram
 
 ```
 config/                   # Django 프로젝트 루트
-├── settings.py           # 설정 파일 (django-environ 사용)
-├── core/                 # 공통 기능 (로그인/로그아웃)
-├── performance/          # 공연 관리 (CRUD)
-├── sales/                # 데이터 관리 (매출, 마케팅, 리뷰)
+├── settings.py           # 설정 파일
+├── core/                 # 공통 기능
+├── performance/          # 공연 관리
+├── data_management/      # 데이터 관리 (매출, 마케팅, 리뷰)
 ├── dashboard/            # 대시보드 (통합/장르별/공연별)
 ├── theme/                # Tailwind CSS 설정
 ├── templates/            # 공통 템플릿 (base.html 등)
-├── docs/                 # 문서 (design-system.md)
+├── docs/                 # 문서
 └── media/                # 업로드 파일
 ```
 

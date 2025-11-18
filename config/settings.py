@@ -50,8 +50,8 @@ INSTALLED_APPS = [
     # Local apps
     'core',
     'performance',
-    'sales',
     'dashboard',
+    'data_management',
 ]
 
 MIDDLEWARE = [
