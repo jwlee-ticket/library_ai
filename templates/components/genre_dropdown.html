@@ -12,7 +12,8 @@
 - width_class: 너비 클래스 (기본값: 'md:w-48')
 {% endcomment %}
 
-{% with prefix=prefix|default:"genre" auto_submit=auto_submit|default:True width_class=width_class|default:"md:w-48" %}
+{% with prefix=prefix|default:"genre" auto_submit=auto_submit|default:True width_class=width_class|default:"md:w-48" default_text=default_text|default:"전체 장르" show_default=show_default|default:True %}
+    {% comment %}선택된 텍스트 찾기{% endcomment %}
     {% with selected_text="" %}
         {% if genre_filter %}
             {% for code, name in genre_choices %}
@@ -21,6 +22,13 @@
                 {% endif %}
             {% endfor %}
         {% endif %}
+        
+        {% comment %}실제 선택된 텍스트 설정{% endcomment %}
+        {% for code, name in genre_choices %}
+            {% if code == genre_filter %}
+                {% with selected_text=name %}{% endwith %}
+            {% endif %}
+        {% endfor %}
         
         <div class="{{ width_class }} relative">
             <input type="hidden" name="genre" id="{{ prefix }}-input" value="{{ genre_filter|default:'' }}">
@@ -32,17 +40,27 @@
                 <svg id="{{ prefix }}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
-                <span id="{{ prefix }}-text" class="flex-1 text-left">{{ selected_text|default:"전체 장르" }}</span>
+                <span id="{{ prefix }}-text" class="flex-1 text-left">
+                    {% if genre_filter %}
+                        {% for code, name in genre_choices %}
+                            {% if code == genre_filter %}{{ name }}{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {{ default_text }}
+                    {% endif %}
+                </span>
             </button>
             <div id="{{ prefix }}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                 <div class="py-1">
-                    <button 
-                        type="button"
-                        onclick="selectDropdownItem('{{ prefix }}', '', '전체 장르', {{ auto_submit|yesno:"true,false" }})"
-                        class="w-full text-left px-4 py-2 text-sm {% if not genre_filter %}bg-primary-100 text-primary font-medium{% else %}text-black hover:bg-gray-50{% endif %} transition-colors"
-                    >
-                        전체 장르
-                    </button>
+                    {% if show_default %}
+                        <button 
+                            type="button"
+                            onclick="selectDropdownItem('{{ prefix }}', '', '{{ default_text }}', {{ auto_submit|yesno:"true,false" }})"
+                            class="w-full text-left px-4 py-2 text-sm {% if not genre_filter %}bg-primary-100 text-primary font-medium{% else %}text-black hover:bg-gray-50{% endif %} transition-colors"
+                        >
+                            {{ default_text }}
+                        </button>
+                    {% endif %}
                     {% for code, name in genre_choices %}
                         <button 
                             type="button"

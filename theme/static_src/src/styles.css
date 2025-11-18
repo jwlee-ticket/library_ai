@@ -18,13 +18,13 @@
   --color-primary-900: color-mix(in srgb, var(--color-primary) 90%, black);
   
   /* Success 컬러 */
-  --color-success: #10b981;
+  --color-success: #16a34a;
   
   /* Danger 컬러 */
-  --color-danger: #ef4444;
+  --color-danger: #dc2626;
   
   /* Secondary 컬러 */
-  --color-secondary: #6b7280;
+  --color-secondary: #78716c;
   
   /* Link 컬러 (Primary와 동일) */
   --color-link: var(--color-primary);

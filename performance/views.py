@@ -78,6 +78,13 @@ class PerformanceUpdateView(UpdateView):
     template_name = 'performance/form.html'
     success_url = reverse_lazy('performance:list')
     
+    def get(self, request, *args, **kwargs):
+        # GET 요청 시 이전 메시지 제거
+        storage = messages.get_messages(request)
+        # 모든 메시지를 소비하여 제거
+        list(storage)
+        return super().get(request, *args, **kwargs)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['genre_choices'] = Performance.GENRE_CHOICES

@@ -12,8 +12,8 @@
         공연 {% if object %}수정{% else %}등록{% endif %}
     </h1>
     
-    <!-- 메시지 표시 -->
-    {% if messages %}
+    <!-- 메시지 표시 (POST 요청일 때만 표시) -->
+    {% if messages and request.method == 'POST' %}
         {% for message in messages %}
             <div class="mb-6 p-4 {% if message.tags == 'success' %}bg-green-50 border-2 border-green-100 text-green-600{% else %}bg-red-50 border-2 border-red-100 text-red-600{% endif %} rounded-lg text-sm">
                 {{ message }}
@@ -354,7 +354,7 @@
                                 {% for grade, price in object.ticket_prices.items %}
                                     <div class="flex gap-2 items-center seat-price-item" data-index="{{ forloop.counter0 }}">
                                         {% with seat_grade_choices=object.seat_grades|to_choices %}
-                                            {% include 'components/genre_dropdown.html' with genre_filter=grade genre_choices=seat_grade_choices prefix="ticket-price-"|add:forloop.counter0 auto_submit=False width_class="flex-1" %}
+                                            {% include 'components/genre_dropdown.html' with genre_filter=grade genre_choices=seat_grade_choices prefix="ticket-price-"|add:forloop.counter0 auto_submit=False width_class="flex-1" default_text="좌석 등급 선택" show_default=False %}
                                         {% endwith %}
                                         <span class="text-gray-400">:</span>
                                         <input type="number" value="{{ price }}" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
@@ -396,7 +396,7 @@
                                 {% for grade, count in object.seat_counts.items %}
                                     <div class="flex gap-2 items-center seat-count-item" data-index="{{ forloop.counter0 }}">
                                         {% with seat_grade_choices=object.seat_grades|to_choices %}
-                                            {% include 'components/genre_dropdown.html' with genre_filter=grade genre_choices=seat_grade_choices prefix="seat-count-"|add:forloop.counter0 auto_submit=False width_class="flex-1" %}
+                                            {% include 'components/genre_dropdown.html' with genre_filter=grade genre_choices=seat_grade_choices prefix="seat-count-"|add:forloop.counter0 auto_submit=False width_class="flex-1" default_text="좌석 등급 선택" show_default=False %}
                                         {% endwith %}
                                         <span class="text-gray-400">:</span>
                                         <input type="number" value="{{ count }}" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
@@ -439,7 +439,7 @@
                                     <div class="border-2 border-gray-200 rounded-lg p-3">
                                         <div class="flex items-center gap-2 mb-2">
                                             {% with seat_grade_choices=object.seat_grades|to_choices %}
-                                                {% include 'components/genre_dropdown.html' with genre_filter=grade genre_choices=seat_grade_choices prefix="discount-grade-"|add:forloop.parentloop.counter0 auto_submit=False width_class="flex-1" %}
+                                                {% include 'components/genre_dropdown.html' with genre_filter=grade genre_choices=seat_grade_choices prefix="discount-grade-"|add:forloop.counter0 auto_submit=False width_class="flex-1" default_text="좌석 등급 선택" show_default=False %}
                                             {% endwith %}
                                             <button type="button" onclick="removeDiscountGroup(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -624,12 +624,18 @@
     // 좌석 등급 드롭다운 옵션 업데이트
     function updateSeatGradeDropdowns() {
         const grades = getSeatGrades();
+        const processedPrefixes = new Set(); // 이미 처리한 prefix 추적
         
-        // 모든 좌석 등급 드롭다운 찾기 (더 넓은 범위로 검색)
+        // 모든 좌석 등급 드롭다운 찾기
         const allInputs = document.querySelectorAll('[id*="ticket-price-"][id$="-input"], [id*="seat-count-"][id$="-input"], [id*="discount-grade-"][id$="-input"]');
         
         allInputs.forEach(inputElement => {
             const prefix = inputElement.id.replace('-input', '');
+            
+            // 이미 처리한 prefix는 건너뛰기
+            if (processedPrefixes.has(prefix)) return;
+            processedPrefixes.add(prefix);
+            
             const dropdown = document.getElementById(prefix + '-dropdown');
             const textElement = document.getElementById(prefix + '-text');
             
@@ -639,8 +645,8 @@
             const dropdownContent = dropdown.querySelector('.py-1');
             if (!dropdownContent) return;
             
-            // 기존 옵션 제거 (첫 번째 "좌석 등급 선택" 버튼 제외)
-            const existingButtons = dropdownContent.querySelectorAll('button:not(:first-child)');
+            // 기존 옵션 모두 제거 (템플릿에서 렌더링된 것 포함)
+            const existingButtons = dropdownContent.querySelectorAll('button');
             existingButtons.forEach(btn => btn.remove());
             
             // 새로운 옵션 추가
@@ -660,49 +666,6 @@
                 const item = inputElement.closest('.seat-price-item, .seat-count-item, .border-2');
                 if (item) {
                     item.remove();
-                    return; // 항목이 제거되었으므로 다음 항목으로 넘어감
-                }
-            }
-        });
-        
-        // genre_dropdown 컴포넌트를 사용하는 경우도 업데이트
-        document.querySelectorAll('[id*="ticket-price-"], [id*="seat-count-"], [id*="discount-grade-"]').forEach(element => {
-            const id = element.id;
-            let prefix = null;
-            
-            if (id.includes('ticket-price-') && id.includes('-input')) {
-                prefix = id.replace('-input', '');
-            } else if (id.includes('seat-count-') && id.includes('-input')) {
-                prefix = id.replace('-input', '');
-            } else if (id.includes('discount-grade-') && id.includes('-input')) {
-                prefix = id.replace('-input', '');
-            }
-            
-            if (prefix) {
-                const dropdown = document.getElementById(prefix + '-dropdown');
-                const inputElement = document.getElementById(prefix + '-input');
-                
-                if (dropdown && inputElement) {
-                    const currentValue = inputElement.value;
-                    const dropdownContent = dropdown.querySelector('.py-1');
-                    
-                    if (dropdownContent) {
-                        // 기존 옵션 제거 (첫 번째 버튼 제외)
-                        const existingButtons = dropdownContent.querySelectorAll('button:not(:first-child)');
-                        existingButtons.forEach(btn => btn.remove());
-                        
-                        // 새로운 옵션 추가
-                        grades.forEach(grade => {
-                            const button = document.createElement('button');
-                            button.type = 'button';
-                            button.className = `w-full text-left px-4 py-2 text-sm ${currentValue === grade ? 'bg-primary-100 text-primary font-medium' : 'text-black hover:bg-gray-50'} transition-colors`;
-                            button.textContent = grade;
-                            button.onclick = function() {
-                                selectDropdownItem(prefix, grade, grade, false);
-                            };
-                            dropdownContent.appendChild(button);
-                        });
-                    }
                 }
             }
         });
@@ -740,13 +703,6 @@
                 </button>
                 <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                     <div class="py-1">
-                        <button 
-                            type="button"
-                            onclick="selectDropdownItem('${prefix}', '', '좌석 등급 선택', false)"
-                            class="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-50 transition-colors"
-                        >
-                            좌석 등급 선택
-                        </button>
                     </div>
                 </div>
             `;
@@ -907,13 +863,6 @@
             </button>
             <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                 <div class="py-1">
-                    <button 
-                        type="button"
-                        onclick="selectDropdownItem('${prefix}', '', '좌석 등급 선택', false)"
-                        class="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-50 transition-colors"
-                    >
-                        좌석 등급 선택
-                    </button>
                 </div>
             </div>
         `;
@@ -978,13 +927,6 @@
             </button>
             <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                 <div class="py-1">
-                    <button 
-                        type="button"
-                        onclick="selectDropdownItem('${prefix}', '', '좌석 등급 선택', false)"
-                        class="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-50 transition-colors"
-                    >
-                        좌석 등급 선택
-                    </button>
                 </div>
             </div>
         `;
@@ -1051,13 +993,6 @@
             </button>
             <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                 <div class="py-1">
-                    <button 
-                        type="button"
-                        onclick="selectDropdownItem('${prefix}', '', '좌석 등급 선택', false)"
-                        class="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-50 transition-colors"
-                    >
-                        좌석 등급 선택
-                    </button>
                 </div>
             </div>
         `;
@@ -1239,7 +1174,8 @@
                 discountContainer.querySelectorAll('div').forEach(discountDiv => {
                     const inputs = discountDiv.querySelectorAll('input');
                     if (inputs.length >= 2 && inputs[0].value.trim() && inputs[1].value.trim()) {
-                        discounts[grade][inputs[0].value.trim()] = parseInt(inputs[1].value) || 0;
+                        const discountValue = parseFloat(inputs[1].value) || 0;
+                        discounts[grade][inputs[0].value.trim()] = Math.round(discountValue);
                     }
                 });
                 // 할인이 없는 경우 빈 딕셔너리 제거
