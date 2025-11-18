@@ -34,36 +34,41 @@ erDiagram
     
     PERFORMANCE {
         int id PK
-        string title
+        string title "공연명"
+        string title_en "공연명(영문)"
         string genre "연극/뮤지컬/콘서트/전시"
-        date start_date
-        date end_date
-        string venue
-        text description
+        string venue "공연장"
+        date performance_start "공연 시작일"
+        date performance_end "공연 종료일"
+        date sales_start "판매 시작일"
+        date sales_end "판매 종료일"
+        string age_rating "관람 연령"
+        string running_time "러닝 타임"
+        text description "설명"
+        json seat_grades "좌석 등급"
+        json ticket_prices "티켓 가격"
+        json seat_counts "좌석 수"
+        json discounts "할인율"
+        json casting "캐스팅"
+        json crew "제작진"
+        json booking_sites "예매처"
+        string producer "제작/주최"
+        string organizer "주관"
+        image seat_map "좌석배치도"
+        datetime created_at "생성일시"
+        datetime updated_at "수정일시"
     }
     
     SALES {
         int id PK
-        int performance_id FK
-        date date
-        decimal amount
-        int ticket_count
     }
     
     MARKETING {
         int id PK
-        int performance_id FK
-        string channel
-        decimal cost
-        string effectiveness
     }
     
     REVIEW {
         int id PK
-        int performance_id FK
-        int rating
-        text content
-        datetime created_at
     }
 ```
 
