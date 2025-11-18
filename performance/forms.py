@@ -83,41 +83,13 @@ class PerformanceForm(forms.ModelForm):
                 'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
                 'placeholder': '주관을 입력해주세요',
             }),
-            'seat_grades': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-                'rows': 3,
-                'placeholder': 'JSON 형식: ["VIP", "R석", "S석"]',
-            }),
-            'crew': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-                'rows': 3,
-                'placeholder': 'JSON 형식: ["감독: 홍길동", "음악: 김철수"]',
-            }),
-            'booking_sites': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-                'rows': 3,
-                'placeholder': 'JSON 형식: [{"인터파크": "https://..."}, {"예스24": "https://..."}]',
-            }),
-            'ticket_prices': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-                'rows': 3,
-                'placeholder': 'JSON 형식: {"VIP": 150000, "R석": 100000}',
-            }),
-            'seat_counts': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-                'rows': 3,
-                'placeholder': 'JSON 형식: {"VIP": 50, "R석": 200}',
-            }),
-            'discounts': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-                'rows': 3,
-                'placeholder': 'JSON 형식: {"VIP": {"조조할인": 10, "단체할인": 15}}',
-            }),
-            'casting': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-                'rows': 3,
-                'placeholder': 'JSON 형식: {"홍길동": "배우A", "김철수": "배우B"}',
-            }),
+            'seat_grades': forms.HiddenInput(),
+            'crew': forms.HiddenInput(),
+            'booking_sites': forms.HiddenInput(),
+            'ticket_prices': forms.HiddenInput(),
+            'seat_counts': forms.HiddenInput(),
+            'discounts': forms.HiddenInput(),
+            'casting': forms.HiddenInput(),
             'seat_map': forms.FileInput(attrs={
                 'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
                 'accept': 'image/*',
@@ -146,8 +118,8 @@ class PerformanceForm(forms.ModelForm):
                 import json
                 if isinstance(data, str):
                     data = json.loads(data)
-                if not isinstance(data, list):
-                    raise forms.ValidationError('리스트 형식이어야 해요')
+                if not isinstance(data, dict):
+                    raise forms.ValidationError('딕셔너리 형식이어야 해요')
             except json.JSONDecodeError:
                 raise forms.ValidationError('올바른 JSON 형식이 아니에요')
         return data

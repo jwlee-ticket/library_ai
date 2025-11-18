@@ -57,6 +57,15 @@ class PerformanceCreateView(CreateView):
     template_name = 'performance/form.html'
     success_url = reverse_lazy('performance:list')
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['genre_choices'] = Performance.GENRE_CHOICES
+        if self.object:
+            context['genre_filter'] = self.object.genre
+        else:
+            context['genre_filter'] = ''
+        return context
+    
     def form_valid(self, form):
         messages.success(self.request, '공연이 성공적으로 등록되었어요')
         return super().form_valid(form)
@@ -68,6 +77,15 @@ class PerformanceUpdateView(UpdateView):
     form_class = PerformanceForm
     template_name = 'performance/form.html'
     success_url = reverse_lazy('performance:list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['genre_choices'] = Performance.GENRE_CHOICES
+        if self.object:
+            context['genre_filter'] = self.object.genre
+        else:
+            context['genre_filter'] = ''
+        return context
     
     def form_valid(self, form):
         messages.success(self.request, '공연 정보가 성공적으로 수정되었어요')

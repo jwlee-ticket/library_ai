@@ -35,8 +35,8 @@ class Performance(models.Model):
     seat_grades = models.JSONField(default=list, blank=True, verbose_name='좌석 등급')
     # 예시: ["VIP", "R석", "S석"]
     
-    crew = models.JSONField(default=list, blank=True, verbose_name='제작진')
-    # 예시: ["감독: 홍길동", "음악: 김철수"]
+    crew = models.JSONField(default=dict, blank=True, verbose_name='제작진')
+    # 예시: {"감독": "홍길동", "음악": "김철수"}
     
     booking_sites = models.JSONField(default=list, blank=True, verbose_name='예매처')
     # 예시: [{"인터파크": "https://..."}, {"예스24": "https://..."}]

@@ -100,7 +100,7 @@
                 {% if performance.crew %}
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-600 mb-2">제작진</label>
-                        {% display_json_list performance.crew as crew_display %}
+                        {% display_json_dict performance.crew as crew_display %}
                         {{ crew_display }}
                     </div>
                 {% endif %}
