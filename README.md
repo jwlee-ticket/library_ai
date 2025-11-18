@@ -87,10 +87,10 @@ erDiagram
 
 ## 디자인 시스템
 
-- **브랜드 컬러**: #f65938 <span style="display: inline-block; width: 20px; height: 20px; background-color: #f65938; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span> (로고, 브랜드명에만 사용)
-- **Primary 컬러**: #2a3038 <span style="display: inline-block; width: 20px; height: 20px; background-color: #2a3038; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span> (액션 버튼, 링크, 강조 요소)
-- **배경**: 흰색 (#ffffff) <span style="display: inline-block; width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>, Primary 연한 버전 (#2a3038/5)
-- **텍스트**: 검은색 (#000000) <span style="display: inline-block; width: 20px; height: 20px; background-color: #000000; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>, 회색 (#666666) <span style="display: inline-block; width: 20px; height: 20px; background-color: #666666; border: 1px solid #e5e5e5; border-radius: 3px; vertical-align: middle; margin-left: 8px;"></span>
+- **브랜드 컬러**: #f65938 (로고, 브랜드명에만 사용)
+- **Primary 컬러**: #2a3038 (액션 버튼, 링크, 강조 요소)
+- **배경**: 흰색 (#ffffff), Primary 연한 버전 (#2a3038/5)
+- **텍스트**: 검은색 (#000000), 회색 (#666666)
 - **폰트**: Pretendard
 - **스타일**: 토스 디자인 철학 + Mixpanel 데이터 대시보드 구조
 - **상세 가이드**: `docs/design-system.md` 참고
