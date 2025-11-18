@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+    <span class="text-gray-700 font-medium">공연 관리</span>
+    <span class="text-gray-400 mx-2">/</span>
+    <span class="text-black font-medium">{% if object %}수정{% else %}등록{% endif %}</span>
+{% endblock %}
+
+{% block content %}
+    <h1 class="text-3xl font-semibold text-black mb-6">
+        공연 {% if object %}수정{% else %}등록{% endif %}
+    </h1>
+    
+    <!-- 메시지 표시 -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-6 p-4 {% if message.tags == 'success' %}bg-green-50 border-2 border-green-100 text-green-600{% else %}bg-red-50 border-2 border-red-100 text-red-600{% endif %} rounded-lg text-sm">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- 폼 카드 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- 기본 정보 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">기본 정보</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.title.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.title.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.title_en.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.title_en.label }}
+                        </label>
+                        {{ form.title_en }}
+                        {% if form.title_en.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.title_en.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.genre.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.genre.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.genre }}
+                        {% if form.genre.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.genre.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.venue.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.venue.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.venue }}
+                        {% if form.venue.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.venue.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 공연 일정 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">공연 일정</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.performance_start.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.performance_start.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.performance_start }}
+                        {% if form.performance_start.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.performance_start.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.performance_end.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.performance_end.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.performance_end }}
+                        {% if form.performance_end.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.performance_end.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.sales_start.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.sales_start.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.sales_start }}
+                        {% if form.sales_start.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.sales_start.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.sales_end.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.sales_end.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.sales_end }}
+                        {% if form.sales_end.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.sales_end.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 상세 정보 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">상세 정보</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.age_rating.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.age_rating.label }}
+                        </label>
+                        {{ form.age_rating }}
+                        {% if form.age_rating.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.age_rating.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.running_time.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.running_time.label }}
+                        </label>
+                        {{ form.running_time }}
+                        {% if form.running_time.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.running_time.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.description.label }}
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.description.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 제작 정보 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">제작 정보</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.producer.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.producer.label }}
+                        </label>
+                        {{ form.producer }}
+                        {% if form.producer.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.producer.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.organizer.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.organizer.label }}
+                        </label>
+                        {{ form.organizer }}
+                        {% if form.organizer.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.organizer.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label for="{{ form.crew.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.crew.label }}
+                        </label>
+                        {{ form.crew }}
+                        <p class="mt-2 text-xs text-gray-500">{{ form.crew.help_text|default:"JSON 형식: [\"감독: 홍길동\", \"음악: 김철수\"]" }}</p>
+                        {% if form.crew.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.crew.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label for="{{ form.casting.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.casting.label }}
+                        </label>
+                        {{ form.casting }}
+                        <p class="mt-2 text-xs text-gray-500">{{ form.casting.help_text|default:"JSON 형식: {\"홍길동\": \"배우A\", \"김철수\": \"배우B\"}" }}</p>
+                        {% if form.casting.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.casting.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 좌석 및 가격 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">좌석 및 가격</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.seat_grades.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.seat_grades.label }}
+                        </label>
+                        {{ form.seat_grades }}
+                        <p class="mt-2 text-xs text-gray-500">{{ form.seat_grades.help_text|default:"JSON 형식: [\"VIP\", \"R석\", \"S석\"]" }}</p>
+                        {% if form.seat_grades.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.seat_grades.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.ticket_prices.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.ticket_prices.label }}
+                        </label>
+                        {{ form.ticket_prices }}
+                        <p class="mt-2 text-xs text-gray-500">{{ form.ticket_prices.help_text|default:"JSON 형식: {\"VIP\": 150000, \"R석\": 100000}" }}</p>
+                        {% if form.ticket_prices.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.ticket_prices.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.seat_counts.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.seat_counts.label }}
+                        </label>
+                        {{ form.seat_counts }}
+                        <p class="mt-2 text-xs text-gray-500">{{ form.seat_counts.help_text|default:"JSON 형식: {\"VIP\": 50, \"R석\": 200}" }}</p>
+                        {% if form.seat_counts.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.seat_counts.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.discounts.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.discounts.label }}
+                        </label>
+                        {{ form.discounts }}
+                        <p class="mt-2 text-xs text-gray-500">{{ form.discounts.help_text|default:"JSON 형식: {\"VIP\": {\"조조할인\": 10, \"단체할인\": 15}}" }}</p>
+                        {% if form.discounts.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.discounts.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 예매 및 기타 -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-black mb-6">예매 및 기타</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.booking_sites.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.booking_sites.label }}
+                        </label>
+                        {{ form.booking_sites }}
+                        <p class="mt-2 text-xs text-gray-500">{{ form.booking_sites.help_text|default:"JSON 형식: [{\"인터파크\": \"https://...\"}, {\"예스24\": \"https://...\"}]" }}</p>
+                        {% if form.booking_sites.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.booking_sites.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.seat_map.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.seat_map.label }}
+                        </label>
+                        {{ form.seat_map }}
+                        {% if object and object.seat_map %}
+                            <p class="mt-2 text-sm text-gray-600">현재 파일: <a href="{{ object.seat_map.url }}" target="_blank" class="text-primary hover:underline">{{ object.seat_map.name }}</a></p>
+                        {% endif %}
+                        {% if form.seat_map.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.seat_map.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 하단 버튼 -->
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-100">
+                <a href="{% url 'performance:list' %}" class="px-6 py-3 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                    취소
+                </a>
+                <button type="submit" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm">
+                    저장
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+

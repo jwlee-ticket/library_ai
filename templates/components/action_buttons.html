@@ -1,0 +1,31 @@
+{% comment %}
+액션 버튼 그룹 컴포넌트
+
+사용법:
+{% include 'components/action_buttons.html' with object=performance %}
+
+또는
+
+{% include 'components/action_buttons.html' with object=performance show_edit=True show_delete=True %}
+{% endcomment %}
+
+<div class="flex gap-3">
+    {% if show_edit != False %}
+        <a href="{% url 'performance:update' object.pk %}" class="px-4 py-2 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+            수정
+        </a>
+    {% endif %}
+    
+    {% if show_delete != False %}
+        <a href="{% url 'performance:delete' object.pk %}" class="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 active:bg-red-700 transition-colors shadow-sm">
+            삭제
+        </a>
+    {% endif %}
+    
+    {% if show_back != False %}
+        <a href="{% url 'performance:list' %}" class="px-4 py-2 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+            목록으로
+        </a>
+    {% endif %}
+</div>
+

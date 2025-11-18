@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load performance_tags custom_filters %}
+
+{% block breadcrumb %}
+    <span class="text-gray-700 font-medium">공연 관리</span>
+    <span class="text-gray-400 mx-2">/</span>
+    <span class="text-black font-medium">{{ performance.title }}</span>
+{% endblock %}
+
+{% block content %}
+    <!-- 상단 액션 바 -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-semibold text-black">{{ performance.title }}</h1>
+        {% include 'components/action_buttons.html' with object=performance show_back=False %}
+    </div>
+    
+    <!-- 공연 정보 카드 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8">
+        <!-- 기본 정보 -->
+        <div class="mb-8 pb-8 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-4">기본 정보</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">공연명</label>
+                    <p class="text-base text-black">{{ performance.title }}</p>
+                </div>
+                {% if performance.title_en %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">공연명(영문)</label>
+                        <p class="text-base text-black">{{ performance.title_en }}</p>
+                    </div>
+                {% endif %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">장르</label>
+                    {{ performance.genre|genre_badge }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">공연장</label>
+                    <p class="text-base text-black">{{ performance.venue }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 공연 일정 -->
+        <div class="mb-8 pb-8 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-4">공연 일정</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">공연 기간</label>
+                    <p class="text-base text-black">{{ performance.performance_start|date_range:performance.performance_end }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">판매 기간</label>
+                    <p class="text-base text-black">{{ performance.sales_start|date_range:performance.sales_end }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 상세 정보 -->
+        <div class="mb-8 pb-8 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-4">상세 정보</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% if performance.age_rating %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">관람 연령</label>
+                        <p class="text-base text-black">{{ performance.age_rating }}</p>
+                    </div>
+                {% endif %}
+                {% if performance.running_time %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">러닝 타임</label>
+                        <p class="text-base text-black">{{ performance.running_time }}</p>
+                    </div>
+                {% endif %}
+                {% if performance.description %}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-600 mb-2">설명</label>
+                        <p class="text-base text-black leading-relaxed whitespace-pre-line">{{ performance.description }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 제작 정보 -->
+        <div class="mb-8 pb-8 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-4">제작 정보</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% if performance.producer %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">제작/주최</label>
+                        <p class="text-base text-black">{{ performance.producer }}</p>
+                    </div>
+                {% endif %}
+                {% if performance.organizer %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">주관</label>
+                        <p class="text-base text-black">{{ performance.organizer }}</p>
+                    </div>
+                {% endif %}
+                {% if performance.crew %}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-600 mb-2">제작진</label>
+                        {% display_json_list performance.crew as crew_display %}
+                        {{ crew_display }}
+                    </div>
+                {% endif %}
+                {% if performance.casting %}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-600 mb-2">캐스팅</label>
+                        {% display_json_dict performance.casting as casting_display %}
+                        {{ casting_display }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 좌석 및 가격 -->
+        <div class="mb-8 pb-8 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-4">좌석 및 가격</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% if performance.seat_grades %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">좌석 등급</label>
+                        {% display_json_list performance.seat_grades as seat_grades_display %}
+                        {{ seat_grades_display }}
+                    </div>
+                {% endif %}
+                {% if performance.ticket_prices %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">티켓 가격</label>
+                        {% display_json_dict performance.ticket_prices as ticket_prices_display %}
+                        {{ ticket_prices_display }}
+                    </div>
+                {% endif %}
+                {% if performance.seat_counts %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">좌석 수</label>
+                        {% display_json_dict performance.seat_counts as seat_counts_display %}
+                        {{ seat_counts_display }}
+                    </div>
+                {% endif %}
+                {% if performance.discounts %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">할인율</label>
+                        {% display_json_dict performance.discounts as discounts_display %}
+                        {{ discounts_display }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 예매 및 기타 -->
+        <div>
+            <h2 class="text-xl font-semibold text-black mb-4">예매 및 기타</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% if performance.booking_sites %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">예매처</label>
+                        {% display_booking_sites performance.booking_sites as booking_sites_display %}
+                        {{ booking_sites_display }}
+                    </div>
+                {% endif %}
+                {% if performance.seat_map %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">좌석배치도</label>
+                        <img src="{{ performance.seat_map.url }}" alt="좌석배치도" class="max-w-full rounded-lg border border-gray-200">
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

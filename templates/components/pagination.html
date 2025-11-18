@@ -1,0 +1,57 @@
+{% comment %}
+페이지네이션 컴포넌트
+
+사용법:
+{% include 'components/pagination.html' with page_obj=page_obj %}
+{% endcomment %}
+
+{% if page_obj.has_other_pages %}
+    <div class="flex justify-center items-center gap-2 mt-8">
+        <!-- 이전 페이지 -->
+        {% if page_obj.has_previous %}
+            <a 
+                href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.genre %}&genre={{ request.GET.genre }}{% endif %}" 
+                class="px-4 py-2 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors"
+            >
+                이전
+            </a>
+        {% else %}
+            <span class="px-4 py-2 bg-gray-100 text-gray-400 rounded-lg font-medium cursor-not-allowed">
+                이전
+            </span>
+        {% endif %}
+        
+        <!-- 페이지 번호 -->
+        <div class="flex gap-2">
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-4 py-2 bg-primary text-white rounded-lg font-medium">
+                        {{ num }}
+                    </span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a 
+                        href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.genre %}&genre={{ request.GET.genre }}{% endif %}" 
+                        class="px-4 py-2 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                    >
+                        {{ num }}
+                    </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- 다음 페이지 -->
+        {% if page_obj.has_next %}
+            <a 
+                href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.genre %}&genre={{ request.GET.genre }}{% endif %}" 
+                class="px-4 py-2 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors"
+            >
+                다음
+            </a>
+        {% else %}
+            <span class="px-4 py-2 bg-gray-100 text-gray-400 rounded-lg font-medium cursor-not-allowed">
+                다음
+            </span>
+        {% endif %}
+    </div>
+{% endif %}
+

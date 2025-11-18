@@ -52,7 +52,7 @@
                     <a href="#" class="block px-4 py-3 rounded-xl hover:bg-primary-100 hover:text-primary text-sm text-black transition-all duration-200 hover:shadow-sm">공연별 대시보드</a>
                     
                     <!-- 공연 관리 -->
-                    <a href="#" class="block px-4 py-3 rounded-xl hover:bg-primary-100 hover:text-primary text-sm text-black transition-all duration-200 hover:shadow-sm">공연 관리</a>
+                    <a href="{% url 'performance:list' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'performance' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-all duration-200 hover:shadow-sm">공연 관리</a>
                     
                     <!-- 데이터 관리 드롭다운 -->
                     <div class="relative">
@@ -86,14 +86,36 @@
                     </div>
                     <div class="flex items-center gap-6">
                         {% if user.is_authenticated %}
-                            <span class="text-sm text-gray-700">
-                                {% if user.first_name %}
-                                    {{ user.first_name }}
-                                {% else %}
-                                    {{ user.username }}
-                                {% endif %}
-                            </span>
-                            <a href="{% url 'core:logout' %}" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors duration-200 shadow-sm">로그아웃</a>
+                            <div class="relative">
+                                <button 
+                                    type="button"
+                                    onclick="toggleUserDropdown()"
+                                    class="p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-200"
+                                >
+                                    <svg class="w-7 h-7" fill="none" stroke="#f65938" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </button>
+                                <div id="user-dropdown" class="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg z-20 max-h-0 overflow-hidden transition-all duration-300 ease-in-out min-w-[180px]">
+                                    <div class="py-2">
+                                        <div class="px-4 py-3 border-b border-gray-100">
+                                            <p class="text-sm font-medium text-black">
+                                                {% if user.first_name %}
+                                                    {{ user.first_name }}
+                                                {% else %}
+                                                    {{ user.username }}
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <a 
+                                            href="{% url 'core:logout' %}" 
+                                            class="block px-4 py-2 text-sm text-black hover:bg-gray-50 transition-colors"
+                                        >
+                                            로그아웃
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -136,6 +158,29 @@
             }
             arrow.classList.toggle('rotate-180');
         }
+        
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('user-dropdown');
+            if (dropdown.classList.contains('max-h-0')) {
+                dropdown.classList.remove('max-h-0');
+                dropdown.classList.add('max-h-96');
+            } else {
+                dropdown.classList.remove('max-h-96');
+                dropdown.classList.add('max-h-0');
+            }
+        }
+        
+        // 외부 클릭 시 사용자 드롭다운 닫기
+        document.addEventListener('click', function(event) {
+            const userButton = document.querySelector('button[onclick="toggleUserDropdown()"]');
+            const userDropdown = document.getElementById('user-dropdown');
+            if (userButton && userDropdown && !userButton.contains(event.target) && !userDropdown.contains(event.target)) {
+                if (!userDropdown.classList.contains('max-h-0')) {
+                    userDropdown.classList.remove('max-h-96');
+                    userDropdown.classList.add('max-h-0');
+                }
+            }
+        });
     </script>
 </body>
 </html>
