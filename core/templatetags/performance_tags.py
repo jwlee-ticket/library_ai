@@ -7,6 +7,14 @@ register = template.Library()
 
 
 @register.filter
+def to_choices(value_list):
+    """리스트를 [(value, value), ...] 형태의 튜플 리스트로 변환"""
+    if not value_list:
+        return []
+    return [(item, item) for item in value_list]
+
+
+@register.filter
 def genre_badge(genre_code):
     """장르 코드를 받아서 뱃지 HTML 반환"""
     genre_map = {
