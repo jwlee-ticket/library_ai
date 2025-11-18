@@ -19,47 +19,7 @@
         </div>
         
         <!-- 장르 필터 -->
-        <div class="md:w-48 relative">
-            <input type="hidden" name="genre" id="genre-input" value="{{ genre_filter }}">
-            <button 
-                type="button"
-                onclick="toggleGenreFilterDropdown()"
-                class="w-full flex items-center px-4 py-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
-            >
-                <svg id="genre-filter-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-                <span id="genre-filter-text" class="flex-1 text-left">
-                    {% if genre_filter %}
-                        {% for code, name in genre_choices %}
-                            {% if code == genre_filter %}{{ name }}{% endif %}
-                        {% endfor %}
-                    {% else %}
-                        전체 장르
-                    {% endif %}
-                </span>
-            </button>
-            <div id="genre-filter-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-10 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                <div class="py-1">
-                    <button 
-                        type="button"
-                        onclick="selectGenreFilter('')"
-                        class="w-full text-left px-4 py-2 text-sm {% if not genre_filter %}bg-primary-100 text-primary font-medium{% else %}text-black hover:bg-gray-50{% endif %} transition-colors"
-                    >
-                        전체 장르
-                    </button>
-                    {% for code, name in genre_choices %}
-                        <button 
-                            type="button"
-                            onclick="selectGenreFilter('{{ code }}')"
-                            class="w-full text-left px-4 py-2 text-sm {% if genre_filter == code %}bg-primary-100 text-primary font-medium{% else %}text-black hover:bg-gray-50{% endif %} transition-colors"
-                        >
-                            {{ name }}
-                        </button>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
+        {% include 'components/genre_dropdown.html' with genre_filter=genre_filter genre_choices=genre_choices prefix="genre-filter" auto_submit=True %}
         
         <!-- 검색 버튼 -->
         <div>
@@ -85,61 +45,4 @@
     </form>
 </div>
 
-<script>
-    function toggleGenreFilterDropdown() {
-        const dropdown = document.getElementById('genre-filter-dropdown');
-        const arrow = document.getElementById('genre-filter-arrow');
-        
-        if (dropdown.classList.contains('max-h-0')) {
-            dropdown.classList.remove('max-h-0');
-            dropdown.classList.add('max-h-96');
-            arrow.classList.add('rotate-180');
-        } else {
-            dropdown.classList.remove('max-h-96');
-            dropdown.classList.add('max-h-0');
-            arrow.classList.remove('rotate-180');
-        }
-    }
-    
-    function selectGenreFilter(code) {
-        const input = document.getElementById('genre-input');
-        const text = document.getElementById('genre-filter-text');
-        const dropdown = document.getElementById('genre-filter-dropdown');
-        const arrow = document.getElementById('genre-filter-arrow');
-        
-        input.value = code;
-        
-        // 텍스트 업데이트
-        const genreNames = {
-            '': '전체 장르',
-            'theater': '연극',
-            'musical': '뮤지컬',
-            'concert': '콘서트',
-            'exhibition': '전시'
-        };
-        text.textContent = genreNames[code] || '전체 장르';
-        
-        // 드롭다운 닫기
-        dropdown.classList.remove('max-h-96');
-        dropdown.classList.add('max-h-0');
-        arrow.classList.remove('rotate-180');
-        
-        // 폼 자동 제출
-        input.closest('form').submit();
-    }
-    
-    // 외부 클릭 시 드롭다운 닫기
-    document.addEventListener('click', function(event) {
-        const filterContainer = document.querySelector('.md\\:w-48.relative');
-        if (filterContainer && !filterContainer.contains(event.target)) {
-            const dropdown = document.getElementById('genre-filter-dropdown');
-            const arrow = document.getElementById('genre-filter-arrow');
-            if (dropdown && !dropdown.classList.contains('max-h-0')) {
-                dropdown.classList.remove('max-h-96');
-                dropdown.classList.add('max-h-0');
-                arrow.classList.remove('rotate-180');
-            }
-        }
-    });
-</script>
 

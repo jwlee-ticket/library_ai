@@ -1,0 +1,129 @@
+{% comment %}
+장르 드롭다운 컴포넌트 (범용 드롭다운 구조 사용)
+
+사용법:
+{% include 'components/genre_dropdown.html' with genre_filter=genre_filter genre_choices=genre_choices prefix="unique-id" auto_submit=True %}
+
+파라미터:
+- genre_filter: 현재 선택된 장르 코드 (예: 'theater', 'musical' 등)
+- genre_choices: 장르 선택지 리스트 (예: [('theater', '연극'), ('musical', '뮤지컬'), ...])
+- prefix: 고유 ID를 위한 접두사 (기본값: 'genre')
+- auto_submit: 선택 시 폼 자동 제출 여부 (기본값: True)
+- width_class: 너비 클래스 (기본값: 'md:w-48')
+{% endcomment %}
+
+{% with prefix=prefix|default:"genre" auto_submit=auto_submit|default:True width_class=width_class|default:"md:w-48" %}
+    {% with selected_text="" %}
+        {% if genre_filter %}
+            {% for code, name in genre_choices %}
+                {% if code == genre_filter %}
+                    {% with selected_text=name %}{% endwith %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        <div class="{{ width_class }} relative">
+            <input type="hidden" name="genre" id="{{ prefix }}-input" value="{{ genre_filter|default:'' }}">
+            <button 
+                type="button"
+                onclick="toggleDropdown('{{ prefix }}')"
+                class="w-full flex items-center px-4 py-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
+            >
+                <svg id="{{ prefix }}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+                <span id="{{ prefix }}-text" class="flex-1 text-left">{{ selected_text|default:"전체 장르" }}</span>
+            </button>
+            <div id="{{ prefix }}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-10 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                <div class="py-1">
+                    <button 
+                        type="button"
+                        onclick="selectDropdownItem('{{ prefix }}', '', '전체 장르', {{ auto_submit|yesno:"true,false" }})"
+                        class="w-full text-left px-4 py-2 text-sm {% if not genre_filter %}bg-primary-100 text-primary font-medium{% else %}text-black hover:bg-gray-50{% endif %} transition-colors"
+                    >
+                        전체 장르
+                    </button>
+                    {% for code, name in genre_choices %}
+                        <button 
+                            type="button"
+                            onclick="selectDropdownItem('{{ prefix }}', '{{ code }}', '{{ name }}', {{ auto_submit|yesno:"true,false" }})"
+                            class="w-full text-left px-4 py-2 text-sm {% if genre_filter == code %}bg-primary-100 text-primary font-medium{% else %}text-black hover:bg-gray-50{% endif %} transition-colors"
+                        >
+                            {{ name }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endwith %}
+{% endwith %}
+
+<script>
+    // 범용 드롭다운 함수들 (한 번만 정의)
+    if (typeof window.toggleDropdown === 'undefined') {
+        window.toggleDropdown = function(prefix) {
+            const dropdown = document.getElementById(prefix + '-dropdown');
+            const arrow = document.getElementById(prefix + '-arrow');
+            
+            if (dropdown && arrow) {
+                if (dropdown.classList.contains('max-h-0')) {
+                    dropdown.classList.remove('max-h-0');
+                    dropdown.classList.add('max-h-96');
+                    arrow.classList.add('rotate-180');
+                } else {
+                    dropdown.classList.remove('max-h-96');
+                    dropdown.classList.add('max-h-0');
+                    arrow.classList.remove('rotate-180');
+                }
+            }
+        };
+    }
+    
+    if (typeof window.selectDropdownItem === 'undefined') {
+        window.selectDropdownItem = function(prefix, value, text, autoSubmit) {
+            const input = document.getElementById(prefix + '-input');
+            const textElement = document.getElementById(prefix + '-text');
+            const dropdown = document.getElementById(prefix + '-dropdown');
+            const arrow = document.getElementById(prefix + '-arrow');
+            
+            if (!input || !textElement || !dropdown || !arrow) return;
+            
+            input.value = value;
+            textElement.textContent = text;
+            
+            // 드롭다운 닫기
+            dropdown.classList.remove('max-h-96');
+            dropdown.classList.add('max-h-0');
+            arrow.classList.remove('rotate-180');
+            
+            // 폼 자동 제출
+            if (autoSubmit) {
+                const form = input.closest('form');
+                if (form) {
+                    form.submit();
+                }
+            }
+        };
+    }
+    
+    // 외부 클릭 시 드롭다운 닫기 (한 번만 등록)
+    if (!window.dropdownClickHandlerRegistered) {
+        document.addEventListener('click', function(event) {
+            const filterContainers = document.querySelectorAll('[id$="-dropdown"]');
+            filterContainers.forEach(function(container) {
+                const prefix = container.id.replace('-dropdown', '');
+                const parentContainer = container.closest('.relative');
+                if (parentContainer && !parentContainer.contains(event.target)) {
+                    const dropdown = document.getElementById(prefix + '-dropdown');
+                    const arrow = document.getElementById(prefix + '-arrow');
+                    if (dropdown && arrow && !dropdown.classList.contains('max-h-0')) {
+                        dropdown.classList.remove('max-h-96');
+                        dropdown.classList.add('max-h-0');
+                        arrow.classList.remove('rotate-180');
+                    }
+                }
+            });
+        });
+        window.dropdownClickHandlerRegistered = true;
+    }
+</script>
