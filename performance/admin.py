@@ -56,7 +56,7 @@ class PerformanceAdmin(admin.ModelAdmin):
             'fields': ('target_revenue', 'break_even_point', 'total_production_cost')
         }),
         ('좌석 및 가격', {
-            'fields': ('seat_grades', 'ticket_prices', 'seat_counts', 'discounts')
+            'fields': ('seat_grades', 'ticket_prices', 'seat_counts', 'discount_types')
         }),
         ('예매 및 기타', {
             'fields': ('booking_sites', 'seat_map')

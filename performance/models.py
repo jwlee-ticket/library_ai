@@ -78,8 +78,8 @@ class Performance(models.Model):
     seat_counts = models.JSONField(default=dict, blank=True, verbose_name='좌석 수')
     # 예시: {"VIP": 50, "R석": 200}
     
-    discounts = models.JSONField(default=dict, blank=True, verbose_name='할인율')
-    # 예시: {"VIP": {"조조할인": 10, "단체할인": 15}}
+    discount_types = models.JSONField(default=list, blank=True, verbose_name='할인권종')
+    # 예시: [{"name": "조조할인", "start_date": "2024-01-01", "end_date": "2024-01-31", "grade": "VIP", "discount_rate": 10}]
     
     casting = models.JSONField(default=dict, blank=True, verbose_name='캐스팅')
     # 예시: {"홍길동": "배우A", "김철수": "배우B"}

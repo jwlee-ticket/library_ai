@@ -381,7 +381,7 @@
             <!-- 좌석 및 가격 -->
             <div class="mb-8 pb-8 border-b border-gray-100">
                 <h2 class="text-xl font-semibold text-black mb-6">좌석 및 가격</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div>
                         <label class="block text-sm font-medium text-black mb-2">
                             {{ form.seat_grades.label }}
@@ -501,69 +501,53 @@
                             <p class="mt-2 text-sm text-red-600">{{ form.seat_counts.errors|first }}</p>
                         {% endif %}
                     </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-black mb-2">
-                            {{ form.discounts.label }}
-                        </label>
-                        {{ form.discounts }}
-                        <div id="discounts-list" class="space-y-3 mb-3">
-                            {% if object and object.discounts %}
-                                {% for grade, discounts_dict in object.discounts.items %}
-                                    <div class="border-2 border-gray-200 rounded-lg p-3">
-                                        <div class="flex items-center gap-2 mb-2">
-                                            {% with seat_grade_choices=object.seat_grades|to_choices %}
-                                                {% include 'components/genre_dropdown.html' with genre_filter=grade genre_choices=seat_grade_choices prefix="discount-grade-"|add:forloop.counter0 auto_submit=False width_class="flex-1" default_text="좌석 등급 선택" show_default=False %}
-                                            {% endwith %}
-                                            <button type="button" onclick="removeDiscountGroup(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                        <div class="ml-4 space-y-2" data-grade="{{ grade }}">
-                                            {% for discount_name, discount_rate in discounts_dict.items %}
-                                                <div class="flex gap-2 items-center">
-                                                    <input type="text" value="{{ discount_name }}" placeholder="할인명" class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm">
-                                                    <span class="text-gray-400">:</span>
-                                                    <input type="number" value="{{ discount_rate }}" placeholder="할인율(%)" class="w-32 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm">
-                                                    <button type="button" onclick="removeDiscountItem(this)" class="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                        <button type="button" onclick="addDiscountItem(this)" class="mt-2 ml-4 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm">
-                                            + 할인 추가
-                                        </button>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                    <div class="border-2 border-gray-200 rounded-lg p-3">
-                                        <div class="flex items-center gap-2 mb-2">
-                                        <div class="flex-1 relative seat-grade-dropdown-container"></div>
-                                        <button type="button" onclick="removeDiscountGroup(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <div class="ml-4 space-y-2"></div>
-                                    <button type="button" onclick="addDiscountItem(this)" class="mt-2 ml-4 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm">
-                                        + 할인 추가
+                </div>
+                
+                <!-- 할인권종 -->
+                <div>
+                    <label class="block text-sm font-medium text-black mb-2">
+                        {{ form.discount_types.label }}
+                    </label>
+                    {{ form.discount_types }}
+                    <div id="discount-types-list" class="space-y-2 mb-3">
+                        {% if object and object.discount_types %}
+                            {% for discount_type in object.discount_types %}
+                                <div class="flex gap-2 items-center">
+                                    <input type="text" value="{{ discount_type.name }}" placeholder="할인권종명" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
+                                    <input type="date" value="{{ discount_type.start_date }}" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
+                                    <input type="date" value="{{ discount_type.end_date }}" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
+                                    {% with seat_grade_choices=object.seat_grades|to_choices %}
+                                        {% include 'components/genre_dropdown.html' with genre_filter=discount_type.grade genre_choices=seat_grade_choices prefix="discount-type-grade-"|add:forloop.counter0 auto_submit=False width_class="flex-1" default_text="좌석 등급 선택" show_default=False %}
+                                    {% endwith %}
+                                    <input type="number" value="{{ discount_type.discount_rate }}" placeholder="할인율(%)" min="0" max="100" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 120px;">
+                                    <button type="button" onclick="removeDiscountTypeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
                                     </button>
                                 </div>
-                            {% endif %}
-                        </div>
-                        <button type="button" onclick="addDiscountGroup()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
-                            + 추가
-                        </button>
-                        {% if form.discounts.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.discounts.errors|first }}</p>
+                            {% endfor %}
+                        {% else %}
+                            <div class="flex gap-2 items-center">
+                                <input type="text" placeholder="할인권종명" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
+                                <input type="date" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
+                                <input type="date" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
+                                <div class="flex-1 relative seat-grade-dropdown-container"></div>
+                                <input type="number" placeholder="할인율(%)" min="0" max="100" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 120px;">
+                                <button type="button" onclick="removeDiscountTypeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         {% endif %}
                     </div>
+                    <button type="button" onclick="addDiscountTypeItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
+                        + 추가
+                    </button>
+                    {% if form.discount_types.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.discount_types.errors|first }}</p>
+                    {% endif %}
                 </div>
             </div>
             
@@ -701,7 +685,7 @@
         const processedPrefixes = new Set(); // 이미 처리한 prefix 추적
         
         // 모든 좌석 등급 드롭다운 찾기
-        const allInputs = document.querySelectorAll('[id*="ticket-price-"][id$="-input"], [id*="seat-count-"][id$="-input"], [id*="discount-grade-"][id$="-input"]');
+        const allInputs = document.querySelectorAll('[id*="ticket-price-"][id$="-input"], [id*="seat-count-"][id$="-input"], [id*="discount-type-grade-"][id$="-input"]');
         
         allInputs.forEach(inputElement => {
             const prefix = inputElement.id.replace('-input', '');
@@ -758,8 +742,16 @@
                 const index = parent.getAttribute('data-index') || container.parentElement.querySelectorAll('.seat-count-item').length;
                 prefix = 'seat-count-' + index;
             } else {
-                const index = container.parentElement.querySelectorAll('.border-2').length;
-                prefix = 'discount-grade-' + index;
+                // discount-types-list 내부인지 확인
+                const discountTypesList = container.closest('#discount-types-list');
+                if (discountTypesList) {
+                    const parent = container.closest('div.flex');
+                    const index = parent ? Array.from(discountTypesList.querySelectorAll('div.flex')).indexOf(parent) : discountTypesList.querySelectorAll('div.flex').length;
+                    prefix = 'discount-type-grade-' + index;
+                } else {
+                    const index = container.parentElement.querySelectorAll('.border-2').length;
+                    prefix = 'discount-type-grade-' + index;
+                }
             }
             
             container.className = 'flex-1 relative';
@@ -1038,93 +1030,91 @@
         button.closest('div').remove();
     }
     
-    // 할인율 관련 함수
-    function addDiscountGroup() {
-        const container = document.getElementById('discounts-list');
-        const index = container.querySelectorAll('.border-2').length;
+    // 할인권종 관련 함수
+    function addDiscountTypeItem() {
+        const container = document.getElementById('discount-types-list');
+        const index = container.querySelectorAll('div.flex').length;
         const div = document.createElement('div');
-        div.className = 'border-2 border-gray-200 rounded-lg p-3 relative';
+        div.className = 'flex gap-2 items-center';
         
-        const gradeDiv = document.createElement('div');
-        gradeDiv.className = 'flex items-center gap-2 mb-2';
+        const prefix = 'discount-type-grade-' + index;
         
-        const prefix = 'discount-grade-' + index;
+        // 이름 입력
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.placeholder = '할인권종명';
+        nameInput.className = 'px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
+        nameInput.style.width = '150px';
         
-        // genre_dropdown 컴포넌트 생성
-        const dropdownDiv = document.createElement('div');
-        dropdownDiv.className = 'flex-1 relative';
-        dropdownDiv.innerHTML = `
-            <input type="hidden" id="${prefix}-input" value="">
-            <button 
-                type="button"
-                onclick="toggleDropdown('${prefix}')"
-                class="w-full flex items-center px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors text-sm"
-            >
-                <svg id="${prefix}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-                <span id="${prefix}-text" class="flex-1 text-left text-sm">좌석 등급 선택</span>
-            </button>
-            <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                <div class="py-1">
-                </div>
-            </div>
-        `;
+        // 시작날짜 입력
+        const startDateInput = document.createElement('input');
+        startDateInput.type = 'date';
+        startDateInput.className = 'px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
+        startDateInput.style.width = '150px';
         
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.onclick = function() { removeDiscountGroup(this); };
-        button.className = 'p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors';
-        button.innerHTML = `
+        // 종료날짜 입력
+        const endDateInput = document.createElement('input');
+        endDateInput.type = 'date';
+        endDateInput.className = 'px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
+        endDateInput.style.width = '150px';
+        
+        // 등급 드롭다운 컨테이너
+        const gradeDropdownContainer = document.createElement('div');
+        gradeDropdownContainer.className = 'flex-1 relative seat-grade-dropdown-container';
+        
+        // 할인율 입력
+        const discountRateInput = document.createElement('input');
+        discountRateInput.type = 'number';
+        discountRateInput.placeholder = '할인율(%)';
+        discountRateInput.min = '0';
+        discountRateInput.max = '100';
+        discountRateInput.className = 'px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
+        discountRateInput.style.width = '120px';
+        
+        // 삭제 버튼
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.onclick = function() { removeDiscountTypeItem(this); };
+        removeButton.className = 'p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors';
+        removeButton.innerHTML = `
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
         `;
         
-        gradeDiv.appendChild(dropdownDiv);
-        gradeDiv.appendChild(button);
-        
-        const discountContainer = document.createElement('div');
-        discountContainer.className = 'ml-4 space-y-2';
-        
-        const addButton = document.createElement('button');
-        addButton.type = 'button';
-        addButton.onclick = function() { addDiscountItem(this); };
-        addButton.className = 'mt-2 ml-4 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm';
-        addButton.textContent = '+ 할인 추가';
-        
-        div.appendChild(gradeDiv);
-        div.appendChild(discountContainer);
-        div.appendChild(addButton);
+        div.appendChild(nameInput);
+        div.appendChild(startDateInput);
+        div.appendChild(endDateInput);
+        div.appendChild(gradeDropdownContainer);
+        div.appendChild(discountRateInput);
+        div.appendChild(removeButton);
         container.appendChild(div);
         
-        // 드롭다운 옵션 업데이트
-        setTimeout(updateSeatGradeDropdowns, 100);
+        // 드롭다운 초기화
+        setTimeout(() => {
+            gradeDropdownContainer.innerHTML = `
+                <input type="hidden" id="${prefix}-input" value="">
+                <button 
+                    type="button"
+                    onclick="toggleDropdown('${prefix}')"
+                    class="w-full flex items-center px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors text-sm"
+                >
+                    <svg id="${prefix}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <span id="${prefix}-text" class="flex-1 text-left text-sm">좌석 등급 선택</span>
+                </button>
+                <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                    <div class="py-1">
+                    </div>
+                </div>
+            `;
+            updateSeatGradeDropdowns();
+        }, 100);
     }
     
-    function removeDiscountGroup(button) {
-        button.closest('.border-2').remove();
-    }
-    
-    function addDiscountItem(button) {
-        const container = button.previousElementSibling;
-        const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center';
-        div.innerHTML = `
-            <input type="text" placeholder="할인명" class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm">
-            <span class="text-gray-400">:</span>
-            <input type="number" placeholder="할인율(%)" class="w-32 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm">
-            <button type="button" onclick="removeDiscountItem(this)" class="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-            </button>
-        `;
-        container.appendChild(div);
-    }
-    
-    function removeDiscountItem(button) {
-        button.closest('div').remove();
+    function removeDiscountTypeItem(button) {
+        button.closest('div.flex').remove();
     }
     
     // 예매처 관련 함수
@@ -1176,6 +1166,36 @@
         
         // 초기 드롭다운 업데이트
         setTimeout(updateSeatGradeDropdowns, 200);
+        
+        // discount-types-list의 빈 드롭다운 컨테이너 초기화
+        const discountTypeContainers = document.querySelectorAll('#discount-types-list .seat-grade-dropdown-container:empty');
+        discountTypeContainers.forEach(container => {
+            const parent = container.closest('div.flex');
+            if (!parent) return;
+            const index = Array.from(parent.parentElement.querySelectorAll('div.flex')).indexOf(parent);
+            const prefix = 'discount-type-grade-' + index;
+            container.className = 'flex-1 relative';
+            container.innerHTML = `
+                <input type="hidden" id="${prefix}-input" value="">
+                <button 
+                    type="button"
+                    onclick="toggleDropdown('${prefix}')"
+                    class="w-full flex items-center px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors text-sm"
+                >
+                    <svg id="${prefix}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <span id="${prefix}-text" class="flex-1 text-left text-sm">좌석 등급 선택</span>
+                </button>
+                <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                    <div class="py-1">
+                    </div>
+                </div>
+            `;
+        });
+        if (discountTypeContainers.length > 0) {
+            setTimeout(updateSeatGradeDropdowns, 100);
+        }
     });
     
     // 폼 제출 전 JSON 변환
@@ -1234,31 +1254,35 @@
         });
         document.getElementById('{{ form.seat_counts.id_for_label }}').value = JSON.stringify(seatCounts);
         
-        // 할인율: 중첩 딕셔너리로 변환
-        const discounts = {};
-        document.querySelectorAll('#discounts-list > .border-2').forEach(groupDiv => {
-            const prefix = groupDiv.querySelector('[id^="discount-grade-"]');
-            if (!prefix) return;
-            const prefixId = prefix.id.replace('-input', '').replace('-dropdown', '').replace('-text', '').replace('-arrow', '');
-            const hiddenInput = document.getElementById(prefixId + '-input');
-            const discountContainer = groupDiv.querySelector('.ml-4.space-y-2');
-            if (hiddenInput && hiddenInput.value.trim() && discountContainer) {
-                const grade = hiddenInput.value.trim();
-                discounts[grade] = {};
-                discountContainer.querySelectorAll('div').forEach(discountDiv => {
-                    const inputs = discountDiv.querySelectorAll('input');
-                    if (inputs.length >= 2 && inputs[0].value.trim() && inputs[1].value.trim()) {
-                        const discountValue = parseFloat(inputs[1].value) || 0;
-                        discounts[grade][inputs[0].value.trim()] = Math.round(discountValue);
-                    }
-                });
-                // 할인이 없는 경우 빈 딕셔너리 제거
-                if (Object.keys(discounts[grade]).length === 0) {
-                    delete discounts[grade];
+        // 할인권종: 리스트로 변환
+        const discountTypes = [];
+        document.querySelectorAll('#discount-types-list > div.flex').forEach(itemDiv => {
+            const inputs = itemDiv.querySelectorAll('input');
+            const nameInput = inputs[0]; // 첫 번째: 이름
+            const startDateInput = inputs[1]; // 두 번째: 시작날짜
+            const endDateInput = inputs[2]; // 세 번째: 종료날짜
+            const discountRateInput = inputs[3]; // 네 번째: 할인율
+            const gradeInput = itemDiv.querySelector('[id^="discount-type-grade-"][id$="-input"]');
+            
+            if (nameInput && startDateInput && endDateInput && gradeInput && discountRateInput) {
+                const name = nameInput.value.trim();
+                const startDate = startDateInput.value.trim();
+                const endDate = endDateInput.value.trim();
+                const grade = gradeInput.value.trim();
+                const discountRate = parseFloat(discountRateInput.value) || 0;
+                
+                if (name && startDate && endDate && grade && discountRate > 0) {
+                    discountTypes.push({
+                        name: name,
+                        start_date: startDate,
+                        end_date: endDate,
+                        grade: grade,
+                        discount_rate: Math.round(discountRate)
+                    });
                 }
             }
         });
-        document.getElementById('{{ form.discounts.id_for_label }}').value = JSON.stringify(discounts);
+        document.getElementById('{{ form.discount_types.id_for_label }}').value = JSON.stringify(discountTypes);
         
         // 예매처: 리스트 안에 딕셔너리로 변환
         const bookingSites = [];

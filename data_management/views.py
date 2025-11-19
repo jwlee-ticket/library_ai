@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import json
 from .models import ConcertDailySales, ConcertFinalSales
 from .forms import ConcertDailySalesForm, ConcertFinalSalesForm, ConcertSalesDailyFormSet
+from .constants import AGE_GROUPS, REGIONS, SEOUL_REGIONS, GYEONGGI_REGIONS
 from performance.models import Performance
 
 
@@ -98,9 +99,10 @@ class ConcertSalesListView(ListView):
                             booking_sites.extend(site_dict.keys())
                 context['booking_sites'] = json.dumps(booking_sites, ensure_ascii=False)
                 
-                # 좌석 등급 추출
+                # 좌석 등급 추출 (템플릿용 리스트 + JavaScript용 JSON)
                 seat_grades = performance.seat_grades if performance.seat_grades else []
-                context['seat_grades'] = json.dumps(seat_grades, ensure_ascii=False)
+                context['seat_grades'] = seat_grades
+                context['seat_grades_json'] = json.dumps(seat_grades, ensure_ascii=False)
                 
                 # 판매 기간 날짜 리스트 생성
                 date_list = []
@@ -111,16 +113,44 @@ class ConcertSalesListView(ListView):
                         current_date += timedelta(days=1)
                 context['sales_date_list'] = json.dumps(date_list, ensure_ascii=False)
                 
+                # 재사용 가능한 상수들 추가 (템플릿용 리스트 + JavaScript용 JSON)
+                context['age_groups'] = AGE_GROUPS
+                context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)
+                context['regions'] = REGIONS
+                context['regions_json'] = json.dumps(REGIONS, ensure_ascii=False)
+                context['seoul_regions'] = SEOUL_REGIONS
+                context['seoul_regions_json'] = json.dumps(SEOUL_REGIONS, ensure_ascii=False)
+                context['gyeonggi_regions'] = GYEONGGI_REGIONS
+                context['gyeonggi_regions_json'] = json.dumps(GYEONGGI_REGIONS, ensure_ascii=False)
+                
             except Performance.DoesNotExist:
                 context['performance'] = None
                 context['booking_sites'] = '[]'
-                context['seat_grades'] = '[]'
+                context['seat_grades'] = []
+                context['seat_grades_json'] = '[]'
                 context['sales_date_list'] = '[]'
+                context['age_groups'] = AGE_GROUPS
+                context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)
+                context['regions'] = REGIONS
+                context['regions_json'] = json.dumps(REGIONS, ensure_ascii=False)
+                context['seoul_regions'] = SEOUL_REGIONS
+                context['seoul_regions_json'] = json.dumps(SEOUL_REGIONS, ensure_ascii=False)
+                context['gyeonggi_regions'] = GYEONGGI_REGIONS
+                context['gyeonggi_regions_json'] = json.dumps(GYEONGGI_REGIONS, ensure_ascii=False)
         else:
             context['performance'] = None
             context['booking_sites'] = '[]'
-            context['seat_grades'] = '[]'
+            context['seat_grades'] = []
+            context['seat_grades_json'] = '[]'
             context['sales_date_list'] = '[]'
+            context['age_groups'] = AGE_GROUPS
+            context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)
+            context['regions'] = REGIONS
+            context['regions_json'] = json.dumps(REGIONS, ensure_ascii=False)
+            context['seoul_regions'] = SEOUL_REGIONS
+            context['seoul_regions_json'] = json.dumps(SEOUL_REGIONS, ensure_ascii=False)
+            context['gyeonggi_regions'] = GYEONGGI_REGIONS
+            context['gyeonggi_regions_json'] = json.dumps(GYEONGGI_REGIONS, ensure_ascii=False)
         
         context['performance_filter'] = performance_id or ''
         context['date_start'] = self.request.GET.get('date_start', '')

@@ -29,7 +29,7 @@ class PerformanceForm(forms.ModelForm):
             'booking_sites',
             'ticket_prices',
             'seat_counts',
-            'discounts',
+            'discount_types',
             'casting',
             'seat_map',
         ]
@@ -109,7 +109,7 @@ class PerformanceForm(forms.ModelForm):
             'booking_sites': forms.HiddenInput(),
             'ticket_prices': forms.HiddenInput(),
             'seat_counts': forms.HiddenInput(),
-            'discounts': forms.HiddenInput(),
+            'discount_types': forms.HiddenInput(),
             'casting': forms.HiddenInput(),
             'seat_map': forms.FileInput(attrs={
                 'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
@@ -187,16 +187,35 @@ class PerformanceForm(forms.ModelForm):
                 raise forms.ValidationError('올바른 JSON 형식이 아니에요')
         return data
     
-    def clean_discounts(self):
-        """할인율 JSON 검증"""
-        data = self.cleaned_data.get('discounts')
+    def clean_discount_types(self):
+        """할인권종 JSON 검증"""
+        data = self.cleaned_data.get('discount_types')
         if data:
             try:
                 import json
                 if isinstance(data, str):
                     data = json.loads(data)
-                if not isinstance(data, dict):
-                    raise forms.ValidationError('딕셔너리 형식이어야 해요')
+                if not isinstance(data, list):
+                    raise forms.ValidationError('리스트 형식이어야 해요')
+                
+                # seat_grades 가져오기
+                seat_grades = self.cleaned_data.get('seat_grades', [])
+                if isinstance(seat_grades, str):
+                    seat_grades = json.loads(seat_grades) if seat_grades else []
+                
+                # 각 항목 검증
+                for item in data:
+                    if not isinstance(item, dict):
+                        raise forms.ValidationError('각 항목은 딕셔너리 형식이어야 해요')
+                    required_fields = ['name', 'start_date', 'end_date', 'grade', 'discount_rate']
+                    for field in required_fields:
+                        if field not in item:
+                            raise forms.ValidationError(f'{field} 필드가 필요해요')
+                    
+                    # 등급이 seat_grades에 있는지 검증
+                    grade = item.get('grade', '').strip()
+                    if grade and seat_grades and grade not in seat_grades:
+                        raise forms.ValidationError(f'등급 "{grade}"는 생성된 좌석 등급에 없어요. 먼저 좌석 등급을 추가해주세요.')
             except json.JSONDecodeError:
                 raise forms.ValidationError('올바른 JSON 형식이 아니에요')
         return data
