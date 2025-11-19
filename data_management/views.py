@@ -8,8 +8,8 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
 import json
-from .models import ConcertSales
-from .forms import ConcertSalesForm, ConcertSalesDailyFormSet
+from .models import ConcertDailySales, ConcertFinalSales
+from .forms import ConcertDailySalesForm, ConcertFinalSalesForm, ConcertSalesDailyFormSet
 from performance.models import Performance
 
 
@@ -49,14 +49,14 @@ class PerformanceListView(ListView):
 
 
 class ConcertSalesListView(ListView):
-    """콘서트 매출 목록 뷰 (특정 공연의 매출)"""
-    model = ConcertSales
+    """콘서트 데일리 매출 목록 뷰 (특정 공연의 매출)"""
+    model = ConcertDailySales
     template_name = 'data_management/concert_sales/list.html'
     context_object_name = 'sales_list'
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = ConcertSales.objects.select_related('performance').all()
+        queryset = ConcertDailySales.objects.select_related('performance').all()
         
         # 공연 필터 (필수)
         performance_id = self.request.GET.get('performance') or self.kwargs.get('performance_id')
@@ -130,9 +130,9 @@ class ConcertSalesListView(ListView):
 
 
 class ConcertSalesCreateView(CreateView):
-    """콘서트 매출 생성 뷰"""
-    model = ConcertSales
-    form_class = ConcertSalesForm
+    """콘서트 데일리 매출 생성 뷰"""
+    model = ConcertDailySales
+    form_class = ConcertDailySalesForm
     template_name = 'data_management/concert_sales/form.html'
     
     def get_success_url(self):
@@ -163,9 +163,9 @@ class ConcertSalesCreateView(CreateView):
 
 
 class ConcertSalesUpdateView(UpdateView):
-    """콘서트 매출 수정 뷰"""
-    model = ConcertSales
-    form_class = ConcertSalesForm
+    """콘서트 데일리 매출 수정 뷰"""
+    model = ConcertDailySales
+    form_class = ConcertDailySalesForm
     template_name = 'data_management/concert_sales/form.html'
     
     def get_success_url(self):
@@ -190,8 +190,8 @@ class ConcertSalesUpdateView(UpdateView):
 
 
 class ConcertSalesDeleteView(DeleteView):
-    """콘서트 매출 삭제 뷰"""
-    model = ConcertSales
+    """콘서트 데일리 매출 삭제 뷰"""
+    model = ConcertDailySales
     template_name = 'data_management/concert_sales/confirm_delete.html'
     
     def get_success_url(self):
@@ -268,10 +268,9 @@ def save_daily_sales(request, performance_id):
     seat_grades = performance.seat_grades if performance.seat_grades else []
     
     # 기존 데이터 삭제 (해당 날짜의 데일리 매출만)
-    ConcertSales.objects.filter(
+    ConcertDailySales.objects.filter(
         performance=performance,
-        date=date,
-        sales_type='daily'
+        date=date
     ).delete()
     
     # Formset 데이터 준비
@@ -282,7 +281,6 @@ def save_daily_sales(request, performance_id):
     for idx, booking_site in enumerate(booking_sites):
         prefix = f'form-{idx}'
         formset_data[f'{prefix}-performance'] = performance.id
-        formset_data[f'{prefix}-sales_type'] = 'daily'
         formset_data[f'{prefix}-date'] = date_str
         formset_data[f'{prefix}-booking_site'] = booking_site
         formset_data[f'{prefix}-paid_revenue'] = request.POST.get(f'{booking_site}_paid_revenue', '0') or '0'
@@ -317,7 +315,7 @@ def save_daily_sales(request, performance_id):
     formset_data['form-MAX_NUM_FORMS'] = '1000'
     
     # Formset 생성 및 검증
-    formset = ConcertSalesDailyFormSet(formset_data, formset_files, queryset=ConcertSales.objects.none())
+    formset = ConcertSalesDailyFormSet(formset_data, formset_files, queryset=ConcertDailySales.objects.none())
     
     # 각 폼에 좌석 등급 전달
     for form in formset.forms:

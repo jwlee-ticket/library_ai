@@ -1,16 +1,16 @@
 from django import forms
 from django.forms import modelformset_factory
 from django.core.exceptions import ValidationError
-from .models import ConcertSales
+from .models import ConcertDailySales, ConcertFinalSales
 from performance.models import Performance
 import json
 
 
-class ConcertSalesForm(forms.ModelForm):
-    """콘서트 매출 폼"""
+class ConcertDailySalesForm(forms.ModelForm):
+    """콘서트 데일리 매출 폼"""
     
     class Meta:
-        model = ConcertSales
+        model = ConcertDailySales
         fields = [
             'performance',
             'date',
@@ -174,14 +174,145 @@ class ConcertSalesForm(forms.ModelForm):
         return cleaned_data
 
 
+class ConcertFinalSalesForm(forms.ModelForm):
+    """콘서트 최종 매출 폼"""
+    
+    class Meta:
+        model = ConcertFinalSales
+        fields = [
+            'performance',
+            'booking_site',
+            'paid_revenue',
+            'paid_ticket_count',
+            'paid_by_grade',
+            'unpaid_revenue',
+            'unpaid_ticket_count',
+            'unpaid_by_grade',
+            'free_by_grade',
+            'notes',
+        ]
+        widgets = {
+            'performance': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            }),
+            'booking_site': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '예매처를 입력하세요',
+            }),
+            'paid_revenue': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '0',
+                'min': '0',
+            }),
+            'paid_ticket_count': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '0',
+                'min': '0',
+            }),
+            'paid_by_grade': forms.HiddenInput(),
+            'unpaid_revenue': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '0',
+                'min': '0',
+            }),
+            'unpaid_ticket_count': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '0',
+                'min': '0',
+            }),
+            'unpaid_by_grade': forms.HiddenInput(),
+            'free_by_grade': forms.HiddenInput(),
+            'notes': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'rows': 3,
+                'placeholder': '비고를 입력하세요',
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 콘서트 공연만 필터링
+        self.fields['performance'].queryset = Performance.objects.filter(genre='concert')
+        self.fields['performance'].label = '공연'
+        self.fields['performance'].empty_label = '공연을 선택하세요'
+    
+    def clean_paid_by_grade(self):
+        """입금 등급별 매수 JSON 검증"""
+        data = self.cleaned_data.get('paid_by_grade')
+        if data:
+            try:
+                if isinstance(data, str):
+                    data = json.loads(data)
+                if not isinstance(data, dict):
+                    raise forms.ValidationError('딕셔너리 형식이어야 해요')
+                for key, value in data.items():
+                    if not isinstance(value, (int, float)) or value < 0:
+                        raise forms.ValidationError('등급별 매수는 0 이상의 숫자여야 해요')
+            except json.JSONDecodeError:
+                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
+        return data
+    
+    def clean_unpaid_by_grade(self):
+        """미입금 등급별 매수 JSON 검증"""
+        data = self.cleaned_data.get('unpaid_by_grade')
+        if data:
+            try:
+                if isinstance(data, str):
+                    data = json.loads(data)
+                if not isinstance(data, dict):
+                    raise forms.ValidationError('딕셔너리 형식이어야 해요')
+                for key, value in data.items():
+                    if not isinstance(value, (int, float)) or value < 0:
+                        raise forms.ValidationError('등급별 매수는 0 이상의 숫자여야 해요')
+            except json.JSONDecodeError:
+                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
+        return data
+    
+    def clean_free_by_grade(self):
+        """무료 등급별 매수 JSON 검증"""
+        data = self.cleaned_data.get('free_by_grade')
+        if data:
+            try:
+                if isinstance(data, str):
+                    data = json.loads(data)
+                if not isinstance(data, dict):
+                    raise forms.ValidationError('딕셔너리 형식이어야 해요')
+                for key, value in data.items():
+                    if not isinstance(value, (int, float)) or value < 0:
+                        raise forms.ValidationError('등급별 매수는 0 이상의 숫자여야 해요')
+            except json.JSONDecodeError:
+                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
+        return data
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        performance = cleaned_data.get('performance')
+        booking_site = cleaned_data.get('booking_site')
+        
+        # 예매처 검증 (Performance의 booking_sites에 있는지 확인)
+        if performance and booking_site:
+            booking_sites = performance.booking_sites
+            if booking_sites:
+                valid_sites = []
+                for site_dict in booking_sites:
+                    if isinstance(site_dict, dict):
+                        valid_sites.extend(site_dict.keys())
+                
+                if valid_sites and booking_site not in valid_sites:
+                    raise ValidationError({
+                        'booking_site': f'등록된 예매처({", ".join(valid_sites)}) 중에서 선택해주세요'
+                    })
+        
+        return cleaned_data
+
+
 class ConcertSalesDailyForm(forms.ModelForm):
     """데일리 매출 입력용 폼 (등급별 필드 동적 생성)"""
     
     class Meta:
-        model = ConcertSales
+        model = ConcertDailySales
         fields = [
             'performance',
-            'sales_type',
             'date',
             'booking_site',
             'paid_revenue',
@@ -194,7 +325,6 @@ class ConcertSalesDailyForm(forms.ModelForm):
         ]
         widgets = {
             'performance': forms.HiddenInput(),
-            'sales_type': forms.HiddenInput(),
             'date': forms.HiddenInput(),
             'booking_site': forms.HiddenInput(),
             'paid_revenue': forms.NumberInput(attrs={
@@ -301,7 +431,7 @@ class ConcertSalesDailyForm(forms.ModelForm):
 
 # 날짜별 Formset 생성
 ConcertSalesDailyFormSet = modelformset_factory(
-    ConcertSales,
+    ConcertDailySales,
     form=ConcertSalesDailyForm,
     extra=0,
     can_delete=False,
