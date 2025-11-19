@@ -52,6 +52,9 @@ class PerformanceAdmin(admin.ModelAdmin):
         ('제작 정보', {
             'fields': ('producer', 'organizer', 'crew', 'casting')
         }),
+        ('수익 목표', {
+            'fields': ('target_revenue', 'break_even_point', 'total_production_cost')
+        }),
         ('좌석 및 가격', {
             'fields': ('seat_grades', 'ticket_prices', 'seat_counts', 'discounts')
         }),

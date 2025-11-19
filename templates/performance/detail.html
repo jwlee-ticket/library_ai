@@ -114,6 +114,33 @@
             </div>
         </div>
         
+        <!-- 수익 목표 -->
+        {% if performance.target_revenue or performance.break_even_point or performance.total_production_cost %}
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-4">수익 목표</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% if performance.target_revenue %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">목표 금액</label>
+                            <p class="text-base text-black">{{ performance.target_revenue|floatformat:0 }}원</p>
+                        </div>
+                    {% endif %}
+                    {% if performance.break_even_point %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">손익분기점</label>
+                            <p class="text-base text-black">{{ performance.break_even_point|floatformat:0 }}원</p>
+                        </div>
+                    {% endif %}
+                    {% if performance.total_production_cost %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">총 제작비</label>
+                            <p class="text-base text-black">{{ performance.total_production_cost|floatformat:0 }}원</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+        
         <!-- 좌석 및 가격 -->
         <div class="mb-8 pb-8 border-b border-gray-100">
             <h2 class="text-xl font-semibold text-black mb-4">좌석 및 가격</h2>

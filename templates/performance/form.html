@@ -91,7 +91,45 @@
                                     window.selectDropdownItem = function(prefix, value, text, autoSubmit) {
                                         if (prefix === 'genre-form' && genreSelect) {
                                             genreSelect.value = value;
+                                            // genre-form일 때는 autoSubmit을 무시하고 원래 함수를 호출하지 않음
+                                            // (드롭다운 UI만 업데이트)
+                                            const input = document.getElementById(prefix + '-input');
+                                            const textElement = document.getElementById(prefix + '-text');
+                                            const dropdown = document.getElementById(prefix + '-dropdown');
+                                            const arrow = document.getElementById(prefix + '-arrow');
+                                            
+                                            if (input && textElement && dropdown && arrow) {
+                                                input.value = value;
+                                                textElement.textContent = text;
+                                                
+                                                // 드롭다운 내부의 모든 버튼에서 활성화 상태 제거
+                                                const buttons = dropdown.querySelectorAll('button');
+                                                buttons.forEach(function(btn) {
+                                                    btn.classList.remove('bg-primary-100', 'text-primary', 'font-medium');
+                                                    btn.classList.add('text-black', 'hover:bg-gray-50');
+                                                });
+                                                
+                                                // 선택된 항목에 활성화 상태 추가
+                                                buttons.forEach(function(btn) {
+                                                    const btnValue = btn.getAttribute('onclick');
+                                                    if (btnValue) {
+                                                        // onclick에서 value 추출 (예: "selectDropdownItem('prefix', 'value', 'text', false)")
+                                                        const match = btnValue.match(/selectDropdownItem\([^,]+,\s*['"]([^'"]*)['"]/);
+                                                        if (match && match[1] === value) {
+                                                            btn.classList.remove('text-black', 'hover:bg-gray-50');
+                                                            btn.classList.add('bg-primary-100', 'text-primary', 'font-medium');
+                                                        }
+                                                    }
+                                                });
+                                                
+                                                // 드롭다운 닫기
+                                                dropdown.classList.remove('max-h-96');
+                                                dropdown.classList.add('max-h-0');
+                                                arrow.classList.remove('rotate-180');
+                                            }
+                                            return; // 원래 함수 호출하지 않음
                                         }
+                                        // 다른 prefix일 때는 원래 함수 호출
                                         if (originalSelectDropdownItem) {
                                             originalSelectDropdownItem(prefix, value, text, autoSubmit);
                                         }
@@ -299,6 +337,42 @@
                         </button>
                         {% if form.casting.errors %}
                             <p class="mt-2 text-sm text-red-600">{{ form.casting.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 수익 목표 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">수익 목표</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="{{ form.target_revenue.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.target_revenue.label }}
+                        </label>
+                        {{ form.target_revenue }}
+                        {% if form.target_revenue.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.target_revenue.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.break_even_point.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.break_even_point.label }}
+                        </label>
+                        {{ form.break_even_point }}
+                        {% if form.break_even_point.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.break_even_point.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.total_production_cost.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.total_production_cost.label }}
+                        </label>
+                        {{ form.total_production_cost }}
+                        {% if form.total_production_cost.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.total_production_cost.errors|first }}</p>
                         {% endif %}
                     </div>
                 </div>

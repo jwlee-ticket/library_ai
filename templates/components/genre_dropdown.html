@@ -31,7 +31,7 @@
         {% endfor %}
         
         <div class="{{ width_class }} relative">
-            <input type="hidden" name="genre" id="{{ prefix }}-input" value="{{ genre_filter|default:'' }}">
+            <input type="hidden"{% if name %} name="{{ name }}"{% endif %} id="{{ prefix }}-input" value="{{ genre_filter|default:'' }}">
             <button 
                 type="button"
                 onclick="toggleDropdown('{{ prefix }}')"
@@ -109,13 +109,33 @@
             input.value = value;
             textElement.textContent = text;
             
+            // 드롭다운 내부의 모든 버튼에서 활성화 상태 제거
+            const buttons = dropdown.querySelectorAll('button');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('bg-primary-100', 'text-primary', 'font-medium');
+                btn.classList.add('text-black', 'hover:bg-gray-50');
+            });
+            
+            // 선택된 항목에 활성화 상태 추가
+            buttons.forEach(function(btn) {
+                const btnValue = btn.getAttribute('onclick');
+                if (btnValue) {
+                    // onclick에서 value 추출 (예: "selectDropdownItem('prefix', 'value', 'text', false)")
+                    const match = btnValue.match(/selectDropdownItem\([^,]+,\s*['"]([^'"]*)['"]/);
+                    if (match && match[1] === value) {
+                        btn.classList.remove('text-black', 'hover:bg-gray-50');
+                        btn.classList.add('bg-primary-100', 'text-primary', 'font-medium');
+                    }
+                }
+            });
+            
             // 드롭다운 닫기
             dropdown.classList.remove('max-h-96');
             dropdown.classList.add('max-h-0');
             arrow.classList.remove('rotate-180');
             
             // 폼 자동 제출
-            if (autoSubmit) {
+            if (autoSubmit === true || autoSubmit === 'true') {
                 const form = input.closest('form');
                 if (form) {
                     form.submit();

@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
 
 class Performance(models.Model):
@@ -30,6 +31,35 @@ class Performance(models.Model):
     performance_end = models.DateField(verbose_name='공연 종료일')
     sales_start = models.DateField(verbose_name='판매 시작일')
     sales_end = models.DateField(verbose_name='판매 종료일')
+    
+    # 수익 목표 필드
+    target_revenue = models.DecimalField(
+        max_digits=15,
+        decimal_places=0,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='목표 금액 (원)',
+        help_text='공연의 목표 매출액'
+    )
+    break_even_point = models.DecimalField(
+        max_digits=15,
+        decimal_places=0,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='손익분기점 (원)',
+        help_text='손익분기점 매출액'
+    )
+    total_production_cost = models.DecimalField(
+        max_digits=15,
+        decimal_places=0,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='총 제작비 (원)',
+        help_text='총 제작비용'
+    )
     
     # JSON 필드 (리스트)
     seat_grades = models.JSONField(default=list, blank=True, verbose_name='좌석 등급')
