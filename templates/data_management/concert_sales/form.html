@@ -1,0 +1,575 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+    <span class="text-gray-700 font-medium">데이터 관리</span>
+    <span class="text-gray-400 mx-2">/</span>
+    <span class="text-gray-700 font-medium">매출</span>
+    <span class="text-gray-400 mx-2">/</span>
+    <span class="text-black font-medium">{% if object %}수정{% else %}등록{% endif %}</span>
+{% endblock %}
+
+{% block content %}
+    <h1 class="text-3xl font-semibold text-black mb-6">
+        콘서트 매출 {% if object %}수정{% else %}등록{% endif %}
+    </h1>
+    
+    <!-- 메시지 표시 (POST 요청일 때만 표시) -->
+    {% if messages and request.method == 'POST' %}
+        {% for message in messages %}
+            <div class="mb-6 p-4 {% if message.tags == 'success' %}bg-green-50 border-2 border-green-100 text-green-600{% else %}bg-red-50 border-2 border-red-100 text-red-600{% endif %} rounded-lg text-sm">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- 폼 카드 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8">
+        <form method="post" id="sales-form">
+            {% csrf_token %}
+            
+            <!-- 기본 정보 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">기본 정보</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.performance.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.performance.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.performance }}
+                        {% if form.performance.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.performance.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.date.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.date.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.booking_site.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.booking_site.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.booking_site }}
+                        <p class="mt-2 text-sm text-gray-500" id="booking-sites-hint"></p>
+                        {% if form.booking_site.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.booking_site.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 유료 - 입금 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">유료 - 입금</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.paid_revenue.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.paid_revenue.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.paid_revenue }}
+                        {% if form.paid_revenue.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.paid_revenue.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.paid_ticket_count.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.paid_ticket_count.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.paid_ticket_count }}
+                        <p class="mt-2 text-sm text-gray-500" id="paid-count-hint"></p>
+                        {% if form.paid_ticket_count.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.paid_ticket_count.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-black mb-2">
+                            {{ form.paid_by_grade.label }}
+                        </label>
+                        {{ form.paid_by_grade }} {# Hidden input #}
+                        <div id="paid-by-grade-list" class="space-y-2 mb-3">
+                            {% if object and object.paid_by_grade %}
+                                {% for grade, count in object.paid_by_grade.items %}
+                                    <div class="flex gap-2 items-center">
+                                        <input type="text" value="{{ grade }}" placeholder="좌석 등급" readonly class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input">
+                                        <span class="text-gray-400">:</span>
+                                        <input type="number" value="{{ count }}" placeholder="매수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors paid-grade-count" data-grade="{{ grade }}">
+                                        <button type="button" onclick="removePaidGradeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <button type="button" onclick="addPaidGradeItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
+                            + 좌석 등급 추가
+                        </button>
+                        {% if form.paid_by_grade.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.paid_by_grade.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 유료 - 미입금 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">유료 - 미입금</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.unpaid_revenue.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.unpaid_revenue.label }}
+                        </label>
+                        {{ form.unpaid_revenue }}
+                        {% if form.unpaid_revenue.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.unpaid_revenue.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.unpaid_ticket_count.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.unpaid_ticket_count.label }}
+                        </label>
+                        {{ form.unpaid_ticket_count }}
+                        <p class="mt-2 text-sm text-gray-500" id="unpaid-count-hint"></p>
+                        {% if form.unpaid_ticket_count.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.unpaid_ticket_count.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-black mb-2">
+                            {{ form.unpaid_by_grade.label }}
+                        </label>
+                        {{ form.unpaid_by_grade }} {# Hidden input #}
+                        <div id="unpaid-by-grade-list" class="space-y-2 mb-3">
+                            {% if object and object.unpaid_by_grade %}
+                                {% for grade, count in object.unpaid_by_grade.items %}
+                                    <div class="flex gap-2 items-center">
+                                        <input type="text" value="{{ grade }}" placeholder="좌석 등급" readonly class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input">
+                                        <span class="text-gray-400">:</span>
+                                        <input type="number" value="{{ count }}" placeholder="매수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors unpaid-grade-count" data-grade="{{ grade }}">
+                                        <button type="button" onclick="removeUnpaidGradeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <button type="button" onclick="addUnpaidGradeItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
+                            + 좌석 등급 추가
+                        </button>
+                        {% if form.unpaid_by_grade.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.unpaid_by_grade.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 무료 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">무료</h2>
+                <div>
+                    <label class="block text-sm font-medium text-black mb-2">
+                        {{ form.free_by_grade.label }}
+                    </label>
+                    {{ form.free_by_grade }} {# Hidden input #}
+                    <div id="free-by-grade-list" class="space-y-2 mb-3">
+                        {% if object and object.free_by_grade %}
+                            {% for grade, count in object.free_by_grade.items %}
+                                <div class="flex gap-2 items-center">
+                                    <input type="text" value="{{ grade }}" placeholder="좌석 등급" readonly class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input">
+                                    <span class="text-gray-400">:</span>
+                                    <input type="number" value="{{ count }}" placeholder="매수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors free-grade-count" data-grade="{{ grade }}">
+                                    <button type="button" onclick="removeFreeGradeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <button type="button" onclick="addFreeGradeItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
+                        + 좌석 등급 추가
+                    </button>
+                    {% if form.free_by_grade.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.free_by_grade.errors|first }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 비고 -->
+            <div class="mb-8">
+                <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                    {{ form.notes.label }}
+                </label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.notes.errors|first }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- 폼 액션 버튼 -->
+            <div class="flex justify-end gap-3 mt-8">
+                <a href="{% url 'data_management:concert_sales_list' %}" class="px-6 py-3 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                    취소
+                </a>
+                <button type="submit" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm">
+                    저장
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 공연 정보 저장 (템플릿에서 전달)
+    const performanceData = {
+        {% for concert in concerts %}
+        {{ concert.id }}: {
+            seat_grades: {{ concert.seat_grades|safe }},
+            booking_sites: {{ concert.booking_sites|safe }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+    // 공연 선택 시 예매처 목록 업데이트
+    document.getElementById('{{ form.performance.id_for_label }}').addEventListener('change', function() {
+        const performanceId = this.value;
+        const hint = document.getElementById('booking-sites-hint');
+        
+        if (performanceId && performanceData[performanceId]) {
+            const data = performanceData[performanceId];
+            if (data.booking_sites && data.booking_sites.length > 0) {
+                const sites = data.booking_sites.map(site => {
+                    if (typeof site === 'object') {
+                        return Object.keys(site)[0];
+                    }
+                    return site;
+                });
+                hint.textContent = `등록된 예매처: ${sites.join(', ')}`;
+                hint.className = 'mt-2 text-sm text-gray-500';
+            } else {
+                hint.textContent = '등록된 예매처가 없어요';
+                hint.className = 'mt-2 text-sm text-yellow-600';
+            }
+        } else {
+            hint.textContent = '';
+        }
+    });
+    
+    // 좌석 등급 목록 가져오기 (공연 선택 시)
+    function getSeatGrades() {
+        const performanceId = document.getElementById('{{ form.performance.id_for_label }}').value;
+        if (!performanceId || !performanceData[performanceId]) return [];
+        return performanceData[performanceId].seat_grades || [];
+    }
+    
+    // 등급별 매수 합계 계산
+    function calculateGradeSum(containerId) {
+        const inputs = document.querySelectorAll(`#${containerId} .seat-grade-input`);
+        let sum = 0;
+        inputs.forEach(input => {
+            const countInput = input.parentElement.querySelector('input[type="number"]');
+            if (countInput && countInput.value) {
+                sum += parseInt(countInput.value) || 0;
+            }
+        });
+        return sum;
+    }
+    
+    // 입금 등급별 매수 업데이트
+    function updatePaidTicketCount() {
+        const sum = calculateGradeSum('paid-by-grade-list');
+        const countInput = document.getElementById('{{ form.paid_ticket_count.id_for_label }}');
+        const hint = document.getElementById('paid-count-hint');
+        
+        if (sum > 0) {
+            if (!countInput.value || parseInt(countInput.value) !== sum) {
+                hint.textContent = `등급별 합계: ${sum}매 (자동 계산됨)`;
+                hint.className = 'mt-2 text-sm text-blue-600';
+            } else {
+                hint.textContent = `등급별 합계: ${sum}매`;
+                hint.className = 'mt-2 text-sm text-gray-500';
+            }
+        } else {
+            hint.textContent = '';
+        }
+    }
+    
+    // 미입금 등급별 매수 업데이트
+    function updateUnpaidTicketCount() {
+        const sum = calculateGradeSum('unpaid-by-grade-list');
+        const countInput = document.getElementById('{{ form.unpaid_ticket_count.id_for_label }}');
+        const hint = document.getElementById('unpaid-count-hint');
+        
+        if (sum > 0) {
+            if (!countInput.value || parseInt(countInput.value) !== sum) {
+                hint.textContent = `등급별 합계: ${sum}매 (자동 계산됨)`;
+                hint.className = 'mt-2 text-sm text-blue-600';
+            } else {
+                hint.textContent = `등급별 합계: ${sum}매`;
+                hint.className = 'mt-2 text-sm text-gray-500';
+            }
+        } else {
+            hint.textContent = '';
+        }
+    }
+    
+    // 입금 등급별 매수 추가
+    function addPaidGradeItem() {
+        const container = document.getElementById('paid-by-grade-list');
+        const performanceId = document.getElementById('{{ form.performance.id_for_label }}').value;
+        
+        if (!performanceId) {
+            alert('공연을 먼저 선택해주세요');
+            return;
+        }
+        
+        const seatGrades = getSeatGrades();
+        if (seatGrades.length === 0) {
+            const grade = prompt('좌석 등급을 입력하세요 (예: VIP, R석)');
+            if (!grade) return;
+            addPaidGradeItemWithGrade(grade);
+            return;
+        }
+        
+        // 이미 추가된 등급 확인
+        const existingGrades = Array.from(container.querySelectorAll('.seat-grade-input')).map(input => input.value);
+        const availableGrades = seatGrades.filter(grade => !existingGrades.includes(grade));
+        
+        if (availableGrades.length === 0) {
+            alert('모든 좌석 등급이 추가되었어요');
+            return;
+        }
+        
+        // 드롭다운으로 등급 선택
+        const grade = prompt(`좌석 등급을 선택하세요:\n${availableGrades.map((g, i) => `${i + 1}. ${g}`).join('\n')}\n\n번호를 입력하거나 직접 입력하세요:`);
+        if (!grade) return;
+        
+        let selectedGrade;
+        const gradeIndex = parseInt(grade) - 1;
+        if (gradeIndex >= 0 && gradeIndex < availableGrades.length) {
+            selectedGrade = availableGrades[gradeIndex];
+        } else {
+            selectedGrade = grade;
+        }
+        
+        addPaidGradeItemWithGrade(selectedGrade);
+    }
+    
+    function addPaidGradeItemWithGrade(grade) {
+        const container = document.getElementById('paid-by-grade-list');
+        
+        const div = document.createElement('div');
+        div.className = 'flex gap-2 items-center';
+        div.innerHTML = `
+            <input type="text" value="${grade}" placeholder="좌석 등급" readonly class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input">
+            <span class="text-gray-400">:</span>
+            <input type="number" placeholder="매수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors paid-grade-count" data-grade="${grade}" oninput="updatePaidTicketCount()">
+            <button type="button" onclick="removePaidGradeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+        `;
+        container.appendChild(div);
+    }
+    
+    // 미입금 등급별 매수 추가 (동일한 로직)
+    function addUnpaidGradeItem() {
+        const container = document.getElementById('unpaid-by-grade-list');
+        const performanceId = document.getElementById('{{ form.performance.id_for_label }}').value;
+        
+        if (!performanceId) {
+            alert('공연을 먼저 선택해주세요');
+            return;
+        }
+        
+        const seatGrades = getSeatGrades();
+        if (seatGrades.length === 0) {
+            const grade = prompt('좌석 등급을 입력하세요 (예: VIP, R석)');
+            if (!grade) return;
+            addUnpaidGradeItemWithGrade(grade);
+            return;
+        }
+        
+        const existingGrades = Array.from(container.querySelectorAll('.seat-grade-input')).map(input => input.value);
+        const availableGrades = seatGrades.filter(grade => !existingGrades.includes(grade));
+        
+        if (availableGrades.length === 0) {
+            alert('모든 좌석 등급이 추가되었어요');
+            return;
+        }
+        
+        const grade = prompt(`좌석 등급을 선택하세요:\n${availableGrades.map((g, i) => `${i + 1}. ${g}`).join('\n')}\n\n번호를 입력하거나 직접 입력하세요:`);
+        if (!grade) return;
+        
+        let selectedGrade;
+        const gradeIndex = parseInt(grade) - 1;
+        if (gradeIndex >= 0 && gradeIndex < availableGrades.length) {
+            selectedGrade = availableGrades[gradeIndex];
+        } else {
+            selectedGrade = grade;
+        }
+        
+        addUnpaidGradeItemWithGrade(selectedGrade);
+    }
+    
+    function addUnpaidGradeItemWithGrade(grade) {
+        const container = document.getElementById('unpaid-by-grade-list');
+        
+        const div = document.createElement('div');
+        div.className = 'flex gap-2 items-center';
+        div.innerHTML = `
+            <input type="text" value="${grade}" placeholder="좌석 등급" readonly class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input">
+            <span class="text-gray-400">:</span>
+            <input type="number" placeholder="매수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors unpaid-grade-count" data-grade="${grade}" oninput="updateUnpaidTicketCount()">
+            <button type="button" onclick="removeUnpaidGradeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+        `;
+        container.appendChild(div);
+    }
+    
+    function removePaidGradeItem(button) {
+        button.closest('div').remove();
+        updatePaidTicketCount();
+    }
+    
+    function removeUnpaidGradeItem(button) {
+        button.closest('div').remove();
+        updateUnpaidTicketCount();
+    }
+    
+    // 무료 등급별 매수 추가 (동일한 로직)
+    function addFreeGradeItem() {
+        const container = document.getElementById('free-by-grade-list');
+        const performanceId = document.getElementById('{{ form.performance.id_for_label }}').value;
+        
+        if (!performanceId) {
+            alert('공연을 먼저 선택해주세요');
+            return;
+        }
+        
+        const seatGrades = getSeatGrades();
+        if (seatGrades.length === 0) {
+            const grade = prompt('좌석 등급을 입력하세요 (예: VIP, R석)');
+            if (!grade) return;
+            addFreeGradeItemWithGrade(grade);
+            return;
+        }
+        
+        const existingGrades = Array.from(container.querySelectorAll('.seat-grade-input')).map(input => input.value);
+        const availableGrades = seatGrades.filter(grade => !existingGrades.includes(grade));
+        
+        if (availableGrades.length === 0) {
+            alert('모든 좌석 등급이 추가되었어요');
+            return;
+        }
+        
+        const grade = prompt(`좌석 등급을 선택하세요:\n${availableGrades.map((g, i) => `${i + 1}. ${g}`).join('\n')}\n\n번호를 입력하거나 직접 입력하세요:`);
+        if (!grade) return;
+        
+        let selectedGrade;
+        const gradeIndex = parseInt(grade) - 1;
+        if (gradeIndex >= 0 && gradeIndex < availableGrades.length) {
+            selectedGrade = availableGrades[gradeIndex];
+        } else {
+            selectedGrade = grade;
+        }
+        
+        addFreeGradeItemWithGrade(selectedGrade);
+    }
+    
+    function addFreeGradeItemWithGrade(grade) {
+        const container = document.getElementById('free-by-grade-list');
+        
+        const div = document.createElement('div');
+        div.className = 'flex gap-2 items-center';
+        div.innerHTML = `
+            <input type="text" value="${grade}" placeholder="좌석 등급" readonly class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input">
+            <span class="text-gray-400">:</span>
+            <input type="number" placeholder="매수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors free-grade-count" data-grade="${grade}">
+            <button type="button" onclick="removeFreeGradeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+        `;
+        container.appendChild(div);
+    }
+    
+    function removeFreeGradeItem(button) {
+        button.closest('div').remove();
+    }
+    
+    // 폼 제출 전 JSON 변환
+    document.getElementById('sales-form').addEventListener('submit', function(e) {
+        // 입금 등급별 매수 JSON 변환
+        const paidByGrade = {};
+        document.querySelectorAll('#paid-by-grade-list .paid-grade-count').forEach(input => {
+            const grade = input.getAttribute('data-grade') || input.parentElement.querySelector('.seat-grade-input').value;
+            const count = parseInt(input.value) || 0;
+            if (grade && count > 0) {
+                paidByGrade[grade] = count;
+            }
+        });
+        document.getElementById('{{ form.paid_by_grade.id_for_label }}').value = JSON.stringify(paidByGrade);
+        
+        // 미입금 등급별 매수 JSON 변환
+        const unpaidByGrade = {};
+        document.querySelectorAll('#unpaid-by-grade-list .unpaid-grade-count').forEach(input => {
+            const grade = input.getAttribute('data-grade') || input.parentElement.querySelector('.seat-grade-input').value;
+            const count = parseInt(input.value) || 0;
+            if (grade && count > 0) {
+                unpaidByGrade[grade] = count;
+            }
+        });
+        document.getElementById('{{ form.unpaid_by_grade.id_for_label }}').value = JSON.stringify(unpaidByGrade);
+        
+        // 무료 등급별 매수 JSON 변환
+        const freeByGrade = {};
+        document.querySelectorAll('#free-by-grade-list .free-grade-count').forEach(input => {
+            const grade = input.getAttribute('data-grade') || input.parentElement.querySelector('.seat-grade-input').value;
+            const count = parseInt(input.value) || 0;
+            if (grade && count > 0) {
+                freeByGrade[grade] = count;
+            }
+        });
+        document.getElementById('{{ form.free_by_grade.id_for_label }}').value = JSON.stringify(freeByGrade);
+    });
+    
+    // 초기 로드 시 등급별 매수 합계 업데이트
+    document.addEventListener('DOMContentLoaded', function() {
+        updatePaidTicketCount();
+        updateUnpaidTicketCount();
+        
+        // 등급별 매수 입력 시 합계 업데이트
+        document.querySelectorAll('.paid-grade-count, .unpaid-grade-count').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.classList.contains('paid-grade-count')) {
+                    updatePaidTicketCount();
+                } else {
+                    updateUnpaidTicketCount();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+

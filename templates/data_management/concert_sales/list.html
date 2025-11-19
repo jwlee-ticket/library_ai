@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+    <span class="text-gray-700 font-medium">데이터 관리</span>
+    <span class="text-gray-400 mx-2">/</span>
+    <span class="text-gray-700 font-medium">매출</span>
+    <span class="text-gray-400 mx-2">/</span>
+    <span class="text-black font-medium">{% if performance %}{{ performance.title }}{% else %}콘서트 매출{% endif %}</span>
+{% endblock %}
+
+{% block content %}
+    <!-- 공연 정보 + 뒤로가기 -->
+    {% if performance %}
+        <div class="mb-6">
+            <a href="{% url 'data_management:performance_list' %}" class="text-sm text-gray-600 hover:text-primary mb-2 inline-block">
+                ← 매출 관리로 돌아가기
+            </a>
+            <div class="bg-white rounded-xl border border-gray-100 p-4 mt-2">
+                <h2 class="text-xl font-semibold text-black mb-2">{{ performance.title }}</h2>
+                <div class="flex gap-4 text-sm text-gray-600">
+                    <span>{{ performance.venue }}</span>
+                    <span>{{ performance.performance_start|date:"Y.m.d" }} ~ {{ performance.performance_end|date:"Y.m.d" }}</span>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- 페이지 제목 + 등록 버튼 -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-semibold text-black">{% if performance %}{{ performance.title }} 매출{% else %}콘서트 매출{% endif %}</h1>
+        {% if performance %}
+            <a href="{% url 'data_management:concert_sales_create' performance.id %}" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm">
+                매출 등록
+            </a>
+        {% endif %}
+    </div>
+    
+    <!-- 필터 컴포넌트 -->
+    {% if performance %}
+        <div class="bg-white rounded-xl border border-gray-100 p-6 mb-6">
+            <form method="get" class="flex flex-col md:flex-row gap-4">
+                <input type="hidden" name="performance" value="{{ performance.id }}">
+            
+                <!-- 날짜 시작 -->
+                <div>
+                    <input 
+                        type="date" 
+                        name="date_start" 
+                        value="{{ date_start }}" 
+                        class="px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
+                        placeholder="시작일"
+                    >
+                </div>
+                
+                <!-- 날짜 종료 -->
+                <div>
+                    <input 
+                        type="date" 
+                        name="date_end" 
+                        value="{{ date_end }}" 
+                        class="px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
+                        placeholder="종료일"
+                    >
+                </div>
+                
+                <!-- 예매처 검색 -->
+                <div>
+                    <input 
+                        type="text" 
+                        name="booking_site" 
+                        value="{{ booking_site_filter }}" 
+                        placeholder="예매처 검색" 
+                        class="px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
+                    >
+                </div>
+                
+                <!-- 검색 버튼 -->
+                <div>
+                    <button 
+                        type="submit" 
+                        class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm"
+                    >
+                        검색
+                    </button>
+                </div>
+                
+                <!-- 초기화 버튼 -->
+                {% if date_start or date_end or booking_site_filter %}
+                    <div>
+                        <a 
+                            href="{% url 'data_management:concert_sales_list' performance.id %}" 
+                            class="px-6 py-3 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors inline-block"
+                        >
+                            초기화
+                        </a>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    {% endif %}
+    
+    <!-- 매출 리스트 테이블 -->
+    {% if performance and sales_list %}
+        <div class="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">날짜</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">예매처</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">입금 판매액</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">입금 매수</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">미입금 판매액</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">미입금 매수</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for sales in sales_list %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-gray-700">{{ sales.date|date:"Y.m.d" }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-gray-700">{{ sales.booking_site }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-sm text-gray-700">{{ sales.paid_revenue|floatformat:0 }}원</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-sm text-gray-700">{{ sales.paid_ticket_count }}매</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-sm text-gray-700">{{ sales.unpaid_revenue|floatformat:0 }}원</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-sm text-gray-700">{{ sales.unpaid_ticket_count }}매</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <a href="{% url 'data_management:concert_sales_update' sales.pk %}" class="px-4 py-2 bg-white text-black border-2 border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                                            수정
+                                        </a>
+                                        <a href="{% url 'data_management:concert_sales_delete' sales.pk %}" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors">
+                                            삭제
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 페이지네이션 -->
+        {% if page_obj.has_other_pages %}
+            <nav class="flex justify-center items-center space-x-2 mt-8">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if performance.id %}&performance={{ performance.id }}{% endif %}{% if request.GET.date_start %}&date_start={{ request.GET.date_start }}{% endif %}{% if request.GET.date_end %}&date_end={{ request.GET.date_end }}{% endif %}{% if request.GET.booking_site %}&booking_site={{ request.GET.booking_site }}{% endif %}"
+                   class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">이전</a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-lg border border-gray-100 text-gray-400 cursor-not-allowed">이전</span>
+                {% endif %}
+
+                {% for i in page_obj.paginator.page_range %}
+                    {% if page_obj.number == i %}
+                        <span class="px-4 py-2 rounded-lg bg-primary text-white font-medium">{{ i }}</span>
+                    {% else %}
+                        <a href="?page={{ i }}{% if performance.id %}&performance={{ performance.id }}{% endif %}{% if request.GET.date_start %}&date_start={{ request.GET.date_start }}{% endif %}{% if request.GET.date_end %}&date_end={{ request.GET.date_end }}{% endif %}{% if request.GET.booking_site %}&booking_site={{ request.GET.booking_site }}{% endif %}"
+                           class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">{{ i }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if performance.id %}&performance={{ performance.id }}{% endif %}{% if request.GET.date_start %}&date_start={{ request.GET.date_start }}{% endif %}{% if request.GET.date_end %}&date_end={{ request.GET.date_end }}{% endif %}{% if request.GET.booking_site %}&booking_site={{ request.GET.booking_site }}{% endif %}"
+                       class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">다음</a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-lg border border-gray-100 text-gray-400 cursor-not-allowed">다음</span>
+                {% endif %}
+            </nav>
+        {% endif %}
+    {% elif performance %}
+        <div class="bg-white rounded-xl border border-gray-100 p-12 text-center">
+            <p class="text-gray-600 text-lg">등록된 매출이 없어요</p>
+            <a href="{% url 'data_management:concert_sales_create' performance.id %}" class="inline-block mt-4 px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 transition-colors">
+                첫 매출 등록하기
+            </a>
+        </div>
+    {% else %}
+        <div class="bg-white rounded-xl border border-gray-100 p-12 text-center">
+            <p class="text-gray-600 text-lg">공연을 선택해주세요</p>
+            <a href="{% url 'data_management:performance_list' %}" class="inline-block mt-4 px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 transition-colors">
+                매출 관리로 돌아가기
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}
+

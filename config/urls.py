@@ -22,4 +22,5 @@ urlpatterns = [
     path('', include('dashboard.urls')),
     path('', include('core.urls')),
     path('performance/', include('performance.urls')),
+    path('data-management/', include('data_management.urls')),
 ]
