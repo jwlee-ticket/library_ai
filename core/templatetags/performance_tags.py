@@ -15,6 +15,17 @@ def to_choices(value_list):
 
 
 @register.filter
+def get_item(dictionary, key):
+    """딕셔너리에서 키로 값을 가져오기"""
+    if not dictionary:
+        return ''
+    try:
+        return dictionary.get(key, '')
+    except (AttributeError, TypeError):
+        return ''
+
+
+@register.filter
 def genre_badge(genre_code):
     """장르 코드를 받아서 뱃지 HTML 반환"""
     genre_map = {

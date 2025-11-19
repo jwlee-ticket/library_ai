@@ -378,132 +378,72 @@
                 </div>
             </div>
             
-            <!-- 좌석 및 가격 -->
+            <!-- 좌석 정보 -->
             <div class="mb-8 pb-8 border-b border-gray-100">
-                <h2 class="text-xl font-semibold text-black mb-6">좌석 및 가격</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div>
-                        <label class="block text-sm font-medium text-black mb-2">
-                            {{ form.seat_grades.label }}
-                        </label>
-                        {{ form.seat_grades }}
-                        <div id="seat-grades-list" class="space-y-2 mb-3">
-                            {% if object and object.seat_grades %}
-                                {% for grade in object.seat_grades %}
-                                    <div class="flex gap-2 items-center">
-                                        <input type="text" value="{{ grade }}" placeholder="예: VIP" readonly class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input">
-                                        <button type="button" onclick="removeSeatGradeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="flex gap-2 items-center">
-                                    <input type="text" placeholder="예: VIP" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors seat-grade-input">
-                                    <button type="button" onclick="removeSeatGradeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <h2 class="text-xl font-semibold text-black mb-6">좌석 정보</h2>
+                {{ form.seat_grades }}
+                {{ form.ticket_prices }}
+                {{ form.seat_counts }}
+                <div id="ticket-prices-seat-counts-list" class="space-y-2 mb-3">
+                    {% if object and object.ticket_prices %}
+                        {% for grade, price in object.ticket_prices.items %}
+                            <div class="grid grid-cols-3 gap-4 items-center seat-price-count-item" data-index="{{ forloop.counter0 }}">
+                                <div>
+                                    <input type="text" value="{{ grade }}" placeholder="좌석 등급" readonly class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input" data-field="grade">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" value="{{ price }}" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors" data-field="price">
+                                    <span class="text-gray-600 text-sm whitespace-nowrap">원</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" value="{% if object.seat_counts %}{{ object.seat_counts|get_item:grade }}{% endif %}" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors" data-field="count">
+                                    <span class="text-gray-600 text-sm whitespace-nowrap">석</span>
+                                    <button type="button" onclick="removeTicketPriceSeatCountItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                         </svg>
                                     </button>
                                 </div>
-                            {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="grid grid-cols-3 gap-4 items-center seat-price-count-item" data-index="0">
+                            <div>
+                                <input type="text" placeholder="좌석 등급" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors seat-grade-input" data-field="grade">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="number" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors" data-field="price">
+                                <span class="text-gray-600 text-sm whitespace-nowrap">원</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="number" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors" data-field="count">
+                                <span class="text-gray-600 text-sm whitespace-nowrap">석</span>
+                                <button type="button" onclick="removeTicketPriceSeatCountItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <button type="button" onclick="addSeatGradeItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
-                            + 추가
-                        </button>
-                        {% if form.seat_grades.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.seat_grades.errors|first }}</p>
-                        {% endif %}
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-black mb-2">
-                            {{ form.ticket_prices.label }}
-                        </label>
-                        {{ form.ticket_prices }}
-                        <div id="ticket-prices-list" class="space-y-2 mb-3">
-                            {% if object and object.ticket_prices %}
-                                {% for grade, price in object.ticket_prices.items %}
-                                    <div class="flex gap-2 items-center seat-price-item" data-index="{{ forloop.counter0 }}">
-                                        {% with seat_grade_choices=object.seat_grades|to_choices %}
-                                            {% include 'components/genre_dropdown.html' with genre_filter=grade genre_choices=seat_grade_choices prefix="ticket-price-"|add:forloop.counter0 auto_submit=False width_class="flex-1" default_text="좌석 등급 선택" show_default=False %}
-                                        {% endwith %}
-                                        <span class="text-gray-400">:</span>
-                                        <input type="number" value="{{ price }}" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                        <button type="button" onclick="removeTicketPriceItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="flex gap-2 items-center seat-price-item" data-index="0">
-                                    <div class="flex-1 relative seat-grade-dropdown-container"></div>
-                                    <span class="text-gray-400">:</span>
-                                    <input type="number" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                    <button type="button" onclick="removeTicketPriceItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <button type="button" onclick="addTicketPriceItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
-                            + 추가
-                        </button>
-                        {% if form.ticket_prices.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.ticket_prices.errors|first }}</p>
-                        {% endif %}
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-black mb-2">
-                            {{ form.seat_counts.label }}
-                        </label>
-                        {{ form.seat_counts }}
-                        <div id="seat-counts-list" class="space-y-2 mb-3">
-                            {% if object and object.seat_counts %}
-                                {% for grade, count in object.seat_counts.items %}
-                                    <div class="flex gap-2 items-center seat-count-item" data-index="{{ forloop.counter0 }}">
-                                        {% with seat_grade_choices=object.seat_grades|to_choices %}
-                                            {% include 'components/genre_dropdown.html' with genre_filter=grade genre_choices=seat_grade_choices prefix="seat-count-"|add:forloop.counter0 auto_submit=False width_class="flex-1" default_text="좌석 등급 선택" show_default=False %}
-                                        {% endwith %}
-                                        <span class="text-gray-400">:</span>
-                                        <input type="number" value="{{ count }}" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                        <button type="button" onclick="removeSeatCountItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="flex gap-2 items-center seat-count-item" data-index="0">
-                                    <div class="flex-1 relative seat-grade-dropdown-container"></div>
-                                    <span class="text-gray-400">:</span>
-                                    <input type="number" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                    <button type="button" onclick="removeSeatCountItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <button type="button" onclick="addSeatCountItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
-                            + 추가
-                        </button>
-                        {% if form.seat_counts.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.seat_counts.errors|first }}</p>
-                        {% endif %}
-                    </div>
+                    {% endif %}
                 </div>
-                
-                <!-- 할인권종 -->
+                <button type="button" onclick="addTicketPriceSeatCountItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
+                    + 추가
+                </button>
+                {% if form.seat_grades.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.seat_grades.errors|first }}</p>
+                {% endif %}
+                {% if form.ticket_prices.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.ticket_prices.errors|first }}</p>
+                {% endif %}
+                {% if form.seat_counts.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.seat_counts.errors|first }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- 할인 정보 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">할인 정보</h2>
                 <div>
                     <label class="block text-sm font-medium text-black mb-2">
                         {{ form.discount_types.label }}
@@ -512,15 +452,15 @@
                     <div id="discount-types-list" class="space-y-2 mb-3">
                         {% if object and object.discount_types %}
                             {% for discount_type in object.discount_types %}
-                                <div class="flex gap-2 items-center">
-                                    <input type="text" value="{{ discount_type.name }}" placeholder="할인권종명" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
+                                <div class="flex gap-2 items-center w-full">
+                                    <input type="text" value="{{ discount_type.name }}" placeholder="할인권종명" class="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm">
                                     <input type="date" value="{{ discount_type.start_date }}" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
                                     <input type="date" value="{{ discount_type.end_date }}" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
                                     {% with seat_grade_choices=object.seat_grades|to_choices %}
-                                        {% include 'components/genre_dropdown.html' with genre_filter=discount_type.grade genre_choices=seat_grade_choices prefix="discount-type-grade-"|add:forloop.counter0 auto_submit=False width_class="flex-1" default_text="좌석 등급 선택" show_default=False %}
+                                        {% include 'components/genre_dropdown.html' with genre_filter=discount_type.grade genre_choices=seat_grade_choices prefix="discount-type-grade-"|add:forloop.counter0 auto_submit=False width_class="w-40" default_text="좌석 등급 선택" show_default=False %}
                                     {% endwith %}
                                     <input type="number" value="{{ discount_type.discount_rate }}" placeholder="할인율(%)" min="0" max="100" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 120px;">
-                                    <button type="button" onclick="removeDiscountTypeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <button type="button" onclick="removeDiscountTypeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                         </svg>
@@ -528,13 +468,13 @@
                                 </div>
                             {% endfor %}
                         {% else %}
-                            <div class="flex gap-2 items-center">
-                                <input type="text" placeholder="할인권종명" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
+                            <div class="flex gap-2 items-center w-full">
+                                <input type="text" placeholder="할인권종명" class="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm">
                                 <input type="date" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
                                 <input type="date" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
-                                <div class="flex-1 relative seat-grade-dropdown-container"></div>
+                                <div class="w-40 relative seat-grade-dropdown-container"></div>
                                 <input type="number" placeholder="할인율(%)" min="0" max="100" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 120px;">
-                                <button type="button" onclick="removeDiscountTypeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                <button type="button" onclick="removeDiscountTypeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
@@ -552,7 +492,7 @@
             </div>
             
             <!-- 예매 및 기타 -->
-            <div class="mb-8">
+            <div class="mb-8 pb-8 border-b border-gray-100">
                 <h2 class="text-xl font-semibold text-black mb-6">예매 및 기타</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -673,10 +613,15 @@
     
     // 좌석 등급 목록 가져오기
     function getSeatGrades() {
-        const seatGradeInputs = document.querySelectorAll('#seat-grades-list input.seat-grade-input');
-        return Array.from(seatGradeInputs)
-            .map(input => input.value.trim())
-            .filter(value => value);
+        // 티켓 가격 및 좌석 수 리스트에서 입력된 좌석 등급들을 가져옴
+        const grades = new Set();
+        document.querySelectorAll('#ticket-prices-seat-counts-list input.seat-grade-input').forEach(input => {
+            const value = input.value.trim();
+            if (value) {
+                grades.add(value);
+            }
+        });
+        return Array.from(grades);
     }
     
     // 좌석 등급 드롭다운 옵션 업데이트
@@ -684,8 +629,8 @@
         const grades = getSeatGrades();
         const processedPrefixes = new Set(); // 이미 처리한 prefix 추적
         
-        // 모든 좌석 등급 드롭다운 찾기
-        const allInputs = document.querySelectorAll('[id*="ticket-price-"][id$="-input"], [id*="seat-count-"][id$="-input"], [id*="discount-type-grade-"][id$="-input"]');
+        // 할인권종의 좌석 등급 드롭다운만 찾기
+        const allInputs = document.querySelectorAll('[id*="discount-type-grade-"][id$="-input"]');
         
         allInputs.forEach(inputElement => {
             const prefix = inputElement.id.replace('-input', '');
@@ -719,53 +664,28 @@
                 dropdownContent.appendChild(button);
             });
             
-            // 현재 선택된 값이 목록에 없으면 항목 제거
-            if (currentValue && !grades.includes(currentValue)) {
-                const item = inputElement.closest('.seat-price-item, .seat-count-item, .border-2');
-                if (item) {
-                    item.remove();
-                }
-            }
         });
         
-        // 빈 컨테이너에 드롭다운 생성
-        const emptyContainers = document.querySelectorAll('.seat-grade-dropdown-container:empty');
+        // 빈 컨테이너에 드롭다운 생성 (할인권종용)
+        const emptyContainers = document.querySelectorAll('#discount-types-list .seat-grade-dropdown-container:empty');
         emptyContainers.forEach(container => {
-            const parent = container.closest('.seat-price-item, .seat-count-item, .border-2');
+            const parent = container.closest('div.flex');
             if (!parent) return;
+            const index = Array.from(parent.parentElement.querySelectorAll('div.flex')).indexOf(parent);
+            const prefix = 'discount-type-grade-' + index;
             
-            let prefix;
-            if (parent.classList.contains('seat-price-item')) {
-                const index = parent.getAttribute('data-index') || container.parentElement.querySelectorAll('.seat-price-item').length;
-                prefix = 'ticket-price-' + index;
-            } else if (parent.classList.contains('seat-count-item')) {
-                const index = parent.getAttribute('data-index') || container.parentElement.querySelectorAll('.seat-count-item').length;
-                prefix = 'seat-count-' + index;
-            } else {
-                // discount-types-list 내부인지 확인
-                const discountTypesList = container.closest('#discount-types-list');
-                if (discountTypesList) {
-                    const parent = container.closest('div.flex');
-                    const index = parent ? Array.from(discountTypesList.querySelectorAll('div.flex')).indexOf(parent) : discountTypesList.querySelectorAll('div.flex').length;
-                    prefix = 'discount-type-grade-' + index;
-                } else {
-                    const index = container.parentElement.querySelectorAll('.border-2').length;
-                    prefix = 'discount-type-grade-' + index;
-                }
-            }
-            
-            container.className = 'flex-1 relative';
+            container.className = 'w-40 relative';
             container.innerHTML = `
                 <input type="hidden" id="${prefix}-input" value="">
                 <button 
                     type="button"
                     onclick="toggleDropdown('${prefix}')"
-                    class="w-full flex items-center px-4 py-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
+                    class="w-full flex items-center px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors text-sm"
                 >
                     <svg id="${prefix}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
-                    <span id="${prefix}-text" class="flex-1 text-left">좌석 등급 선택</span>
+                    <span id="${prefix}-text" class="flex-1 text-left text-sm">좌석 등급 선택</span>
                 </button>
                 <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                     <div class="py-1">
@@ -789,7 +709,7 @@
                         dropdownContent.appendChild(button);
                     });
                 }
-            }, 50);
+            }, 100);
         });
     }
     
@@ -859,39 +779,19 @@
         
         // 해당 좌석 등급을 사용하는 항목들 제거
         if (gradeToRemove) {
-            // 티켓 가격에서 제거
-            document.querySelectorAll('#ticket-prices-list > .seat-price-item').forEach(item => {
-                const prefix = item.querySelector('[id^="ticket-price-"]');
-                if (prefix) {
-                    const prefixId = prefix.id.replace('-input', '').replace('-dropdown', '').replace('-text', '').replace('-arrow', '');
-                    const hiddenInput = document.getElementById(prefixId + '-input');
-                    if (hiddenInput && hiddenInput.value === gradeToRemove) {
-                        item.remove();
-                    }
+            // 티켓 가격 및 좌석 수에서 제거
+            document.querySelectorAll('#ticket-prices-seat-counts-list > .seat-price-count-item').forEach(item => {
+                const gradeInput = item.querySelector('input[data-field="grade"]');
+                if (gradeInput && gradeInput.value.trim() === gradeToRemove) {
+                    item.remove();
                 }
             });
             
-            // 좌석 수에서 제거
-            document.querySelectorAll('#seat-counts-list > .seat-count-item').forEach(item => {
-                const prefix = item.querySelector('[id^="seat-count-"]');
-                if (prefix) {
-                    const prefixId = prefix.id.replace('-input', '').replace('-dropdown', '').replace('-text', '').replace('-arrow', '');
-                    const hiddenInput = document.getElementById(prefixId + '-input');
-                    if (hiddenInput && hiddenInput.value === gradeToRemove) {
-                        item.remove();
-                    }
-                }
-            });
-            
-            // 할인율에서 제거
-            document.querySelectorAll('#discounts-list > .border-2').forEach(item => {
-                const prefix = item.querySelector('[id^="discount-grade-"]');
-                if (prefix) {
-                    const prefixId = prefix.id.replace('-input', '').replace('-dropdown', '').replace('-text', '').replace('-arrow', '');
-                    const hiddenInput = document.getElementById(prefixId + '-input');
-                    if (hiddenInput && hiddenInput.value === gradeToRemove) {
-                        item.remove();
-                    }
+            // 할인권종에서 제거
+            document.querySelectorAll('#discount-types-list > div.flex').forEach(item => {
+                const gradeInput = item.querySelector('[id^="discount-type-grade-"][id$="-input"]');
+                if (gradeInput && gradeInput.value.trim() === gradeToRemove) {
+                    item.remove();
                 }
             });
         }
@@ -901,133 +801,89 @@
         updateSeatGradeDropdowns();
     }
     
-    // 티켓 가격 관련 함수
-    function addTicketPriceItem() {
-        const container = document.getElementById('ticket-prices-list');
-        const index = container.querySelectorAll('.seat-price-item').length;
+    // 티켓 가격 및 좌석 수 관련 함수 (통합)
+    function addTicketPriceSeatCountItem() {
+        const container = document.getElementById('ticket-prices-seat-counts-list');
+        const index = container.querySelectorAll('.seat-price-count-item').length;
         const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center seat-price-item';
+        div.className = 'grid grid-cols-3 gap-4 items-center seat-price-count-item';
         div.setAttribute('data-index', index);
         
-        const prefix = 'ticket-price-' + index;
-        const grades = getSeatGrades();
+        // 첫 번째 열: 좌석 등급 입력
+        const gradeCol = document.createElement('div');
+        const gradeInput = document.createElement('input');
+        gradeInput.type = 'text';
+        gradeInput.placeholder = '좌석 등급';
+        gradeInput.className = 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors seat-grade-input';
+        gradeInput.setAttribute('data-field', 'grade');
         
-        // genre_dropdown 컴포넌트 생성
-        const dropdownDiv = document.createElement('div');
-        dropdownDiv.className = 'flex-1 relative';
-        dropdownDiv.innerHTML = `
-            <input type="hidden" id="${prefix}-input" value="">
-            <button 
-                type="button"
-                onclick="toggleDropdown('${prefix}')"
-                class="w-full flex items-center px-4 py-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
-            >
-                <svg id="${prefix}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-                <span id="${prefix}-text" class="flex-1 text-left">좌석 등급 선택</span>
-            </button>
-            <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                <div class="py-1">
-                </div>
-            </div>
-        `;
+        // Enter 키 입력 시 비활성화
+        gradeInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur();
+                disableSeatGradeInput(this);
+            }
+        });
         
-        const span = document.createElement('span');
-        span.className = 'text-gray-400';
-        span.textContent = ':';
+        // blur 시 비활성화
+        gradeInput.addEventListener('blur', function() {
+            if (this.value.trim()) {
+                disableSeatGradeInput(this);
+            }
+        });
         
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.placeholder = '가격';
-        input.className = 'flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors';
+        gradeCol.appendChild(gradeInput);
         
+        // 두 번째 열: 가격
+        const priceCol = document.createElement('div');
+        priceCol.className = 'flex items-center gap-2';
+        const priceInput = document.createElement('input');
+        priceInput.type = 'number';
+        priceInput.placeholder = '가격';
+        priceInput.className = 'flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors';
+        priceInput.setAttribute('data-field', 'price');
+        const wonSpan = document.createElement('span');
+        wonSpan.className = 'text-gray-600 text-sm whitespace-nowrap';
+        wonSpan.textContent = '원';
+        priceCol.appendChild(priceInput);
+        priceCol.appendChild(wonSpan);
+        
+        // 세 번째 열: 좌석 수 및 삭제 버튼
+        const countCol = document.createElement('div');
+        countCol.className = 'flex items-center gap-2';
+        const countInput = document.createElement('input');
+        countInput.type = 'number';
+        countInput.placeholder = '좌석 수';
+        countInput.className = 'flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors';
+        countInput.setAttribute('data-field', 'count');
+        const seatSpan = document.createElement('span');
+        seatSpan.className = 'text-gray-600 text-sm whitespace-nowrap';
+        seatSpan.textContent = '석';
         const button = document.createElement('button');
         button.type = 'button';
-        button.onclick = function() { removeTicketPriceItem(this); };
-        button.className = 'p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors';
+        button.onclick = function() { removeTicketPriceSeatCountItem(this); };
+        button.className = 'p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0';
         button.innerHTML = `
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
         `;
+        countCol.appendChild(countInput);
+        countCol.appendChild(seatSpan);
+        countCol.appendChild(button);
         
-        div.appendChild(dropdownDiv);
-        div.appendChild(span);
-        div.appendChild(input);
-        div.appendChild(button);
+        div.appendChild(gradeCol);
+        div.appendChild(priceCol);
+        div.appendChild(countCol);
         container.appendChild(div);
         
-        // 드롭다운 옵션 업데이트
-        setTimeout(updateSeatGradeDropdowns, 100);
+        // 좌석 등급 입력 필드에 포커스
+        gradeInput.focus();
     }
     
-    function removeTicketPriceItem(button) {
-        button.closest('div').remove();
-    }
-    
-    // 좌석 수 관련 함수
-    function addSeatCountItem() {
-        const container = document.getElementById('seat-counts-list');
-        const index = container.querySelectorAll('.seat-count-item').length;
-        const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center seat-count-item';
-        div.setAttribute('data-index', index);
-        
-        const prefix = 'seat-count-' + index;
-        
-        // genre_dropdown 컴포넌트 생성
-        const dropdownDiv = document.createElement('div');
-        dropdownDiv.className = 'flex-1 relative';
-        dropdownDiv.innerHTML = `
-            <input type="hidden" id="${prefix}-input" value="">
-            <button 
-                type="button"
-                onclick="toggleDropdown('${prefix}')"
-                class="w-full flex items-center px-4 py-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
-            >
-                <svg id="${prefix}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-                <span id="${prefix}-text" class="flex-1 text-left">좌석 등급 선택</span>
-            </button>
-            <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                <div class="py-1">
-                </div>
-            </div>
-        `;
-        
-        const span = document.createElement('span');
-        span.className = 'text-gray-400';
-        span.textContent = ':';
-        
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.placeholder = '좌석 수';
-        input.className = 'flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors';
-        
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.onclick = function() { removeSeatCountItem(this); };
-        button.className = 'p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors';
-        button.innerHTML = `
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-        `;
-        
-        div.appendChild(dropdownDiv);
-        div.appendChild(span);
-        div.appendChild(input);
-        div.appendChild(button);
-        container.appendChild(div);
-        
-        // 드롭다운 옵션 업데이트
-        setTimeout(updateSeatGradeDropdowns, 100);
-    }
-    
-    function removeSeatCountItem(button) {
-        button.closest('div').remove();
+    function removeTicketPriceSeatCountItem(button) {
+        button.closest('.seat-price-count-item').remove();
     }
     
     // 할인권종 관련 함수
@@ -1035,7 +891,7 @@
         const container = document.getElementById('discount-types-list');
         const index = container.querySelectorAll('div.flex').length;
         const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center';
+        div.className = 'flex gap-2 items-center w-full';
         
         const prefix = 'discount-type-grade-' + index;
         
@@ -1043,8 +899,7 @@
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.placeholder = '할인권종명';
-        nameInput.className = 'px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
-        nameInput.style.width = '150px';
+        nameInput.className = 'flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
         
         // 시작날짜 입력
         const startDateInput = document.createElement('input');
@@ -1060,7 +915,7 @@
         
         // 등급 드롭다운 컨테이너
         const gradeDropdownContainer = document.createElement('div');
-        gradeDropdownContainer.className = 'flex-1 relative seat-grade-dropdown-container';
+        gradeDropdownContainer.className = 'w-40 relative seat-grade-dropdown-container';
         
         // 할인율 입력
         const discountRateInput = document.createElement('input');
@@ -1075,7 +930,7 @@
         const removeButton = document.createElement('button');
         removeButton.type = 'button';
         removeButton.onclick = function() { removeDiscountTypeItem(this); };
-        removeButton.className = 'p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors';
+        removeButton.className = 'p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0';
         removeButton.innerHTML = `
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -1139,10 +994,10 @@
         button.closest('div').remove();
     }
     
-    // 페이지 로드 시 좌석 등급 드롭다운 초기화
+    // 페이지 로드 시 좌석 등급 입력 필드 초기화
     document.addEventListener('DOMContentLoaded', function() {
-        // 좌석 등급 입력 필드에 변경 이벤트 리스너 추가
-        const seatGradeInputs = document.querySelectorAll('#seat-grades-list input.seat-grade-input');
+        // 좌석 정보의 좌석 등급 입력 필드에 변경 이벤트 리스너 추가
+        const seatGradeInputs = document.querySelectorAll('#ticket-prices-seat-counts-list input.seat-grade-input');
         seatGradeInputs.forEach(input => {
             // readonly가 아닌 경우에만 이벤트 리스너 추가
             if (!input.readOnly) {
@@ -1154,7 +1009,9 @@
                     }
                 });
                 input.addEventListener('blur', function() {
-                    disableSeatGradeInput(this);
+                    if (this.value.trim()) {
+                        disableSeatGradeInput(this);
+                    }
                 });
                 input.addEventListener('input', function() {
                     if (!this.readOnly) {
@@ -1164,7 +1021,7 @@
             }
         });
         
-        // 초기 드롭다운 업데이트
+        // 초기 드롭다운 업데이트 (할인권종용)
         setTimeout(updateSeatGradeDropdowns, 200);
         
         // discount-types-list의 빈 드롭다운 컨테이너 초기화
@@ -1174,7 +1031,7 @@
             if (!parent) return;
             const index = Array.from(parent.parentElement.querySelectorAll('div.flex')).indexOf(parent);
             const prefix = 'discount-type-grade-' + index;
-            container.className = 'flex-1 relative';
+            container.className = 'w-40 relative';
             container.innerHTML = `
                 <input type="hidden" id="${prefix}-input" value="">
                 <button 
@@ -1220,38 +1077,28 @@
         });
         document.getElementById('{{ form.casting.id_for_label }}').value = JSON.stringify(castingDict);
         
-        // 좌석 등급: 리스트로 변환
-        const seatGrades = Array.from(document.querySelectorAll('#seat-grades-list input.seat-grade-input'))
-            .map(input => input.value.trim())
-            .filter(value => value);
-        document.getElementById('{{ form.seat_grades.id_for_label }}').value = JSON.stringify(seatGrades);
-        
-        // 티켓 가격: 딕셔너리로 변환
+        // 티켓 가격 및 좌석 수: 딕셔너리로 변환 및 좌석 등급 추출
         const ticketPrices = {};
-        document.querySelectorAll('#ticket-prices-list > .seat-price-item').forEach(div => {
-            const prefix = div.querySelector('[id^="ticket-price-"]');
-            if (!prefix) return;
-            const prefixId = prefix.id.replace('-input', '').replace('-dropdown', '').replace('-text', '').replace('-arrow', '');
-            const hiddenInput = document.getElementById(prefixId + '-input');
-            const priceInput = div.querySelector('input[type="number"]');
-            if (hiddenInput && priceInput && hiddenInput.value.trim() && priceInput.value.trim()) {
-                ticketPrices[hiddenInput.value.trim()] = parseInt(priceInput.value) || 0;
-            }
-        });
-        document.getElementById('{{ form.ticket_prices.id_for_label }}').value = JSON.stringify(ticketPrices);
-        
-        // 좌석 수: 딕셔너리로 변환
         const seatCounts = {};
-        document.querySelectorAll('#seat-counts-list > .seat-count-item').forEach(div => {
-            const prefix = div.querySelector('[id^="seat-count-"]');
-            if (!prefix) return;
-            const prefixId = prefix.id.replace('-input', '').replace('-dropdown', '').replace('-text', '').replace('-arrow', '');
-            const hiddenInput = document.getElementById(prefixId + '-input');
-            const countInput = div.querySelector('input[type="number"]');
-            if (hiddenInput && countInput && hiddenInput.value.trim() && countInput.value.trim()) {
-                seatCounts[hiddenInput.value.trim()] = parseInt(countInput.value) || 0;
+        const seatGrades = [];
+        document.querySelectorAll('#ticket-prices-seat-counts-list > .seat-price-count-item').forEach(div => {
+            const gradeInput = div.querySelector('input[data-field="grade"]');
+            const priceInput = div.querySelector('input[data-field="price"]');
+            const countInput = div.querySelector('input[data-field="count"]');
+            
+            if (gradeInput && gradeInput.value.trim()) {
+                const grade = gradeInput.value.trim();
+                seatGrades.push(grade);
+                if (priceInput && priceInput.value.trim()) {
+                    ticketPrices[grade] = parseInt(priceInput.value) || 0;
+                }
+                if (countInput && countInput.value.trim()) {
+                    seatCounts[grade] = parseInt(countInput.value) || 0;
+                }
             }
         });
+        document.getElementById('{{ form.seat_grades.id_for_label }}').value = JSON.stringify(seatGrades);
+        document.getElementById('{{ form.ticket_prices.id_for_label }}').value = JSON.stringify(ticketPrices);
         document.getElementById('{{ form.seat_counts.id_for_label }}').value = JSON.stringify(seatCounts);
         
         // 할인권종: 리스트로 변환

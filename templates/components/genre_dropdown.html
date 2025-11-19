@@ -40,7 +40,7 @@
                 <svg id="{{ prefix }}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
-                <span id="{{ prefix }}-text" class="flex-1 text-left">
+                <span id="{{ prefix }}-text" class="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis">
                     {% if genre_filter %}
                         {% for code, name in genre_choices %}
                             {% if code == genre_filter %}{{ name }}{% endif %}
