@@ -4,8 +4,12 @@ from django.contrib import messages
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.db.models import Q
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from datetime import datetime, timedelta
+import json
 from .models import ConcertSales
-from .forms import ConcertSalesForm
+from .forms import ConcertSalesForm, ConcertSalesDailyFormSet
 from performance.models import Performance
 
 
@@ -83,11 +87,40 @@ class ConcertSalesListView(ListView):
         
         if performance_id:
             try:
-                context['performance'] = Performance.objects.get(id=performance_id)
+                performance = Performance.objects.get(id=performance_id)
+                context['performance'] = performance
+                
+                # 예매처 목록 추출
+                booking_sites = []
+                if performance.booking_sites:
+                    for site_dict in performance.booking_sites:
+                        if isinstance(site_dict, dict):
+                            booking_sites.extend(site_dict.keys())
+                context['booking_sites'] = json.dumps(booking_sites, ensure_ascii=False)
+                
+                # 좌석 등급 추출
+                seat_grades = performance.seat_grades if performance.seat_grades else []
+                context['seat_grades'] = json.dumps(seat_grades, ensure_ascii=False)
+                
+                # 판매 기간 날짜 리스트 생성
+                date_list = []
+                if performance.sales_start and performance.sales_end:
+                    current_date = performance.sales_start
+                    while current_date <= performance.sales_end:
+                        date_list.append(current_date.strftime('%Y-%m-%d'))
+                        current_date += timedelta(days=1)
+                context['sales_date_list'] = json.dumps(date_list, ensure_ascii=False)
+                
             except Performance.DoesNotExist:
                 context['performance'] = None
+                context['booking_sites'] = '[]'
+                context['seat_grades'] = '[]'
+                context['sales_date_list'] = '[]'
         else:
             context['performance'] = None
+            context['booking_sites'] = '[]'
+            context['seat_grades'] = '[]'
+            context['sales_date_list'] = '[]'
         
         context['performance_filter'] = performance_id or ''
         context['date_start'] = self.request.GET.get('date_start', '')
@@ -200,3 +233,102 @@ class TheaterSalesListView(ListView):
             except Performance.DoesNotExist:
                 context['performance'] = None
         return context
+
+
+@login_required
+@require_http_methods(["POST"])
+def save_daily_sales(request, performance_id):
+    """날짜별 데일리 매출 저장 (AJAX)"""
+    try:
+        performance = Performance.objects.get(id=performance_id, genre='concert')
+    except Performance.DoesNotExist:
+        return JsonResponse({'success': False, 'error': '공연을 찾을 수 없어요'}, status=404)
+    
+    # POST 데이터에서 날짜 추출
+    date_str = request.POST.get('date')
+    if not date_str:
+        return JsonResponse({'success': False, 'error': '날짜가 필요해요'}, status=400)
+    
+    try:
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'success': False, 'error': '올바른 날짜 형식이 아니에요'}, status=400)
+    
+    # 예매처 목록 추출
+    booking_sites = []
+    if performance.booking_sites:
+        for site_dict in performance.booking_sites:
+            if isinstance(site_dict, dict):
+                booking_sites.extend(site_dict.keys())
+    
+    if not booking_sites:
+        return JsonResponse({'success': False, 'error': '등록된 예매처가 없어요'}, status=400)
+    
+    # 좌석 등급 추출
+    seat_grades = performance.seat_grades if performance.seat_grades else []
+    
+    # 기존 데이터 삭제 (해당 날짜의 데일리 매출만)
+    ConcertSales.objects.filter(
+        performance=performance,
+        date=date,
+        sales_type='daily'
+    ).delete()
+    
+    # Formset 데이터 준비
+    formset_data = {}
+    formset_files = {}
+    
+    # 각 예매처별로 폼 데이터 준비
+    for idx, booking_site in enumerate(booking_sites):
+        prefix = f'form-{idx}'
+        formset_data[f'{prefix}-performance'] = performance.id
+        formset_data[f'{prefix}-sales_type'] = 'daily'
+        formset_data[f'{prefix}-date'] = date_str
+        formset_data[f'{prefix}-booking_site'] = booking_site
+        formset_data[f'{prefix}-paid_revenue'] = request.POST.get(f'{booking_site}_paid_revenue', '0') or '0'
+        formset_data[f'{prefix}-paid_ticket_count'] = request.POST.get(f'{booking_site}_paid_ticket_count', '0') or '0'
+        formset_data[f'{prefix}-unpaid_revenue'] = request.POST.get(f'{booking_site}_unpaid_revenue', '0') or '0'
+        formset_data[f'{prefix}-unpaid_ticket_count'] = request.POST.get(f'{booking_site}_unpaid_ticket_count', '0') or '0'
+        
+        # 등급별 매수
+        paid_by_grade = {}
+        unpaid_by_grade = {}
+        free_by_grade = {}
+        
+        for grade in seat_grades:
+            paid_value = request.POST.get(f'{booking_site}_paid_grade_{grade}', '0') or '0'
+            unpaid_value = request.POST.get(f'{booking_site}_unpaid_grade_{grade}', '0') or '0'
+            free_value = request.POST.get(f'{booking_site}_free_grade_{grade}', '0') or '0'
+            
+            if int(paid_value) > 0:
+                paid_by_grade[grade] = int(paid_value)
+            if int(unpaid_value) > 0:
+                unpaid_by_grade[grade] = int(unpaid_value)
+            if int(free_value) > 0:
+                free_by_grade[grade] = int(free_value)
+        
+        formset_data[f'{prefix}-paid_by_grade'] = json.dumps(paid_by_grade, ensure_ascii=False)
+        formset_data[f'{prefix}-unpaid_by_grade'] = json.dumps(unpaid_by_grade, ensure_ascii=False)
+        formset_data[f'{prefix}-free_by_grade'] = json.dumps(free_by_grade, ensure_ascii=False)
+    
+    formset_data['form-TOTAL_FORMS'] = len(booking_sites)
+    formset_data['form-INITIAL_FORMS'] = '0'
+    formset_data['form-MIN_NUM_FORMS'] = '0'
+    formset_data['form-MAX_NUM_FORMS'] = '1000'
+    
+    # Formset 생성 및 검증
+    formset = ConcertSalesDailyFormSet(formset_data, formset_files, queryset=ConcertSales.objects.none())
+    
+    # 각 폼에 좌석 등급 전달
+    for form in formset.forms:
+        form.seat_grades = seat_grades
+    
+    if formset.is_valid():
+        formset.save()
+        return JsonResponse({'success': True, 'message': '매출이 성공적으로 저장되었어요'})
+    else:
+        errors = {}
+        for idx, form in enumerate(formset.forms):
+            if form.errors:
+                errors[f'form_{idx}'] = form.errors
+        return JsonResponse({'success': False, 'error': '입력값을 확인해주세요', 'errors': errors}, status=400)

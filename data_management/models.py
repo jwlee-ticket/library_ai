@@ -3,7 +3,13 @@ from django.core.validators import MinValueValidator
 
 
 class ConcertSales(models.Model):
-    """콘서트 데일리 매출 모델"""
+    """콘서트 매출 모델"""
+    
+    # 매출 타입 선택지
+    SALES_TYPE_CHOICES = [
+        ('daily', '데일리'),
+        ('final', '최종'),
+    ]
     
     performance = models.ForeignKey(
         'performance.Performance',
@@ -11,6 +17,13 @@ class ConcertSales(models.Model):
         limit_choices_to={'genre': 'concert'},
         verbose_name='공연',
         related_name='concert_sales'
+    )
+    sales_type = models.CharField(
+        max_length=10,
+        choices=SALES_TYPE_CHOICES,
+        default='daily',
+        verbose_name='매출 타입',
+        help_text='데일리 매출 또는 최종 매출'
     )
     date = models.DateField(verbose_name='공연 날짜')
     booking_site = models.CharField(max_length=100, verbose_name='예매처')
@@ -80,8 +93,8 @@ class ConcertSales(models.Model):
             models.Index(fields=['date']),
             models.Index(fields=['booking_site']),
         ]
-        # 같은 공연, 같은 날짜, 같은 예매처는 중복 방지
-        unique_together = [['performance', 'date', 'booking_site']]
+        # 같은 공연, 같은 날짜, 같은 예매처, 같은 매출 타입은 중복 방지
+        unique_together = [['performance', 'date', 'booking_site', 'sales_type']]
     
     def __str__(self):
         return f'{self.performance.title} - {self.date} - {self.booking_site}'

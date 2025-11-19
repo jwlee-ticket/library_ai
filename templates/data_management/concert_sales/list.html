@@ -9,93 +9,33 @@
 {% endblock %}
 
 {% block content %}
-    <!-- 공연 정보 + 뒤로가기 -->
-    {% if performance %}
-        <div class="mb-6">
-            <a href="{% url 'data_management:performance_list' %}" class="text-sm text-gray-600 hover:text-primary mb-2 inline-block">
-                ← 매출 관리로 돌아가기
-            </a>
-            <div class="bg-white rounded-xl border border-gray-100 p-4 mt-2">
-                <h2 class="text-xl font-semibold text-black mb-2">{{ performance.title }}</h2>
-                <div class="flex gap-4 text-sm text-gray-600">
-                    <span>{{ performance.venue }}</span>
-                    <span>{{ performance.performance_start|date:"Y.m.d" }} ~ {{ performance.performance_end|date:"Y.m.d" }}</span>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-    
-    <!-- 페이지 제목 + 등록 버튼 -->
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-semibold text-black">{% if performance %}{{ performance.title }} 매출{% else %}콘서트 매출{% endif %}</h1>
-        {% if performance %}
-            <a href="{% url 'data_management:concert_sales_create' performance.id %}" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm">
-                매출 등록
-            </a>
-        {% endif %}
+    <!-- 페이지 제목 -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-semibold text-black">{% if performance %}{{ performance.title }}{% else %}콘서트 매출{% endif %}</h1>
     </div>
     
-    <!-- 필터 컴포넌트 -->
-    {% if performance %}
-        <div class="bg-white rounded-xl border border-gray-100 p-6 mb-6">
-            <form method="get" class="flex flex-col md:flex-row gap-4">
-                <input type="hidden" name="performance" value="{{ performance.id }}">
-            
-                <!-- 날짜 시작 -->
-                <div>
-                    <input 
-                        type="date" 
-                        name="date_start" 
-                        value="{{ date_start }}" 
-                        class="px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
-                        placeholder="시작일"
-                    >
-                </div>
-                
-                <!-- 날짜 종료 -->
-                <div>
-                    <input 
-                        type="date" 
-                        name="date_end" 
-                        value="{{ date_end }}" 
-                        class="px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
-                        placeholder="종료일"
-                    >
-                </div>
-                
-                <!-- 예매처 검색 -->
-                <div>
-                    <input 
-                        type="text" 
-                        name="booking_site" 
-                        value="{{ booking_site_filter }}" 
-                        placeholder="예매처 검색" 
-                        class="px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
-                    >
-                </div>
-                
-                <!-- 검색 버튼 -->
-                <div>
+    <!-- 데일리 매출 입력 섹션 -->
+    {% if performance and booking_sites %}
+        <div class="mb-12">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-black">데일리 매출 입력</h2>
+                <div class="flex items-center gap-4">
+                    <label class="text-sm font-medium text-gray-700">날짜 추가:</label>
+                    <input type="date" id="new-date-input" class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
                     <button 
-                        type="submit" 
-                        class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm"
+                        type="button"
+                        onclick="addDateSection()"
+                        class="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm"
                     >
-                        검색
+                        추가
                     </button>
                 </div>
-                
-                <!-- 초기화 버튼 -->
-                {% if date_start or date_end or booking_site_filter %}
-                    <div>
-                        <a 
-                            href="{% url 'data_management:concert_sales_list' performance.id %}" 
-                            class="px-6 py-3 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors inline-block"
-                        >
-                            초기화
-                        </a>
-                    </div>
-                {% endif %}
-            </form>
+            </div>
+            
+            <!-- 날짜별 섹션 컨테이너 -->
+            <div id="date-sections-container" class="space-y-4">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
         </div>
     {% endif %}
     
@@ -183,9 +123,6 @@
     {% elif performance %}
         <div class="bg-white rounded-xl border border-gray-100 p-12 text-center">
             <p class="text-gray-600 text-lg">등록된 매출이 없어요</p>
-            <a href="{% url 'data_management:concert_sales_create' performance.id %}" class="inline-block mt-4 px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 transition-colors">
-                첫 매출 등록하기
-            </a>
         </div>
     {% else %}
         <div class="bg-white rounded-xl border border-gray-100 p-12 text-center">
@@ -195,5 +132,315 @@
             </a>
         </div>
     {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        const performanceId = {% if performance %}{{ performance.id }}{% else %}null{% endif %};
+        const bookingSites = {{ booking_sites|safe }};
+        const seatGrades = {{ seat_grades|safe }};
+        const salesDateList = {{ sales_date_list|safe }};
+        const selectedDates = new Set();
+        
+        // 페이지 로드 시 판매 기간의 모든 날짜 섹션 자동 생성
+        document.addEventListener('DOMContentLoaded', function() {
+            if (salesDateList && salesDateList.length > 0) {
+                salesDateList.forEach(dateStr => {
+                    selectedDates.add(dateStr);
+                    createDateSection(dateStr);
+                });
+            }
+        });
+        
+        function addDateSection() {
+            const dateInput = document.getElementById('new-date-input');
+            const dateStr = dateInput.value;
+            
+            if (!dateStr) {
+                alert('날짜를 선택해주세요');
+                return;
+            }
+            
+            // 이미 추가된 날짜인지 확인
+            if (selectedDates.has(dateStr)) {
+                alert('이미 추가된 날짜예요');
+                return;
+            }
+            
+            // 공연 기간 내의 날짜인지 확인
+            const dateObj = new Date(dateStr);
+            const performanceStart = new Date('{{ performance.performance_start|date:"Y-m-d" }}');
+            const performanceEnd = new Date('{{ performance.performance_end|date:"Y-m-d" }}');
+            
+            if (dateObj < performanceStart || dateObj > performanceEnd) {
+                alert('공연 기간 내의 날짜를 선택해주세요');
+                return;
+            }
+            
+            selectedDates.add(dateStr);
+            createDateSection(dateStr);
+            dateInput.value = ''; // 입력 필드 초기화
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+        }
+        
+        function createDateSection(dateStr) {
+            const container = document.getElementById('date-sections-container');
+            const dateObj = new Date(dateStr);
+            const dateFormatted = dateObj.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+            
+            const sectionId = `date-section-${dateStr}`;
+            const section = document.createElement('div');
+            section.id = sectionId;
+            section.className = 'bg-white rounded-xl border border-gray-100 overflow-hidden';
+            section.innerHTML = `
+                <div class="p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleDateSection('${dateStr}')">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <svg id="arrow-${dateStr}" class="w-5 h-5 text-gray-600 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            <h3 class="text-lg font-semibold text-black">${dateFormatted}</h3>
+                            <span id="status-${dateStr}" class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">입력 전</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="content-${dateStr}" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                    <div class="p-6">
+                        <div class="space-y-6">
+                            <!-- 예매처별 입금/미입금 -->
+                            <div class="space-y-4">
+                                ${bookingSites.map(site => createBookingSiteForm(dateStr, site)).join('')}
+                            </div>
+                            
+                            <!-- 초대 영역 (별도) -->
+                            ${seatGrades.length > 0 ? createInviteSection(dateStr) : ''}
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <button 
+                                type="button"
+                                onclick="saveDateSales('${dateStr}')"
+                                class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm"
+                            >
+                                저장
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(section);
+        }
+        
+        function createBookingSiteForm(dateStr, bookingSite) {
+            const siteId = `${dateStr}_${bookingSite}`;
+            
+            return `
+                <div class="border-2 border-gray-100 rounded-lg p-4">
+                    <h4 class="text-base font-semibold text-black mb-4">${bookingSite}</h4>
+                    <!-- 입금과 미입금을 가로로 5:5 배치 -->
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- 입금 -->
+                        <div class="pr-6 border-r border-gray-200">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">입금</label>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <label class="block text-xs text-gray-600 mb-1">판매액 (원)</label>
+                                    <input type="number" id="${siteId}_paid_revenue" name="${bookingSite}_paid_revenue" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-600 mb-1">판매 매수</label>
+                                    <input type="number" id="${siteId}_paid_ticket_count" name="${bookingSite}_paid_ticket_count" min="0" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"'}">
+                                </div>
+                            </div>
+                            ${seatGrades.length > 0 ? `
+                                <div class="mb-2">
+                                    <label class="block text-xs text-gray-600 mb-2">등급별 매수 (입금)</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        ${seatGrades.map(grade => `
+                                            <div class="relative">
+                                                <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
+                                                <input type="number" id="${siteId}_paid_grade_${grade}" name="${bookingSite}_paid_grade_${grade}" min="0" placeholder="0" oninput="updateTicketCount('${siteId}', 'paid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- 미입금 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">미입금</label>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <label class="block text-xs text-gray-600 mb-1">판매액 (원)</label>
+                                    <input type="number" id="${siteId}_unpaid_revenue" name="${bookingSite}_unpaid_revenue" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-600 mb-1">판매 매수</label>
+                                    <input type="number" id="${siteId}_unpaid_ticket_count" name="${bookingSite}_unpaid_ticket_count" min="0" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"'}">
+                                </div>
+                            </div>
+                            ${seatGrades.length > 0 ? `
+                                <div class="mb-2">
+                                    <label class="block text-xs text-gray-600 mb-2">등급별 매수 (미입금)</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        ${seatGrades.map(grade => `
+                                            <div class="relative">
+                                                <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
+                                                <input type="number" id="${siteId}_unpaid_grade_${grade}" name="${bookingSite}_unpaid_grade_${grade}" min="0" placeholder="0" oninput="updateTicketCount('${siteId}', 'unpaid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createInviteSection(dateStr) {
+            // 예매처별로 입력하되, UI에서는 예매처를 구분하지 않고 등급별로만 표시
+            // 저장 시에는 각 예매처에 동일한 값이 저장되도록 처리
+            return `
+                <div class="border-2 border-gray-100 rounded-lg p-4">
+                    <h4 class="text-base font-semibold text-black mb-4">초대</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${seatGrades.map(grade => {
+                            // 첫 번째 예매처의 입력 필드만 표시 (나머지는 hidden으로 저장)
+                            const firstSiteId = `${dateStr}_${bookingSites[0]}`;
+                            const hiddenInputs = bookingSites.slice(1).map(bookingSite => {
+                                const siteId = `${dateStr}_${bookingSite}`;
+                                return `<input type="hidden" id="${siteId}_free_grade_${grade}" name="${bookingSite}_free_grade_${grade}" value="0">`;
+                            }).join('');
+                            return `
+                                <div class="relative">
+                                    <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
+                                    <input type="number" id="${firstSiteId}_free_grade_${grade}" name="${bookingSites[0]}_free_grade_${grade}" min="0" placeholder="0" oninput="syncInviteInputs('${dateStr}', '${grade}')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                    ${hiddenInputs}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function syncInviteInputs(dateStr, grade) {
+            // 첫 번째 예매처의 값을 다른 예매처들에도 동일하게 적용
+            const firstInput = document.getElementById(`${dateStr}_${bookingSites[0]}_free_grade_${grade}`);
+            if (firstInput) {
+                const value = firstInput.value || 0;
+                bookingSites.slice(1).forEach(bookingSite => {
+                    const hiddenInput = document.getElementById(`${dateStr}_${bookingSite}_free_grade_${grade}`);
+                    if (hiddenInput) {
+                        hiddenInput.value = value;
+                    }
+                });
+            }
+        }
+        
+        function updateTicketCount(siteId, type) {
+            if (!seatGrades || seatGrades.length === 0) return;
+            
+            let total = 0;
+            seatGrades.forEach(grade => {
+                const input = document.getElementById(`${siteId}_${type}_grade_${grade}`);
+                if (input) {
+                    const value = parseInt(input.value) || 0;
+                    total += value;
+                }
+            });
+            
+            const ticketCountInput = document.getElementById(`${siteId}_${type}_ticket_count`);
+            if (ticketCountInput) {
+                ticketCountInput.value = total;
+            }
+        }
+        
+        function toggleDateSection(dateStr) {
+            const content = document.getElementById(`content-${dateStr}`);
+            const arrow = document.getElementById(`arrow-${dateStr}`);
+            
+            if (content.classList.contains('max-h-0')) {
+                content.classList.remove('max-h-0');
+                content.classList.add('max-h-[2000px]');
+                arrow.classList.add('rotate-90');
+            } else {
+                content.classList.remove('max-h-[2000px]');
+                content.classList.add('max-h-0');
+                arrow.classList.remove('rotate-90');
+            }
+        }
+        
+        function removeDateSection(dateStr) {
+            // 판매 기간 날짜는 삭제 불가 (항상 표시되어야 함)
+        }
+        
+        function saveDateSales(dateStr) {
+            const formData = new FormData();
+            formData.append('date', dateStr);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            
+            // 해당 날짜의 모든 입력 필드 수집
+            bookingSites.forEach(site => {
+                const siteId = `${dateStr}_${site}`;
+                formData.append(`${site}_paid_revenue`, document.getElementById(`${siteId}_paid_revenue`)?.value || '0');
+                formData.append(`${site}_paid_ticket_count`, document.getElementById(`${siteId}_paid_ticket_count`)?.value || '0');
+                formData.append(`${site}_unpaid_revenue`, document.getElementById(`${siteId}_unpaid_revenue`)?.value || '0');
+                formData.append(`${site}_unpaid_ticket_count`, document.getElementById(`${siteId}_unpaid_ticket_count`)?.value || '0');
+                
+                seatGrades.forEach(grade => {
+                    formData.append(`${site}_paid_grade_${grade}`, document.getElementById(`${siteId}_paid_grade_${grade}`)?.value || '0');
+                    formData.append(`${site}_unpaid_grade_${grade}`, document.getElementById(`${siteId}_unpaid_grade_${grade}`)?.value || '0');
+                    // 초대는 첫 번째 예매처의 값을 모든 예매처에 동일하게 적용
+                    const firstSiteId = `${dateStr}_${bookingSites[0]}`;
+                    const freeValue = document.getElementById(`${firstSiteId}_free_grade_${grade}`)?.value || '0';
+                    formData.append(`${site}_free_grade_${grade}`, freeValue);
+                });
+            });
+            
+            fetch(`{% url 'data_management:save_daily_sales' performance.id %}`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    updateDateStatus(dateStr, '입력 완료');
+                    // 페이지 새로고침하여 목록 업데이트
+                    window.location.reload();
+                } else {
+                    alert('저장 실패: ' + (data.error || '알 수 없는 오류'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('저장 중 오류가 발생했어요');
+            });
+        }
+        
+        function updateDateStatus(dateStr, status) {
+            const statusEl = document.getElementById(`status-${dateStr}`);
+            if (statusEl) {
+                statusEl.textContent = status;
+                if (status === '입력 완료') {
+                    statusEl.className = 'px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700';
+                } else if (status === '입력 중') {
+                    statusEl.className = 'px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700';
+                } else {
+                    statusEl.className = 'px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+                }
+            }
+        }
+    </script>
 {% endblock %}
 

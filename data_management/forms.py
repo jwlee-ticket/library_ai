@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import modelformset_factory
 from django.core.exceptions import ValidationError
 from .models import ConcertSales
 from performance.models import Performance
@@ -171,4 +172,138 @@ class ConcertSalesForm(forms.ModelForm):
                 pass
         
         return cleaned_data
+
+
+class ConcertSalesDailyForm(forms.ModelForm):
+    """데일리 매출 입력용 폼 (등급별 필드 동적 생성)"""
+    
+    class Meta:
+        model = ConcertSales
+        fields = [
+            'performance',
+            'sales_type',
+            'date',
+            'booking_site',
+            'paid_revenue',
+            'paid_ticket_count',
+            'paid_by_grade',
+            'unpaid_revenue',
+            'unpaid_ticket_count',
+            'unpaid_by_grade',
+            'free_by_grade',
+        ]
+        widgets = {
+            'performance': forms.HiddenInput(),
+            'sales_type': forms.HiddenInput(),
+            'date': forms.HiddenInput(),
+            'booking_site': forms.HiddenInput(),
+            'paid_revenue': forms.NumberInput(attrs={
+                'class': 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '0',
+                'min': '0',
+                'step': '1',
+            }),
+            'paid_ticket_count': forms.NumberInput(attrs={
+                'class': 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '0',
+                'min': '0',
+                'step': '1',
+            }),
+            'paid_by_grade': forms.HiddenInput(),
+            'unpaid_revenue': forms.NumberInput(attrs={
+                'class': 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '0',
+                'min': '0',
+                'step': '1',
+            }),
+            'unpaid_ticket_count': forms.NumberInput(attrs={
+                'class': 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '0',
+                'min': '0',
+                'step': '1',
+            }),
+            'unpaid_by_grade': forms.HiddenInput(),
+            'free_by_grade': forms.HiddenInput(),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.seat_grades = kwargs.pop('seat_grades', [])
+        super().__init__(*args, **kwargs)
+        
+        # 등급별 입력 필드 동적 생성
+        if self.seat_grades:
+            for grade in self.seat_grades:
+                # 입금 등급별 매수
+                self.fields[f'paid_grade_{grade}'] = forms.IntegerField(
+                    required=False,
+                    min_value=0,
+                    widget=forms.NumberInput(attrs={
+                        'class': 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                        'placeholder': '0',
+                        'min': '0',
+                        'step': '1',
+                    })
+                )
+                # 미입금 등급별 매수
+                self.fields[f'unpaid_grade_{grade}'] = forms.IntegerField(
+                    required=False,
+                    min_value=0,
+                    widget=forms.NumberInput(attrs={
+                        'class': 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                        'placeholder': '0',
+                        'min': '0',
+                        'step': '1',
+                    })
+                )
+                # 무료 등급별 매수
+                self.fields[f'free_grade_{grade}'] = forms.IntegerField(
+                    required=False,
+                    min_value=0,
+                    widget=forms.NumberInput(attrs={
+                        'class': 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                        'placeholder': '0',
+                        'min': '0',
+                        'step': '1',
+                    })
+                )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # 등급별 매수를 JSON으로 변환
+        if self.seat_grades:
+            # 입금 등급별 매수
+            paid_by_grade = {}
+            for grade in self.seat_grades:
+                value = cleaned_data.get(f'paid_grade_{grade}', 0) or 0
+                if value > 0:
+                    paid_by_grade[grade] = int(value)
+            cleaned_data['paid_by_grade'] = paid_by_grade
+            
+            # 미입금 등급별 매수
+            unpaid_by_grade = {}
+            for grade in self.seat_grades:
+                value = cleaned_data.get(f'unpaid_grade_{grade}', 0) or 0
+                if value > 0:
+                    unpaid_by_grade[grade] = int(value)
+            cleaned_data['unpaid_by_grade'] = unpaid_by_grade
+            
+            # 무료 등급별 매수
+            free_by_grade = {}
+            for grade in self.seat_grades:
+                value = cleaned_data.get(f'free_grade_{grade}', 0) or 0
+                if value > 0:
+                    free_by_grade[grade] = int(value)
+            cleaned_data['free_by_grade'] = free_by_grade
+        
+        return cleaned_data
+
+
+# 날짜별 Formset 생성
+ConcertSalesDailyFormSet = modelformset_factory(
+    ConcertSales,
+    form=ConcertSalesDailyForm,
+    extra=0,
+    can_delete=False,
+)
 
