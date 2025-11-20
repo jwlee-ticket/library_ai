@@ -462,8 +462,6 @@ function loadExistingSalesData(dateStr) {
                                 gradeInput.value = formatValue(siteData.paid_by_grade[grade]);
                             }
                         });
-                        // 입금 등급별 매수 합계 업데이트
-                        updateTicketCount(siteId, 'paid');
                     }
                     
                     if (siteData.unpaid_by_grade && seatGrades) {
@@ -473,8 +471,6 @@ function loadExistingSalesData(dateStr) {
                                 gradeInput.value = formatValue(siteData.unpaid_by_grade[grade]);
                             }
                         });
-                        // 미입금 등급별 매수 합계 업데이트
-                        updateTicketCount(siteId, 'unpaid');
                     }
                     
                     // 초대 등급별 매수 채우기 (첫 번째 예매처의 값 사용)
@@ -559,7 +555,7 @@ function createBookingSiteForm(dateStr, bookingSite) {
                         </div>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">판매 매수</label>
-                            <input type="text" inputmode="numeric" id="${siteId}_paid_ticket_count" name="${bookingSite}_paid_ticket_count" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"'}>
+                            <input type="text" inputmode="numeric" id="${siteId}_paid_ticket_count" name="${bookingSite}_paid_ticket_count" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                         </div>
                     </div>
                     ${seatGrades.length > 0 ? `
@@ -569,7 +565,7 @@ function createBookingSiteForm(dateStr, bookingSite) {
                                 ${seatGrades.map(grade => `
                                     <div class="relative">
                                         <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
-                                        <input type="text" inputmode="numeric" id="${siteId}_paid_grade_${grade}" name="${bookingSite}_paid_grade_${grade}" placeholder="0" oninput="updateTicketCount('${siteId}', 'paid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
+                                        <input type="text" inputmode="numeric" id="${siteId}_paid_grade_${grade}" name="${bookingSite}_paid_grade_${grade}" placeholder="0" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                                     </div>
                                 `).join('')}
                             </div>
@@ -587,7 +583,7 @@ function createBookingSiteForm(dateStr, bookingSite) {
                         </div>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">판매 매수</label>
-                            <input type="text" inputmode="numeric" id="${siteId}_unpaid_ticket_count" name="${bookingSite}_unpaid_ticket_count" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"'}>
+                            <input type="text" inputmode="numeric" id="${siteId}_unpaid_ticket_count" name="${bookingSite}_unpaid_ticket_count" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                         </div>
                     </div>
                     ${seatGrades.length > 0 ? `
@@ -597,7 +593,7 @@ function createBookingSiteForm(dateStr, bookingSite) {
                                 ${seatGrades.map(grade => `
                                     <div class="relative">
                                         <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
-                                        <input type="text" inputmode="numeric" id="${siteId}_unpaid_grade_${grade}" name="${bookingSite}_unpaid_grade_${grade}" placeholder="0" oninput="updateTicketCount('${siteId}', 'unpaid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
+                                        <input type="text" inputmode="numeric" id="${siteId}_unpaid_grade_${grade}" name="${bookingSite}_unpaid_grade_${grade}" placeholder="0" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                                     </div>
                                 `).join('')}
                             </div>
