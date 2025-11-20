@@ -18,6 +18,10 @@ class Performance(models.Model):
     genre = models.CharField(max_length=20, choices=GENRE_CHOICES, verbose_name='장르')
     venue = models.CharField(max_length=200, verbose_name='공연장')
     
+    # 주소 필드 (카카오 우편번호 API 사용)
+    postcode = models.CharField(max_length=10, blank=True, verbose_name='우편번호')
+    address = models.CharField(max_length=200, verbose_name='공연장 주소')
+    
     # 선택 텍스트 필드
     title_en = models.CharField(max_length=200, blank=True, verbose_name='공연명(영문)')
     age_rating = models.CharField(max_length=50, blank=True, verbose_name='관람 연령')

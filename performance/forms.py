@@ -12,6 +12,8 @@ class PerformanceForm(forms.ModelForm):
             'title_en',
             'genre',
             'venue',
+            'postcode',
+            'address',
             'performance_start',
             'performance_end',
             'sales_start',
@@ -48,6 +50,12 @@ class PerformanceForm(forms.ModelForm):
             'venue': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
                 'placeholder': '공연장을 입력해주세요',
+            }),
+            'postcode': forms.HiddenInput(),
+            'address': forms.TextInput(attrs={
+                'class': 'flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors bg-gray-50',
+                'placeholder': '공연장 주소',
+                'readonly': True,
             }),
             'performance_start': forms.DateInput(attrs={
                 'type': 'date',
