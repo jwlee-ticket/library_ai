@@ -28,6 +28,22 @@
   
   /* Link 컬러 (Primary와 동일) */
   --color-link: var(--color-primary);
+  
+  /* 차트용 예매처 색상 (고정) */
+  --color-chart-nolticket: #1e3a8a;  /* 남색 (놀티켓) */
+  --color-chart-yes24: #0ea5e9;      /* 하늘색 (예스24) */
+  --color-chart-melonticket: #10b981; /* 초록색 (멜론티켓) */
+  --color-chart-ticketlink: #ef4444;  /* 빨간색 (티켓링크) */
+  
+  /* 기타 예매처용 색상 팔레트 (동적 할당) */
+  --color-chart-site-5: #8b5cf6;  /* 보라색 */
+  --color-chart-site-6: #06b6d4;  /* 청록색 */
+  --color-chart-site-7: #f97316;  /* 오렌지색 */
+  --color-chart-site-8: #ec4899;  /* 핑크색 */
+  
+  /* 차트용 입금/미입금 색상 */
+  --color-chart-paid-opacity: 1;      /* 입금: 불투명도 100% */
+  --color-chart-unpaid-opacity: 0.6;  /* 미입금: 불투명도 60% */
 }
 
 /**
