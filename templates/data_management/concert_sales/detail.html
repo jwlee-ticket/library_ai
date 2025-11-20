@@ -36,7 +36,7 @@
     <!-- 데일리 매출 입력 섹션 -->
     {% if performance and booking_sites %}
         <div class="mb-12">
-            <h2 class="text-2xl font-semibold text-black mb-6">데일리 매출 입력</h2>
+            <h2 class="text-2xl font-semibold text-black mb-6">데일리</h2>
             
             <!-- 캘린더 컨테이너 -->
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
@@ -58,7 +58,7 @@
     {% if performance %}
         <div class="mb-12">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-semibold text-black">최종 매출 입력</h2>
+                <h2 class="text-2xl font-semibold text-black">최종</h2>
                 <button 
                     type="button"
                     onclick="saveFinalSales()"
@@ -343,97 +343,49 @@
         </div>
     {% endif %}
     
-    <!-- 매출 리스트 테이블 -->
-    {% if performance and sales_list %}
-        <div class="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">날짜</th>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">예매처</th>
-                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">입금 판매액</th>
-                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">입금 매수</th>
-                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">미입금 판매액</th>
-                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">미입금 매수</th>
-                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for sales in sales_list %}
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <span class="text-sm text-gray-700">{{ sales.date|date:"Y.m.d" }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="text-sm text-gray-700">{{ sales.booking_site }}</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <span class="text-sm text-gray-700">{{ sales.paid_revenue|floatformat:0 }}원</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <span class="text-sm text-gray-700">{{ sales.paid_ticket_count }}매</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <span class="text-sm text-gray-700">{{ sales.unpaid_revenue|floatformat:0 }}원</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <span class="text-sm text-gray-700">{{ sales.unpaid_ticket_count }}매</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <a href="{% url 'data_management:concert_sales_update' sales.pk %}" class="px-4 py-2 bg-white text-black border-2 border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                                            수정
-                                        </a>
-                                        <a href="{% url 'data_management:concert_sales_delete' sales.pk %}" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors">
-                                            삭제
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- 엑셀 업로드 섹션 -->
+    {% if performance %}
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-black mb-6">엑셀 업로드</h2>
+            
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
+                <div class="space-y-4">
+                    <!-- 업로드 폼 -->
+                    <form id="excel-upload-form" enctype="multipart/form-data" class="space-y-4">
+                        {% csrf_token %}
+                        <div class="flex gap-4 items-end">
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">엑셀 파일 선택</label>
+                                <input 
+                                    type="file" 
+                                    id="excel-file-input" 
+                                    name="excel_file" 
+                                    accept=".xlsx,.xls"
+                                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary file:text-white file:cursor-pointer hover:file:bg-primary-900"
+                                >
+                            </div>
+                            <button 
+                                type="submit"
+                                id="excel-upload-btn"
+                                class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm"
+                            >
+                                업로드
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- 상태 메시지 영역 -->
+                    <div id="excel-upload-status" class="hidden mt-4 p-4 rounded-lg border-2 transition-all duration-200">
+                        <div class="flex items-start gap-3">
+                            <div id="excel-upload-icon" class="flex-shrink-0 mt-0.5"></div>
+                            <div class="flex-1">
+                                <p id="excel-upload-message" class="text-sm font-medium"></p>
+                                <p id="excel-upload-details" class="text-xs mt-1"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <!-- 페이지네이션 -->
-        {% if page_obj.has_other_pages %}
-            <nav class="flex justify-center items-center space-x-2 mt-8">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if performance.id %}&performance={{ performance.id }}{% endif %}{% if request.GET.date_start %}&date_start={{ request.GET.date_start }}{% endif %}{% if request.GET.date_end %}&date_end={{ request.GET.date_end }}{% endif %}{% if request.GET.booking_site %}&booking_site={{ request.GET.booking_site }}{% endif %}"
-                   class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">이전</a>
-                {% else %}
-                    <span class="px-4 py-2 rounded-lg border border-gray-100 text-gray-400 cursor-not-allowed">이전</span>
-                {% endif %}
-
-                {% for i in page_obj.paginator.page_range %}
-                    {% if page_obj.number == i %}
-                        <span class="px-4 py-2 rounded-lg bg-primary text-white font-medium">{{ i }}</span>
-                    {% else %}
-                        <a href="?page={{ i }}{% if performance.id %}&performance={{ performance.id }}{% endif %}{% if request.GET.date_start %}&date_start={{ request.GET.date_start }}{% endif %}{% if request.GET.date_end %}&date_end={{ request.GET.date_end }}{% endif %}{% if request.GET.booking_site %}&booking_site={{ request.GET.booking_site }}{% endif %}"
-                           class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">{{ i }}</a>
-                    {% endif %}
-                {% endfor %}
-
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if performance.id %}&performance={{ performance.id }}{% endif %}{% if request.GET.date_start %}&date_start={{ request.GET.date_start }}{% endif %}{% if request.GET.date_end %}&date_end={{ request.GET.date_end }}{% endif %}{% if request.GET.booking_site %}&booking_site={{ request.GET.booking_site }}{% endif %}"
-                       class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">다음</a>
-                {% else %}
-                    <span class="px-4 py-2 rounded-lg border border-gray-100 text-gray-400 cursor-not-allowed">다음</span>
-                {% endif %}
-            </nav>
-        {% endif %}
-    {% elif performance %}
-        <div class="bg-white rounded-xl border border-gray-100 p-12 text-center">
-            <p class="text-gray-600 text-lg">등록된 매출이 없어요</p>
-        </div>
-    {% else %}
-        <div class="bg-white rounded-xl border border-gray-100 p-12 text-center">
-            <p class="text-gray-600 text-lg">공연을 선택해주세요</p>
-            <a href="{% url 'data_management:performance_list' %}" class="inline-block mt-4 px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 transition-colors">
-                매출 관리로 돌아가기
-            </a>
         </div>
     {% endif %}
 {% endblock %}

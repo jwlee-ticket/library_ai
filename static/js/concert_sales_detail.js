@@ -213,21 +213,35 @@ function createDateCell(year, month, day, dateStr, isLastRow, isLastCol) {
         cellClass = cellClass.replace('border-b', '');
     }
     
+    // 오늘 날짜와 입력 완료 상태를 분리하여 처리
+    const isCompleted = status === 'completed';
+    
+    // 날짜 숫자를 감쌀 동그란 원 스타일 (오늘 날짜만)
+    let circleClass = '';
+    let dayTextClass = '';
+    
     if (isToday) {
-        // 오늘 날짜: 브랜드 컬러
-        cellClass += ' bg-brand text-white font-semibold shadow-sm hover:bg-brand-900';
+        // 오늘 날짜: primary 배경의 동그란 원
+        circleClass = 'w-8 h-8 rounded-full bg-primary text-white font-semibold flex items-center justify-center';
+        dayTextClass = 'text-white';
     } else {
-        // 상태별 스타일
-        switch(status) {
-            case 'completed':
-                cellClass += ' bg-success/10 text-success hover:bg-success/20 hover:shadow-sm';
-                break;
-            default:
-                cellClass += ' bg-white text-gray-700 hover:bg-gray-50 hover:shadow-sm';
-        }
+        // 기본 상태: 동그란 원 없이 일반 텍스트
+        dayTextClass = isCompleted ? 'text-success' : 'text-gray-700';
     }
     
-    return `<div class="${cellClass}" onclick="openDateModal('${dateStr}')" data-date="${dateStr}">${day}</div>`;
+    // 셀 배경색 설정 (입력 완료만 배경색 적용)
+    if (isCompleted) {
+        cellClass += ' bg-success/10 hover:bg-success/20 hover:shadow-sm';
+    } else {
+        cellClass += ' bg-white hover:bg-gray-50 hover:shadow-sm';
+    }
+    
+    // 날짜 숫자를 동그란 원으로 감싸거나 일반 텍스트로 표시
+    const dayContent = circleClass 
+        ? `<span class="${circleClass}"><span class="${dayTextClass}">${day}</span></span>`
+        : `<span class="${dayTextClass}">${day}</span>`;
+    
+    return `<div class="${cellClass}" onclick="openDateModal('${dateStr}')" data-date="${dateStr}">${dayContent}</div>`;
 }
 
 // 날짜 상태 확인
@@ -890,3 +904,165 @@ function saveFinalSales() {
     // TODO: AJAX로 저장 요청
     alert('최종 매출 저장 기능은 아직 구현 중입니다.');
 }
+
+// 엑셀 업로드 폼 처리
+document.addEventListener('DOMContentLoaded', function() {
+    const excelUploadForm = document.getElementById('excel-upload-form');
+    const excelUploadStatus = document.getElementById('excel-upload-status');
+    const excelUploadMessage = document.getElementById('excel-upload-message');
+    const excelUploadDetails = document.getElementById('excel-upload-details');
+    const excelUploadIcon = document.getElementById('excel-upload-icon');
+    const excelUploadBtn = document.getElementById('excel-upload-btn');
+    
+    if (excelUploadForm) {
+        excelUploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('excel-file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showExcelUploadStatus('error', '파일을 선택해주세요.', '');
+                return;
+            }
+            
+            // 파일 확장자 확인
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                showExcelUploadStatus('error', '지원하지 않는 파일 형식입니다.', '.xlsx 또는 .xls 파일만 업로드 가능합니다.');
+                return;
+            }
+            
+            // 업로드 버튼 비활성화
+            if (excelUploadBtn) {
+                excelUploadBtn.disabled = true;
+                excelUploadBtn.textContent = '업로드 중...';
+            }
+            
+            // FormData 생성
+            const formData = new FormData();
+            formData.append('excel_file', file);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            // 업로드 진행 중 상태 표시
+            showExcelUploadStatus('loading', '파일을 업로드하는 중입니다...', '');
+            
+            // TODO: 실제 업로드 URL로 변경 필요
+            // fetch('업로드_URL', {
+            //     method: 'POST',
+            //     body: formData,
+            //     headers: {
+            //         'X-CSRFToken': csrfToken
+            //     }
+            // })
+            // .then(response => response.json())
+            // .then(data => {
+            //     if (data.success) {
+            //         showExcelUploadStatus('success', '업로드가 완료되었습니다.', `총 ${data.count || 0}건의 데이터가 등록되었습니다.`);
+            //         fileInput.value = '';
+            //         // 캘린더 새로고침
+            //         if (typeof renderCalendar === 'function') {
+            //             renderCalendar();
+            //         }
+            //     } else {
+            //         showExcelUploadStatus('error', '업로드 실패', data.error || '알 수 없는 오류가 발생했습니다.');
+            //     }
+            // })
+            // .catch(error => {
+            //     showExcelUploadStatus('error', '업로드 중 오류 발생', error.message);
+            // })
+            // .finally(() => {
+            //     if (excelUploadBtn) {
+            //         excelUploadBtn.disabled = false;
+            //         excelUploadBtn.textContent = '업로드';
+            //     }
+            // });
+        });
+    }
+    
+    // 엑셀 업로드 상태 메시지 표시 함수
+    function showExcelUploadStatus(type, message, details) {
+        if (!excelUploadStatus || !excelUploadMessage) return;
+        
+        excelUploadStatus.classList.remove('hidden');
+        
+        // 타입에 따른 스타일 설정
+        excelUploadStatus.className = 'mt-4 p-4 rounded-lg border-2 transition-all duration-200';
+        
+        let iconSvg = '';
+        let bgColor = '';
+        let borderColor = '';
+        let textColor = '';
+        let iconColor = '';
+        
+        switch(type) {
+            case 'success':
+                bgColor = 'bg-success/10';
+                borderColor = 'border-success';
+                textColor = 'text-success';
+                iconColor = 'text-success';
+                iconSvg = `
+                    <svg class="w-5 h-5 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                `;
+                break;
+            case 'error':
+                bgColor = 'bg-danger/10';
+                borderColor = 'border-danger';
+                textColor = 'text-danger';
+                iconColor = 'text-danger';
+                iconSvg = `
+                    <svg class="w-5 h-5 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                `;
+                break;
+            case 'loading':
+                bgColor = 'bg-primary/10';
+                borderColor = 'border-primary';
+                textColor = 'text-primary';
+                iconColor = 'text-primary';
+                iconSvg = `
+                    <svg class="w-5 h-5 ${iconColor} animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                `;
+                break;
+            default:
+                bgColor = 'bg-gray-50';
+                borderColor = 'border-gray-200';
+                textColor = 'text-gray-700';
+                iconColor = 'text-gray-500';
+        }
+        
+        excelUploadStatus.className += ` ${bgColor} ${borderColor}`;
+        excelUploadMessage.className = `text-sm font-medium ${textColor}`;
+        excelUploadMessage.textContent = message;
+        
+        if (excelUploadDetails) {
+            if (details) {
+                excelUploadDetails.className = `text-xs mt-1 ${textColor}`;
+                excelUploadDetails.textContent = details;
+                excelUploadDetails.classList.remove('hidden');
+            } else {
+                excelUploadDetails.classList.add('hidden');
+            }
+        }
+        
+        if (excelUploadIcon) {
+            excelUploadIcon.innerHTML = iconSvg;
+        }
+        
+        // 성공/오류 메시지는 5초 후 자동 숨김
+        if (type === 'success' || type === 'error') {
+            setTimeout(() => {
+                excelUploadStatus.classList.add('hidden');
+            }, 5000);
+        }
+    }
+    
+    // 전역 함수로 등록 (템플릿 다운로드 등에서 사용 가능)
+    window.showExcelUploadStatus = showExcelUploadStatus;
+});
