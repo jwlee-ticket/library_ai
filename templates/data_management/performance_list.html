@@ -27,12 +27,20 @@
                             <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연명</th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연장</th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연 기간</th>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">관리</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">상태</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         {% for performance in performances %}
-                            <tr class="hover:bg-gray-50 transition-colors">
+                            {% if performance.genre == 'concert' %}
+                                {% url 'data_management:concert_sales_list' performance.id as sales_url %}
+                            {% elif performance.genre == 'musical' %}
+                                {% url 'data_management:musical_sales_list' performance.id as sales_url %}
+                            {% elif performance.genre == 'theater' %}
+                                {% url 'data_management:theater_sales_list' performance.id as sales_url %}
+                            {% endif %}
+                            <tr class="hover:bg-gray-50 transition-colors {% if sales_url %}cursor-pointer{% else %}cursor-not-allowed{% endif %}" 
+                                {% if sales_url %}data-href="{{ sales_url }}"{% endif %}>
                                 <td class="px-6 py-4">
                                     {{ performance.genre|genre_badge }}
                                 </td>
@@ -48,22 +56,8 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    {% if performance.genre == 'concert' %}
-                                        <a href="{% url 'data_management:concert_sales_list' performance.id %}" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-900 transition-colors">
-                                            매출 관리
-                                        </a>
-                                    {% elif performance.genre == 'musical' %}
-                                        <a href="{% url 'data_management:musical_sales_list' performance.id %}" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-900 transition-colors">
-                                            매출 관리
-                                        </a>
-                                    {% elif performance.genre == 'theater' %}
-                                        <a href="{% url 'data_management:theater_sales_list' performance.id %}" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-900 transition-colors">
-                                            매출 관리
-                                        </a>
-                                    {% else %}
-                                        <span class="px-4 py-2 bg-gray-200 text-gray-500 rounded-lg text-sm font-medium cursor-not-allowed">
-                                            준비 중
-                                        </span>
+                                    {% if not sales_url %}
+                                        <span class="text-sm text-gray-500">준비 중</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -80,5 +74,26 @@
             <p class="text-gray-600 text-lg">등록된 공연이 없어요</p>
         </div>
     {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 테이블 행 클릭 이벤트
+        const rows = document.querySelectorAll('tbody tr[data-href]');
+        rows.forEach(row => {
+            row.addEventListener('click', function(e) {
+                // 버튼이나 링크 클릭 시에는 기본 동작 유지
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('button') || e.target.closest('a')) {
+                    return;
+                }
+                const href = this.getAttribute('data-href');
+                if (href) {
+                    window.location.href = href;
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}
 
