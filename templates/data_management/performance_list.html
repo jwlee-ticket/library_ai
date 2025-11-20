@@ -33,7 +33,7 @@
                     <tbody class="divide-y divide-gray-100">
                         {% for performance in performances %}
                             {% if performance.genre == 'concert' %}
-                                {% url 'data_management:concert_sales_list' performance.id as sales_url %}
+                                {% url 'data_management:concert_sales_detail' performance.id as sales_url %}
                             {% elif performance.genre == 'musical' %}
                                 {% url 'data_management:musical_sales_list' performance.id as sales_url %}
                             {% elif performance.genre == 'theater' %}

@@ -50,9 +50,9 @@ class PerformanceListView(ListView):
 
 
 class ConcertSalesListView(ListView):
-    """콘서트 데일리 매출 목록 뷰 (특정 공연의 매출)"""
+    """콘서트 데일리 매출 상세 뷰 (특정 공연의 매출)"""
     model = ConcertDailySales
-    template_name = 'data_management/concert_sales/list.html'
+    template_name = 'data_management/concert_sales/detail.html'
     context_object_name = 'sales_list'
     paginate_by = 20
     
@@ -176,7 +176,7 @@ class ConcertSalesCreateView(CreateView):
     
     def get_success_url(self):
         performance_id = self.object.performance.id
-        return reverse_lazy('data_management:concert_sales_list', kwargs={'performance_id': performance_id})
+        return reverse_lazy('data_management:concert_sales_detail', kwargs={'performance_id': performance_id})
     
     def get_initial(self):
         initial = super().get_initial()
@@ -209,7 +209,7 @@ class ConcertSalesUpdateView(UpdateView):
     
     def get_success_url(self):
         performance_id = self.object.performance.id
-        return reverse_lazy('data_management:concert_sales_list', kwargs={'performance_id': performance_id})
+        return reverse_lazy('data_management:concert_sales_detail', kwargs={'performance_id': performance_id})
     
     def get(self, request, *args, **kwargs):
         # GET 요청 시 이전 메시지 제거
@@ -235,7 +235,7 @@ class ConcertSalesDeleteView(DeleteView):
     
     def get_success_url(self):
         performance_id = self.object.performance.id
-        return reverse_lazy('data_management:concert_sales_list', kwargs={'performance_id': performance_id})
+        return reverse_lazy('data_management:concert_sales_detail', kwargs={'performance_id': performance_id})
     
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, '매출이 성공적으로 삭제되었어요')

@@ -12,7 +12,7 @@ urlpatterns = [
     path('sales/', views.PerformanceListView.as_view(), name='performance_list'),
     
     # 콘서트 매출 관리 (특정 공연의 매출)
-    path('sales/concert/<int:performance_id>/', views.ConcertSalesListView.as_view(), name='concert_sales_list'),
+    path('sales/concert/<int:performance_id>/', views.ConcertSalesListView.as_view(), name='concert_sales_detail'),
     path('sales/concert/<int:performance_id>/create/', views.ConcertSalesCreateView.as_view(), name='concert_sales_create'),
     path('sales/concert/<int:performance_id>/save-daily/', views.save_daily_sales, name='save_daily_sales'),
     path('sales/concert/<int:pk>/edit/', views.ConcertSalesUpdateView.as_view(), name='concert_sales_update'),

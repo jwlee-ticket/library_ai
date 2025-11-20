@@ -52,7 +52,7 @@
                            <!-- 데이터 관리 드롭다운 -->
                            <div class="relative">
                                {% with is_sales_active=request.resolver_match.url_name|default:"" %}
-                               {% if is_sales_active == "performance_list" or is_sales_active == "concert_sales_list" or is_sales_active == "musical_sales_list" or is_sales_active == "theater_sales_list" %}
+                               {% if is_sales_active == "performance_list" or is_sales_active == "concert_sales_detail" or is_sales_active == "musical_sales_list" or is_sales_active == "theater_sales_list" %}
                                    {% with data_dropdown_open=True %}
                                        <button onclick="toggleDataDropdown()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-all duration-200 hover:shadow-sm">
                                            <span>데이터 관리</span>
