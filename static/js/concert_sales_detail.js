@@ -360,11 +360,28 @@ function openDateModal(dateStr) {
         // 모달에 포커스 주기
         modal.focus();
         
-        // 모달 DOM이 완전히 렌더링된 후 기존 저장된 데이터 불러오기
+        // 모달 DOM이 완전히 렌더링된 후 기존 저장된 데이터 불러오기 및 포맷팅 적용
         setTimeout(() => {
             loadExistingSalesData(dateStr);
+            // 숫자 입력 필드에 포맷팅 적용
+            applyNumberFormattingToModal();
         }, 50);
     }, 10);
+}
+
+// 모달 내 숫자 입력 필드에 포맷팅 적용
+function applyNumberFormattingToModal() {
+    const modal = document.getElementById('date-modal');
+    if (!modal) return;
+    
+    // 모든 텍스트 입력 필드 찾기 (이미 type="text"로 변경됨)
+    const textInputs = modal.querySelectorAll('input[type="text"][inputmode="numeric"]');
+    textInputs.forEach(input => {
+        // base.js의 포맷팅 함수 사용
+        if (typeof applyNumberFormatting === 'function') {
+            applyNumberFormatting(input);
+        }
+    });
 }
 
 // 기존 저장된 매출 데이터 불러오기
@@ -407,17 +424,28 @@ function loadExistingSalesData(dateStr) {
                     const unpaidRevenueInput = document.getElementById(`${siteId}_unpaid_revenue`);
                     const unpaidTicketCountInput = document.getElementById(`${siteId}_unpaid_ticket_count`);
                     
-                    if (paidRevenueInput) paidRevenueInput.value = siteData.paid_revenue || 0;
-                    if (paidTicketCountInput) paidTicketCountInput.value = siteData.paid_ticket_count || 0;
-                    if (unpaidRevenueInput) unpaidRevenueInput.value = siteData.unpaid_revenue || 0;
-                    if (unpaidTicketCountInput) unpaidTicketCountInput.value = siteData.unpaid_ticket_count || 0;
+                    // 숫자 포맷팅 헬퍼 함수
+                    const formatValue = (value) => {
+                        if (!value && value !== 0) return '';
+                        // base.js의 formatNumber 함수 사용 (있는 경우)
+                        if (typeof formatNumber === 'function') {
+                            return formatNumber(value);
+                        }
+                        // 없으면 직접 포맷팅
+                        return parseInt(value, 10).toLocaleString('ko-KR');
+                    };
+                    
+                    if (paidRevenueInput) paidRevenueInput.value = formatValue(siteData.paid_revenue);
+                    if (paidTicketCountInput) paidTicketCountInput.value = formatValue(siteData.paid_ticket_count);
+                    if (unpaidRevenueInput) unpaidRevenueInput.value = formatValue(siteData.unpaid_revenue);
+                    if (unpaidTicketCountInput) unpaidTicketCountInput.value = formatValue(siteData.unpaid_ticket_count);
                     
                     // 등급별 매수 채우기
                     if (siteData.paid_by_grade && seatGrades) {
                         seatGrades.forEach(grade => {
                             const gradeInput = document.getElementById(`${siteId}_paid_grade_${grade}`);
                             if (gradeInput && siteData.paid_by_grade[grade]) {
-                                gradeInput.value = siteData.paid_by_grade[grade];
+                                gradeInput.value = formatValue(siteData.paid_by_grade[grade]);
                             }
                         });
                         // 입금 등급별 매수 합계 업데이트
@@ -428,7 +456,7 @@ function loadExistingSalesData(dateStr) {
                         seatGrades.forEach(grade => {
                             const gradeInput = document.getElementById(`${siteId}_unpaid_grade_${grade}`);
                             if (gradeInput && siteData.unpaid_by_grade[grade]) {
-                                gradeInput.value = siteData.unpaid_by_grade[grade];
+                                gradeInput.value = formatValue(siteData.unpaid_by_grade[grade]);
                             }
                         });
                         // 미입금 등급별 매수 합계 업데이트
@@ -441,7 +469,7 @@ function loadExistingSalesData(dateStr) {
                             const firstSiteId = `${dateStr}_${bookingSites[0]}`;
                             const freeInput = document.getElementById(`${firstSiteId}_free_grade_${grade}`);
                             if (freeInput && siteData.free_by_grade[grade]) {
-                                freeInput.value = siteData.free_by_grade[grade];
+                                freeInput.value = formatValue(siteData.free_by_grade[grade]);
                                 // 다른 예매처에도 동기화
                                 syncInviteInputs(dateStr, grade);
                             }
@@ -513,11 +541,11 @@ function createBookingSiteForm(dateStr, bookingSite) {
                     <div class="grid grid-cols-2 gap-4 mb-3">
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">판매액 (원)</label>
-                            <input type="number" id="${siteId}_paid_revenue" name="${bookingSite}_paid_revenue" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
+                            <input type="text" inputmode="numeric" id="${siteId}_paid_revenue" name="${bookingSite}_paid_revenue" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">판매 매수</label>
-                            <input type="number" id="${siteId}_paid_ticket_count" name="${bookingSite}_paid_ticket_count" min="0" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"'}">
+                            <input type="text" inputmode="numeric" id="${siteId}_paid_ticket_count" name="${bookingSite}_paid_ticket_count" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"'}>
                         </div>
                     </div>
                     ${seatGrades.length > 0 ? `
@@ -527,7 +555,7 @@ function createBookingSiteForm(dateStr, bookingSite) {
                                 ${seatGrades.map(grade => `
                                     <div class="relative">
                                         <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
-                                        <input type="number" id="${siteId}_paid_grade_${grade}" name="${bookingSite}_paid_grade_${grade}" min="0" placeholder="0" oninput="updateTicketCount('${siteId}', 'paid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
+                                        <input type="text" inputmode="numeric" id="${siteId}_paid_grade_${grade}" name="${bookingSite}_paid_grade_${grade}" placeholder="0" oninput="updateTicketCount('${siteId}', 'paid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                                     </div>
                                 `).join('')}
                             </div>
@@ -541,11 +569,11 @@ function createBookingSiteForm(dateStr, bookingSite) {
                     <div class="grid grid-cols-2 gap-4 mb-3">
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">판매액 (원)</label>
-                            <input type="number" id="${siteId}_unpaid_revenue" name="${bookingSite}_unpaid_revenue" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
+                            <input type="text" inputmode="numeric" id="${siteId}_unpaid_revenue" name="${bookingSite}_unpaid_revenue" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">판매 매수</label>
-                            <input type="number" id="${siteId}_unpaid_ticket_count" name="${bookingSite}_unpaid_ticket_count" min="0" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"'}">
+                            <input type="text" inputmode="numeric" id="${siteId}_unpaid_ticket_count" name="${bookingSite}_unpaid_ticket_count" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"'}>
                         </div>
                     </div>
                     ${seatGrades.length > 0 ? `
@@ -555,7 +583,7 @@ function createBookingSiteForm(dateStr, bookingSite) {
                                 ${seatGrades.map(grade => `
                                     <div class="relative">
                                         <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
-                                        <input type="number" id="${siteId}_unpaid_grade_${grade}" name="${bookingSite}_unpaid_grade_${grade}" min="0" placeholder="0" oninput="updateTicketCount('${siteId}', 'unpaid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
+                                        <input type="text" inputmode="numeric" id="${siteId}_unpaid_grade_${grade}" name="${bookingSite}_unpaid_grade_${grade}" placeholder="0" oninput="updateTicketCount('${siteId}', 'unpaid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                                     </div>
                                 `).join('')}
                             </div>
@@ -584,7 +612,7 @@ function createInviteSection(dateStr) {
                     return `
                         <div class="relative">
                             <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
-                            <input type="number" id="${firstSiteId}_free_grade_${grade}" name="${bookingSites[0]}_free_grade_${grade}" min="0" placeholder="0" oninput="syncInviteInputs('${dateStr}', '${grade}')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
+                            <input type="text" inputmode="numeric" id="${firstSiteId}_free_grade_${grade}" name="${bookingSites[0]}_free_grade_${grade}" placeholder="0" oninput="syncInviteInputs('${dateStr}', '${grade}')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                             ${hiddenInputs}
                         </div>
                     `;
@@ -595,10 +623,21 @@ function createInviteSection(dateStr) {
 }
 
 function syncInviteInputs(dateStr, grade) {
+    // 콤마 제거 헬퍼 함수
+    const removeCommasFromValue = (value) => {
+        if (!value) return '';
+        // base.js의 removeCommas 함수 사용 (있는 경우)
+        if (typeof removeCommas === 'function') {
+            return removeCommas(value);
+        }
+        // 없으면 직접 제거
+        return String(value).replace(/,/g, '');
+    };
+    
     // 첫 번째 예매처의 값을 다른 예매처들에도 동일하게 적용
     const firstInput = document.getElementById(`${dateStr}_${bookingSites[0]}_free_grade_${grade}`);
     if (firstInput) {
-        const value = firstInput.value || 0;
+        const value = removeCommasFromValue(firstInput.value) || '0';
         bookingSites.slice(1).forEach(bookingSite => {
             const hiddenInput = document.getElementById(`${dateStr}_${bookingSite}_free_grade_${grade}`);
             if (hiddenInput) {
@@ -645,13 +684,24 @@ function saveDateSales(dateStr) {
     formData.append('date', dateStr);
     formData.append('csrfmiddlewaretoken', csrfToken);
     
-    // 해당 날짜의 모든 입력 필드 수집
+    // 콤마 제거 헬퍼 함수
+    const removeCommasFromValue = (value) => {
+        if (!value) return '0';
+        // base.js의 removeCommas 함수 사용 (있는 경우)
+        if (typeof removeCommas === 'function') {
+            return removeCommas(value) || '0';
+        }
+        // 없으면 직접 제거
+        return String(value).replace(/,/g, '') || '0';
+    };
+    
+    // 해당 날짜의 모든 입력 필드 수집 (콤마 제거)
     bookingSites.forEach(site => {
         const siteId = `${dateStr}_${site}`;
-        const paidRevenue = document.getElementById(`${siteId}_paid_revenue`)?.value || '0';
-        const paidTicketCount = document.getElementById(`${siteId}_paid_ticket_count`)?.value || '0';
-        const unpaidRevenue = document.getElementById(`${siteId}_unpaid_revenue`)?.value || '0';
-        const unpaidTicketCount = document.getElementById(`${siteId}_unpaid_ticket_count`)?.value || '0';
+        const paidRevenue = removeCommasFromValue(document.getElementById(`${siteId}_paid_revenue`)?.value);
+        const paidTicketCount = removeCommasFromValue(document.getElementById(`${siteId}_paid_ticket_count`)?.value);
+        const unpaidRevenue = removeCommasFromValue(document.getElementById(`${siteId}_unpaid_revenue`)?.value);
+        const unpaidTicketCount = removeCommasFromValue(document.getElementById(`${siteId}_unpaid_ticket_count`)?.value);
         
         formData.append(`${site}_paid_revenue`, paidRevenue);
         formData.append(`${site}_paid_ticket_count`, paidTicketCount);
@@ -659,11 +709,11 @@ function saveDateSales(dateStr) {
         formData.append(`${site}_unpaid_ticket_count`, unpaidTicketCount);
         
         seatGrades.forEach(grade => {
-            const paidGrade = document.getElementById(`${siteId}_paid_grade_${grade}`)?.value || '0';
-            const unpaidGrade = document.getElementById(`${siteId}_unpaid_grade_${grade}`)?.value || '0';
+            const paidGrade = removeCommasFromValue(document.getElementById(`${siteId}_paid_grade_${grade}`)?.value);
+            const unpaidGrade = removeCommasFromValue(document.getElementById(`${siteId}_unpaid_grade_${grade}`)?.value);
             // 초대는 첫 번째 예매처의 값을 모든 예매처에 동일하게 적용
             const firstSiteId = `${dateStr}_${bookingSites[0]}`;
-            const freeValue = document.getElementById(`${firstSiteId}_free_grade_${grade}`)?.value || '0';
+            const freeValue = removeCommasFromValue(document.getElementById(`${firstSiteId}_free_grade_${grade}`)?.value);
             
             formData.append(`${site}_paid_grade_${grade}`, paidGrade);
             formData.append(`${site}_unpaid_grade_${grade}`, unpaidGrade);
