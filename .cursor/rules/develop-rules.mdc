@@ -1,7 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
 ---
-
 # 개발 규칙
 
 ## 파일 구조 및 분리 원칙
@@ -29,7 +28,7 @@ alwaysApply: true
 
 ## JavaScript 작성 규칙
 - JavaScript 코드는 별도 `.js` 파일로 작성하고 `static/js/` 디렉토리에 저장합니다.
-- 파일명은 `kebab-case.js` 형식을 사용합니다 (예: `performance-form.js`).
+- 파일명은 `kebab-case.js` 형식을 사용합니다 (예: `performance_form.js`).
 - 공통으로 사용되는 함수는 `static/js/base.js`에 작성합니다.
 - 페이지별 JavaScript는 해당 페이지와 동일한 이름의 파일로 작성합니다.
 - DOM 조작은 `DOMContentLoaded` 이벤트 내에서 수행합니다.

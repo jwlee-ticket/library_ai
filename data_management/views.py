@@ -378,3 +378,70 @@ def save_daily_sales(request, performance_id):
             if form.errors:
                 errors[f'form_{idx}'] = form.errors
         return JsonResponse({'success': False, 'error': '입력값을 확인해주세요', 'errors': errors}, status=400)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_daily_sales(request, performance_id):
+    """특정 날짜의 데일리 매출 조회 (AJAX)"""
+    try:
+        performance = Performance.objects.get(id=performance_id, genre='concert')
+    except Performance.DoesNotExist:
+        return JsonResponse({'success': False, 'error': '공연을 찾을 수 없어요'}, status=404)
+    
+    # GET 파라미터에서 날짜 추출
+    date_str = request.GET.get('date')
+    if not date_str:
+        return JsonResponse({'success': False, 'error': '날짜가 필요해요'}, status=400)
+    
+    try:
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'success': False, 'error': '올바른 날짜 형식이 아니에요'}, status=400)
+    
+    # 해당 날짜의 모든 매출 데이터 조회
+    sales_data = ConcertDailySales.objects.filter(
+        performance=performance,
+        date=date
+    )
+    
+    # 예매처별로 데이터 정리
+    result = {}
+    for sales in sales_data:
+        site = sales.booking_site
+        if site not in result:
+            result[site] = {
+                'paid_revenue': 0,
+                'paid_ticket_count': 0,
+                'unpaid_revenue': 0,
+                'unpaid_ticket_count': 0,
+                'paid_by_grade': {},
+                'unpaid_by_grade': {},
+                'free_by_grade': {}
+            }
+        
+        result[site]['paid_revenue'] = float(sales.paid_revenue) if sales.paid_revenue else 0
+        result[site]['paid_ticket_count'] = sales.paid_ticket_count or 0
+        result[site]['unpaid_revenue'] = float(sales.unpaid_revenue) if sales.unpaid_revenue else 0
+        result[site]['unpaid_ticket_count'] = sales.unpaid_ticket_count or 0
+        
+        # 등급별 매수 파싱
+        if sales.paid_by_grade:
+            try:
+                result[site]['paid_by_grade'] = json.loads(sales.paid_by_grade) if isinstance(sales.paid_by_grade, str) else sales.paid_by_grade
+            except:
+                result[site]['paid_by_grade'] = {}
+        
+        if sales.unpaid_by_grade:
+            try:
+                result[site]['unpaid_by_grade'] = json.loads(sales.unpaid_by_grade) if isinstance(sales.unpaid_by_grade, str) else sales.unpaid_by_grade
+            except:
+                result[site]['unpaid_by_grade'] = {}
+        
+        if sales.free_by_grade:
+            try:
+                result[site]['free_by_grade'] = json.loads(sales.free_by_grade) if isinstance(sales.free_by_grade, str) else sales.free_by_grade
+            except:
+                result[site]['free_by_grade'] = {}
+    
+    return JsonResponse({'success': True, 'data': result})
