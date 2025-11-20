@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load performance_tags %}
+
+{% block breadcrumb %}
+    <span class="text-gray-700 font-medium">공연별 대시보드</span>
+    <span class="text-gray-400 mx-2">/</span>
+    <span class="text-black font-medium">{{ performance.title }}</span>
+{% endblock %}
+
+{% block content %}
+    <!-- 페이지 제목 -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-semibold text-black">{{ performance.title }}</h1>
+    </div>
+    
+    <!-- 연극 대시보드 내용 (추후 구현 예정) -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+        <p class="text-base text-gray-600">연극 대시보드 상세 페이지는 추후 구현 예정입니다.</p>
+    </div>
+{% endblock %}
+

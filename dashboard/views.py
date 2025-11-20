@@ -48,7 +48,22 @@ class PerformanceDashboardListView(ListView):
 
 
 class PerformanceDashboardDetailView(DetailView):
-    """공연별 대시보드 상세 뷰 (임시 - 추후 구현 예정)"""
+    """공연별 대시보드 상세 뷰 (장르별로 다른 템플릿 사용)"""
     model = Performance
-    template_name = 'dashboard/detail.html'
     context_object_name = 'performance'
+    
+    def get_template_names(self):
+        """장르에 따라 다른 템플릿 반환"""
+        performance = self.get_object()
+        genre = performance.genre
+        
+        # 장르별 템플릿 경로 매핑
+        genre_template_map = {
+            'concert': 'dashboard/concert/detail.html',
+            'theater': 'dashboard/theater/detail.html',
+            'musical': 'dashboard/musical/detail.html',
+            'exhibition': 'dashboard/exhibition/detail.html',
+        }
+        
+        # 장르별 템플릿이 있으면 사용, 없으면 기본 템플릿 사용
+        return [genre_template_map.get(genre, 'dashboard/detail.html')]
