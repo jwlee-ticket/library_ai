@@ -85,7 +85,7 @@
                     <label class="block text-sm font-medium text-gray-600 mb-2">주관</label>
                     <p class="text-base text-black">{% if performance.organizer %}{{ performance.organizer }}{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
                 </div>
-                <div class="md:col-span-2">
+                <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">제작진</label>
                     {% if performance.crew %}
                         {% display_json_dict performance.crew as crew_display %}
@@ -94,7 +94,7 @@
                         <span class="text-gray-400">없음</span>
                     {% endif %}
                 </div>
-                <div class="md:col-span-2">
+                <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">캐스팅</label>
                     {% if performance.casting %}
                         {% display_json_dict performance.casting as casting_display %}
