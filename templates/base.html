@@ -10,11 +10,8 @@
     
     <!-- Tailwind CSS -->
     {% load tailwind_tags %}
-    {% tailwind_css %}
-    
-    <!-- Base CSS -->
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    {% tailwind_css %}
     
     {% block extra_css %}{% endblock %}
 </head>

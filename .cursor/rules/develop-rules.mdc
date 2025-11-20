@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+---
+
+# 개발 규칙
+
+## 파일 구조 및 분리 원칙
+- HTML, CSS, JavaScript는 각각 별도 파일로 분리합니다.
+- HTML: 템플릿 파일은 `templates/` 디렉토리에 위치합니다.
+- CSS: 전역 스타일은 `theme/static_src/src/styles.css`, 페이지별 스타일은 `static/css/` 디렉토리에 위치합니다.
+- JavaScript: 공통 함수는 `static/js/base.js`, 페이지별 스크립트는 `static/js/` 디렉토리에 위치합니다.
+- 재사용 컴포넌트: `templates/components/` 디렉토리에 위치하며, CSS, HTML, JavaScript를 하나의 파일에 포함합니다 (예외).
+
+## 템플릿 작성 규칙
+- 모든 템플릿은 `base.html`을 상속받아 작성합니다 (`{% extends 'base.html' %}`).
+- CSS 추가가 필요한 경우 `{% block extra_css %}` 블록을 사용합니다.
+- JavaScript 추가가 필요한 경우 `{% block extra_js %}` 블록을 사용합니다.
+- 정적 파일 사용 시 `{% load static %}` 태그를 먼저 선언합니다.
+- 정적 파일 경로는 `{% static 'path/to/file' %}` 형식을 사용합니다.
+
+## CSS 작성 규칙
+- Tailwind CSS를 우선적으로 사용합니다.
+- 전역 스타일은 `theme/static_src/src/styles.css`에 작성합니다.
+  - 모든 페이지에 공통으로 적용되는 스타일
+- 페이지별 스타일은 `static/css/페이지명.css`에 작성합니다.
+  - 특정 페이지에서만 필요한 스타일
+  - `{% block extra_css %}` 블록에서 로드합니다.
+  - Tailwind CSS가 이미 로드되어 있으므로, HTML에서 Tailwind 유틸리티 클래스를 함께 사용할 수 있습니다.
+
+## JavaScript 작성 규칙
+- JavaScript 코드는 별도 `.js` 파일로 작성하고 `static/js/` 디렉토리에 저장합니다.
+- 파일명은 `kebab-case.js` 형식을 사용합니다 (예: `performance-form.js`).
+- 공통으로 사용되는 함수는 `static/js/base.js`에 작성합니다.
+- 페이지별 JavaScript는 해당 페이지와 동일한 이름의 파일로 작성합니다.
+- DOM 조작은 `DOMContentLoaded` 이벤트 내에서 수행합니다.
+
+## 재사용 컴포넌트 작성 규칙
+- 재사용 가능한 HTML 컴포넌트는 `templates/components/` 디렉토리에 작성합니다.
+- 파일명은 `kebab-case.html` 형식을 사용합니다 (예: `genre_dropdown.html`).
+- 컴포넌트 파일 상단에 사용법과 파라미터를 주석으로 명시합니다.
+- `{% include 'components/컴포넌트명.html' with 파라미터=값 %}` 형식으로 사용합니다.
+- 컴포넌트의 CSS, HTML, JavaScript는 하나의 `.html` 파일에 모두 포함합니다.
+  - `<style>` 태그로 CSS를 포함합니다.
+  - `<script>` 태그로 JavaScript를 포함합니다.
+  - 컴포넌트가 독립적이고 포터블하도록 유지합니다.
+
+## Django 템플릿 태그 사용
+- 정적 파일 로드: `{% load static %}`
+- 템플릿 상속: `{% extends 'base.html' %}`
+- 템플릿 포함: `{% include 'components/컴포넌트명.html' with 파라미터=값 %}`
+- 블록 정의: `{% block block_name %}...{% endblock %}`
+- URL 역참조: `{% url 'app_name:view_name' %}`
+- 템플릿 필터: 커스텀 필터는 `core/templatetags/` 디렉토리에 작성합니다.

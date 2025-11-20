@@ -104,6 +104,11 @@ class ConcertSalesListView(ListView):
                 context['seat_grades'] = seat_grades
                 context['seat_grades_json'] = json.dumps(seat_grades, ensure_ascii=False)
                 
+                # 할인권종 추출 (템플릿용 리스트 + JavaScript용 JSON)
+                discount_types = performance.discount_types if performance.discount_types else []
+                context['discount_types'] = discount_types
+                context['discount_types_json'] = json.dumps(discount_types, ensure_ascii=False)
+                
                 # 판매 기간 날짜 리스트 생성
                 date_list = []
                 if performance.sales_start and performance.sales_end:
@@ -128,6 +133,8 @@ class ConcertSalesListView(ListView):
                 context['booking_sites'] = '[]'
                 context['seat_grades'] = []
                 context['seat_grades_json'] = '[]'
+                context['discount_types'] = []
+                context['discount_types_json'] = '[]'
                 context['sales_date_list'] = '[]'
                 context['age_groups'] = AGE_GROUPS
                 context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)
@@ -142,6 +149,8 @@ class ConcertSalesListView(ListView):
             context['booking_sites'] = '[]'
             context['seat_grades'] = []
             context['seat_grades_json'] = '[]'
+            context['discount_types'] = []
+            context['discount_types_json'] = '[]'
             context['sales_date_list'] = '[]'
             context['age_groups'] = AGE_GROUPS
             context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)

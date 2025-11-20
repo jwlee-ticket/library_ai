@@ -24,12 +24,10 @@
                     <label class="block text-sm font-medium text-gray-600 mb-2">공연명</label>
                     <p class="text-base text-black">{{ performance.title }}</p>
                 </div>
-                {% if performance.title_en %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">공연명(영문)</label>
-                        <p class="text-base text-black">{{ performance.title_en }}</p>
-                    </div>
-                {% endif %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">공연명(영문)</label>
+                    <p class="text-base text-black">{% if performance.title_en %}{{ performance.title_en }}{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">장르</label>
                     {{ performance.genre|genre_badge }}
@@ -60,24 +58,18 @@
         <div class="mb-8 pb-8 border-b border-gray-100">
             <h2 class="text-xl font-semibold text-black mb-4">상세 정보</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% if performance.age_rating %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">관람 연령</label>
-                        <p class="text-base text-black">{{ performance.age_rating }}</p>
-                    </div>
-                {% endif %}
-                {% if performance.running_time %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">러닝 타임</label>
-                        <p class="text-base text-black">{{ performance.running_time }}</p>
-                    </div>
-                {% endif %}
-                {% if performance.description %}
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-600 mb-2">설명</label>
-                        <p class="text-base text-black leading-relaxed whitespace-pre-line">{{ performance.description }}</p>
-                    </div>
-                {% endif %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">관람 연령</label>
+                    <p class="text-base text-black">{% if performance.age_rating %}{{ performance.age_rating }}{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">러닝 타임</label>
+                    <p class="text-base text-black">{% if performance.running_time %}{{ performance.running_time }}{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-600 mb-2">설명</label>
+                    <p class="text-base text-black leading-relaxed whitespace-pre-line">{% if performance.description %}{{ performance.description }}{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
+                </div>
             </div>
         </div>
         
@@ -85,93 +77,98 @@
         <div class="mb-8 pb-8 border-b border-gray-100">
             <h2 class="text-xl font-semibold text-black mb-4">제작 정보</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% if performance.producer %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">제작/주최</label>
-                        <p class="text-base text-black">{{ performance.producer }}</p>
-                    </div>
-                {% endif %}
-                {% if performance.organizer %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">주관</label>
-                        <p class="text-base text-black">{{ performance.organizer }}</p>
-                    </div>
-                {% endif %}
-                {% if performance.crew %}
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-600 mb-2">제작진</label>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">제작/주최</label>
+                    <p class="text-base text-black">{% if performance.producer %}{{ performance.producer }}{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">주관</label>
+                    <p class="text-base text-black">{% if performance.organizer %}{{ performance.organizer }}{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-600 mb-2">제작진</label>
+                    {% if performance.crew %}
                         {% display_json_dict performance.crew as crew_display %}
                         {{ crew_display }}
-                    </div>
-                {% endif %}
-                {% if performance.casting %}
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-600 mb-2">캐스팅</label>
+                    {% else %}
+                        <span class="text-gray-400">없음</span>
+                    {% endif %}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-600 mb-2">캐스팅</label>
+                    {% if performance.casting %}
                         {% display_json_dict performance.casting as casting_display %}
                         {{ casting_display }}
-                    </div>
-                {% endif %}
+                    {% else %}
+                        <span class="text-gray-400">없음</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
         
         <!-- 수익 목표 -->
-        {% if performance.target_revenue or performance.break_even_point or performance.total_production_cost %}
-            <div class="mb-8 pb-8 border-b border-gray-100">
-                <h2 class="text-xl font-semibold text-black mb-4">수익 목표</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {% if performance.target_revenue %}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-600 mb-2">목표 금액</label>
-                            <p class="text-base text-black">{{ performance.target_revenue|floatformat:0 }}원</p>
-                        </div>
-                    {% endif %}
-                    {% if performance.break_even_point %}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-600 mb-2">손익분기점</label>
-                            <p class="text-base text-black">{{ performance.break_even_point|floatformat:0 }}원</p>
-                        </div>
-                    {% endif %}
-                    {% if performance.total_production_cost %}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-600 mb-2">총 제작비</label>
-                            <p class="text-base text-black">{{ performance.total_production_cost|floatformat:0 }}원</p>
-                        </div>
-                    {% endif %}
+        <div class="mb-8 pb-8 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-4">수익 목표</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">목표 금액</label>
+                    <p class="text-base text-black">{% if performance.target_revenue %}{{ performance.target_revenue|intcomma }}원{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">손익분기점</label>
+                    <p class="text-base text-black">{% if performance.break_even_point %}{{ performance.break_even_point|intcomma }}원{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">총 제작비</label>
+                    <p class="text-base text-black">{% if performance.total_production_cost %}{{ performance.total_production_cost|intcomma }}원{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
                 </div>
             </div>
-        {% endif %}
+        </div>
         
         <!-- 좌석 및 가격 -->
         <div class="mb-8 pb-8 border-b border-gray-100">
             <h2 class="text-xl font-semibold text-black mb-4">좌석 및 가격</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% if performance.seat_grades %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">좌석 등급</label>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">좌석 등급</label>
+                    {% if performance.seat_grades %}
                         {% display_json_list performance.seat_grades as seat_grades_display %}
                         {{ seat_grades_display }}
-                    </div>
-                {% endif %}
-                {% if performance.ticket_prices %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">티켓 가격</label>
+                    {% else %}
+                        <span class="text-gray-400">없음</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">티켓 가격</label>
+                    {% if performance.ticket_prices %}
                         {% display_json_dict performance.ticket_prices as ticket_prices_display %}
                         {{ ticket_prices_display }}
-                    </div>
-                {% endif %}
-                {% if performance.seat_counts %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">좌석 수</label>
+                    {% else %}
+                        <span class="text-gray-400">없음</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">좌석 수</label>
+                    {% if performance.seat_counts %}
                         {% display_json_dict performance.seat_counts as seat_counts_display %}
                         {{ seat_counts_display }}
-                    </div>
-                {% endif %}
-                {% if performance.discounts %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">할인율</label>
-                        {% display_json_dict performance.discounts as discounts_display %}
-                        {{ discounts_display }}
-                    </div>
+                    {% else %}
+                        <span class="text-gray-400">없음</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 할인 정보 -->
+        <div class="mb-8 pb-8 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-4">할인 정보</h2>
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">할인권종</label>
+                {% if performance.discount_types %}
+                    {% display_discount_types performance.discount_types as discount_types_display %}
+                    {{ discount_types_display }}
+                {% else %}
+                    <span class="text-gray-400">없음</span>
                 {% endif %}
             </div>
         </div>
@@ -180,19 +177,23 @@
         <div>
             <h2 class="text-xl font-semibold text-black mb-4">예매 및 기타</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% if performance.booking_sites %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">예매처</label>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">예매처</label>
+                    {% if performance.booking_sites %}
                         {% display_booking_sites performance.booking_sites as booking_sites_display %}
                         {{ booking_sites_display }}
-                    </div>
-                {% endif %}
-                {% if performance.seat_map %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-2">좌석배치도</label>
+                    {% else %}
+                        <span class="text-gray-400">없음</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-2">좌석배치도</label>
+                    {% if performance.seat_map %}
                         <img src="{{ performance.seat_map.url }}" alt="좌석배치도" class="max-w-full rounded-lg border border-gray-200">
-                    </div>
-                {% endif %}
+                    {% else %}
+                        <span class="text-gray-400">없음</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

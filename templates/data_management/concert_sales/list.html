@@ -105,30 +105,27 @@
                         <h4 class="text-base font-medium text-black mb-4">할인권종 판매현황</h4>
                         <div class="border-2 border-gray-200 rounded-lg p-4">
                             <div id="final_discount_sales" class="space-y-3">
-                                <!-- 첫 번째 항목 (비어있어도 표시) -->
-                                <div class="flex gap-4 items-end">
-                                    <div class="flex-1">
-                                        <label class="block text-xs text-gray-600 mb-1">권종명</label>
-                                        <input type="text" placeholder="예: 조조할인, 학생할인" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg" data-field="discount_type">
-                                    </div>
-                                    <div class="flex-1">
-                                        <label class="block text-xs text-gray-600 mb-1">판매매수</label>
-                                        <input type="number" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg" data-field="sales_count">
-                                    </div>
-                                    <div class="flex-1">
-                                        <label class="block text-xs text-gray-600 mb-1">판매액</label>
-                                        <input type="number" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg" data-field="revenue">
-                                    </div>
-                                    <button type="button" onclick="removeDiscountSalesItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
-                                </div>
+                                {% if discount_types %}
+                                    {% for discount_type in discount_types %}
+                                        <div class="flex gap-4 items-end">
+                                            <div class="flex-1">
+                                                <label class="block text-xs text-gray-600 mb-1">권종명</label>
+                                                <input type="text" value="{{ discount_type.name }}" readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed" data-field="discount_type">
+                                            </div>
+                                            <div class="flex-1">
+                                                <label class="block text-xs text-gray-600 mb-1">판매매수</label>
+                                                <input type="number" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg" data-field="sales_count" data-discount-type="{{ discount_type.name }}">
+                                            </div>
+                                            <div class="flex-1">
+                                                <label class="block text-xs text-gray-600 mb-1">판매액</label>
+                                                <input type="number" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg" data-field="revenue" data-discount-type="{{ discount_type.name }}">
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-sm text-gray-400 text-center py-4">등록된 할인권종이 없어요</div>
+                                {% endif %}
                             </div>
-                            <button type="button" onclick="addDiscountSalesItem()" class="mt-3 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
-                                + 할인권종 추가
-                            </button>
                         </div>
                     </div>
                     
@@ -741,38 +738,7 @@
         
         // 등급별 판매현황은 템플릿에서 자동 생성됨 (모든 등급에 대해)
         
-        // 2. 할인권종 판매현황 항목 추가
-        function addDiscountSalesItem() {
-            const container = document.getElementById('final_discount_sales');
-            if (!container) return;
-            
-            const div = document.createElement('div');
-            div.className = 'flex gap-4 items-end';
-            div.innerHTML = `
-                <div class="flex-1">
-                    <label class="block text-xs text-gray-600 mb-1">권종명</label>
-                    <input type="text" placeholder="예: 조조할인, 학생할인" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg" data-field="discount_type">
-                </div>
-                <div class="flex-1">
-                    <label class="block text-xs text-gray-600 mb-1">판매매수</label>
-                    <input type="number" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg" data-field="sales_count">
-                </div>
-                <div class="flex-1">
-                    <label class="block text-xs text-gray-600 mb-1">판매액</label>
-                    <input type="number" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg" data-field="revenue">
-                </div>
-                <button type="button" onclick="removeDiscountSalesItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
-            `;
-            container.appendChild(div);
-        }
-        
-        function removeDiscountSalesItem(button) {
-            button.closest('div').remove();
-        }
+        // 할인권종 판매현황은 템플릿에서 자동 생성됨 (공연 모델의 discount_types 기반)
         
         // 연령대별 성별 판매현황은 템플릿에서 자동 생성됨 (AGE_GROUPS의 모든 항목에 대해)
         

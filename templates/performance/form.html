@@ -1167,12 +1167,12 @@
         // 할인권종: 리스트로 변환
         const discountTypes = [];
         document.querySelectorAll('#discount-types-list > div.flex').forEach(itemDiv => {
-            const inputs = itemDiv.querySelectorAll('input');
+            const inputs = itemDiv.querySelectorAll('input:not([type="hidden"])');
             const nameInput = inputs[0]; // 첫 번째: 이름
             const startDateInput = inputs[1]; // 두 번째: 시작날짜
             const endDateInput = inputs[2]; // 세 번째: 종료날짜
             const discountRateInput = inputs[3]; // 네 번째: 할인율
-            const gradeInput = itemDiv.querySelector('[id^="discount-type-grade-"][id$="-input"]');
+            const gradeInput = itemDiv.querySelector('input[id^="discount-type-grade-"][id$="-input"]');
             
             if (nameInput && startDateInput && endDateInput && gradeInput && discountRateInput) {
                 const name = nameInput.value.trim();
@@ -1192,7 +1192,10 @@
                 }
             }
         });
-        document.getElementById('{{ form.discount_types.id_for_label }}').value = JSON.stringify(discountTypes);
+        const discountTypesField = document.getElementById('{{ form.discount_types.id_for_label }}');
+        if (discountTypesField) {
+            discountTypesField.value = JSON.stringify(discountTypes);
+        }
         
         // 예매처: 리스트 안에 딕셔너리로 변환
         const bookingSites = [];

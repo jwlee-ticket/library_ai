@@ -38,3 +38,11 @@
   * the scope of this path.
   */
 @source "../../../**/*.{html,py,js}";
+
+/**
+  * Base 스타일
+  * 기본 폰트 설정 등 전역 스타일
+  */
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}

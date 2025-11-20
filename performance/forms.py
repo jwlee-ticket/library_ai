@@ -129,6 +129,14 @@ class PerformanceForm(forms.ModelForm):
                     raise forms.ValidationError('리스트 형식이어야 해요')
             except json.JSONDecodeError:
                 raise forms.ValidationError('올바른 JSON 형식이 아니에요')
+        else:
+            # 빈 문자열이나 None인 경우 빈 리스트로 처리
+            data = []
+        
+        # 최소 1개 이상 필수
+        if not data or len(data) == 0:
+            raise forms.ValidationError('좌석 등급을 최소 1개 이상 입력해주세요')
+        
         return data
     
     def clean_crew(self):

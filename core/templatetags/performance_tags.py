@@ -106,7 +106,19 @@ def display_json_dict(json_data):
                 nested_items = ', '.join([f'{escape(str(k))}: {escape(str(v))}%' for k, v in value.items()])
                 items.append(f'<div class="mb-2"><span class="font-medium text-gray-700">{escape(str(key))}:</span> <span class="text-gray-600">{nested_items}</span></div>')
             else:
-                items.append(f'<div class="mb-2"><span class="font-medium text-gray-700">{escape(str(key))}:</span> <span class="text-gray-600">{escape(str(value))}</span></div>')
+                # 숫자인 경우 콤마 포맷팅
+                display_value = str(value)
+                try:
+                    # 숫자로 변환 가능한지 확인
+                    num_value = float(value)
+                    if num_value == int(num_value):
+                        # 정수인 경우 콤마 포맷팅
+                        display_value = f'{int(num_value):,}'
+                    else:
+                        display_value = f'{num_value:,}'
+                except (ValueError, TypeError):
+                    pass
+                items.append(f'<div class="mb-2"><span class="font-medium text-gray-700">{escape(str(key))}:</span> <span class="text-gray-600">{escape(display_value)}</span></div>')
         
         html = f'<div class="space-y-1">{chr(10).join(items)}</div>'
         return mark_safe(html)
@@ -141,6 +153,48 @@ def display_booking_sites(json_data):
                 links.append(f'<span class="text-gray-600">{escape(str(item))}</span>')
         
         html = f'<div class="flex flex-wrap gap-3">{chr(10).join(links)}</div>'
+        return mark_safe(html)
+    except (json.JSONDecodeError, TypeError):
+        return mark_safe('<span class="text-red-500">데이터 오류</span>')
+
+
+@register.simple_tag
+def display_discount_types(json_data):
+    """할인권종 JSON 데이터를 표시"""
+    if not json_data:
+        return mark_safe('<span class="text-gray-400">없음</span>')
+    
+    try:
+        if isinstance(json_data, str):
+            data = json.loads(json_data)
+        else:
+            data = json_data
+        
+        if not isinstance(data, list):
+            return mark_safe('<span class="text-gray-400">잘못된 형식</span>')
+        
+        if len(data) == 0:
+            return mark_safe('<span class="text-gray-400">없음</span>')
+        
+        items = []
+        for item in data:
+            if isinstance(item, dict):
+                name = escape(str(item.get('name', '')))
+                start_date = escape(str(item.get('start_date', '')))
+                end_date = escape(str(item.get('end_date', '')))
+                grade = escape(str(item.get('grade', '')))
+                discount_rate = escape(str(item.get('discount_rate', 0)))
+                
+                # 한 행으로 표시: 이름 (기간, 좌석 등급, 할인율%)
+                items.append(
+                    f'<div class="mb-1 text-gray-700">'
+                    f'{name} ({start_date} ~ {end_date}, {grade}, {discount_rate}%)'
+                    f'</div>'
+                )
+            else:
+                items.append(f'<div class="mb-1 text-gray-600">{escape(str(item))}</div>')
+        
+        html = f'<div class="space-y-1">{chr(10).join(items)}</div>'
         return mark_safe(html)
     except (json.JSONDecodeError, TypeError):
         return mark_safe('<span class="text-red-500">데이터 오류</span>')
