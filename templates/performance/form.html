@@ -351,6 +351,19 @@
                             {{ form.target_revenue.label }}
                         </label>
                         {{ form.target_revenue }}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const input = document.getElementById('{{ form.target_revenue.id_for_label }}');
+                                if (input) {
+                                    input.type = 'text';
+                                    input.classList.add('number-input');
+                                    if (input.value) {
+                                        input.value = formatNumber(input.value);
+                                    }
+                                    applyNumberFormatting(input);
+                                }
+                            });
+                        </script>
                         {% if form.target_revenue.errors %}
                             <p class="mt-2 text-sm text-red-600">{{ form.target_revenue.errors|first }}</p>
                         {% endif %}
@@ -361,6 +374,19 @@
                             {{ form.break_even_point.label }}
                         </label>
                         {{ form.break_even_point }}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const input = document.getElementById('{{ form.break_even_point.id_for_label }}');
+                                if (input) {
+                                    input.type = 'text';
+                                    input.classList.add('number-input');
+                                    if (input.value) {
+                                        input.value = formatNumber(input.value);
+                                    }
+                                    applyNumberFormatting(input);
+                                }
+                            });
+                        </script>
                         {% if form.break_even_point.errors %}
                             <p class="mt-2 text-sm text-red-600">{{ form.break_even_point.errors|first }}</p>
                         {% endif %}
@@ -371,6 +397,19 @@
                             {{ form.total_production_cost.label }}
                         </label>
                         {{ form.total_production_cost }}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const input = document.getElementById('{{ form.total_production_cost.id_for_label }}');
+                                if (input) {
+                                    input.type = 'text';
+                                    input.classList.add('number-input');
+                                    if (input.value) {
+                                        input.value = formatNumber(input.value);
+                                    }
+                                    applyNumberFormatting(input);
+                                }
+                            });
+                        </script>
                         {% if form.total_production_cost.errors %}
                             <p class="mt-2 text-sm text-red-600">{{ form.total_production_cost.errors|first }}</p>
                         {% endif %}
@@ -392,11 +431,11 @@
                                     <input type="text" value="{{ grade }}" placeholder="좌석 등급" readonly class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input" data-field="grade">
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <input type="number" value="{{ price }}" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors" data-field="price">
+                                    <input type="text" value="{{ price|floatformat:0 }}" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input" data-field="price">
                                     <span class="text-gray-600 text-sm whitespace-nowrap">원</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <input type="number" value="{% if object.seat_counts %}{{ object.seat_counts|get_item:grade }}{% endif %}" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors" data-field="count">
+                                    <input type="text" value="{% if object.seat_counts %}{{ object.seat_counts|get_item:grade|floatformat:0 }}{% endif %}" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input" data-field="count">
                                     <span class="text-gray-600 text-sm whitespace-nowrap">석</span>
                                     <button type="button" onclick="removeTicketPriceSeatCountItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -411,12 +450,12 @@
                             <div>
                                 <input type="text" placeholder="좌석 등급" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors seat-grade-input" data-field="grade">
                             </div>
-                            <div class="flex items-center gap-2">
-                                <input type="number" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors" data-field="price">
-                                <span class="text-gray-600 text-sm whitespace-nowrap">원</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <input type="number" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors" data-field="count">
+                                <div class="flex items-center gap-2">
+                                    <input type="text" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input" data-field="price">
+                                    <span class="text-gray-600 text-sm whitespace-nowrap">원</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input" data-field="count">
                                 <span class="text-gray-600 text-sm whitespace-nowrap">석</span>
                                 <button type="button" onclick="removeTicketPriceSeatCountItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -839,10 +878,11 @@
         const priceCol = document.createElement('div');
         priceCol.className = 'flex items-center gap-2';
         const priceInput = document.createElement('input');
-        priceInput.type = 'number';
+        priceInput.type = 'text';
         priceInput.placeholder = '가격';
-        priceInput.className = 'flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors';
+        priceInput.className = 'flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input';
         priceInput.setAttribute('data-field', 'price');
+        applyNumberFormatting(priceInput);
         const wonSpan = document.createElement('span');
         wonSpan.className = 'text-gray-600 text-sm whitespace-nowrap';
         wonSpan.textContent = '원';
@@ -853,10 +893,11 @@
         const countCol = document.createElement('div');
         countCol.className = 'flex items-center gap-2';
         const countInput = document.createElement('input');
-        countInput.type = 'number';
+        countInput.type = 'text';
         countInput.placeholder = '좌석 수';
-        countInput.className = 'flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors';
+        countInput.className = 'flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input';
         countInput.setAttribute('data-field', 'count');
+        applyNumberFormatting(countInput);
         const seatSpan = document.createElement('span');
         seatSpan.className = 'text-gray-600 text-sm whitespace-nowrap';
         seatSpan.textContent = '석';
@@ -1024,6 +1065,14 @@
         // 초기 드롭다운 업데이트 (할인권종용)
         setTimeout(updateSeatGradeDropdowns, 200);
         
+        // 숫자 입력 필드에 포맷팅 적용
+        document.querySelectorAll('#ticket-prices-seat-counts-list .number-input').forEach(input => {
+            if (input.value) {
+                input.value = formatNumber(input.value);
+            }
+            applyNumberFormatting(input);
+        });
+        
         // discount-types-list의 빈 드롭다운 컨테이너 초기화
         const discountTypeContainers = document.querySelectorAll('#discount-types-list .seat-grade-dropdown-container:empty');
         discountTypeContainers.forEach(container => {
@@ -1057,6 +1106,20 @@
     
     // 폼 제출 전 JSON 변환
     document.querySelector('form').addEventListener('submit', function(e) {
+        // 수익 목표 필드들에서 콤마 제거
+        const targetRevenueInput = document.getElementById('{{ form.target_revenue.id_for_label }}');
+        if (targetRevenueInput && targetRevenueInput.value) {
+            targetRevenueInput.value = removeCommas(targetRevenueInput.value);
+        }
+        const breakEvenPointInput = document.getElementById('{{ form.break_even_point.id_for_label }}');
+        if (breakEvenPointInput && breakEvenPointInput.value) {
+            breakEvenPointInput.value = removeCommas(breakEvenPointInput.value);
+        }
+        const totalProductionCostInput = document.getElementById('{{ form.total_production_cost.id_for_label }}');
+        if (totalProductionCostInput && totalProductionCostInput.value) {
+            totalProductionCostInput.value = removeCommas(totalProductionCostInput.value);
+        }
+        
         // 제작진: 딕셔너리로 변환
         const crewDict = {};
         document.querySelectorAll('#crew-list > div').forEach(div => {
@@ -1090,10 +1153,10 @@
                 const grade = gradeInput.value.trim();
                 seatGrades.push(grade);
                 if (priceInput && priceInput.value.trim()) {
-                    ticketPrices[grade] = parseInt(priceInput.value) || 0;
+                    ticketPrices[grade] = parseInt(removeCommas(priceInput.value)) || 0;
                 }
                 if (countInput && countInput.value.trim()) {
-                    seatCounts[grade] = parseInt(countInput.value) || 0;
+                    seatCounts[grade] = parseInt(removeCommas(countInput.value)) || 0;
                 }
             }
         });
