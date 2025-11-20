@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load performance_tags %}
+
+{% block breadcrumb %}
+    <span class="text-gray-700 font-medium">공연별 대시보드</span>
+{% endblock %}
+
+{% block content %}
+    <!-- 페이지 제목 -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-semibold text-black">공연별 대시보드</h1>
+    </div>
+    
+    <!-- 검색/필터 컴포넌트 -->
+    {% include 'components/search_filter.html' with genre_filter=genre_filter search_query=search_query genre_choices=genre_choices %}
+    
+    <!-- 공연 리스트 테이블 -->
+    {% if performances %}
+        <div class="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8 shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">장르</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연명</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연장</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연 기간</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for performance in performances %}
+                            <tr 
+                                class="hover:bg-gray-50 transition-colors cursor-pointer"
+                                onclick="window.location.href='{% url 'dashboard:detail' performance.pk %}'"
+                            >
+                                <td class="px-6 py-4">
+                                    {{ performance.genre|genre_badge }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-base font-medium text-black">{{ performance.title }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-gray-700">{{ performance.venue }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-gray-700">
+                                        {{ performance.performance_start|date:"Y.m.d" }} ~ {{ performance.performance_end|date:"Y.m.d" }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 페이지네이션 -->
+        {% include 'components/pagination.html' with page_obj=page_obj %}
+    {% else %}
+        <div class="bg-white rounded-xl border border-gray-100 p-12 text-center shadow-sm">
+            <p class="text-gray-600 text-lg">등록된 공연이 없어요</p>
+        </div>
+    {% endif %}
+{% endblock %}
+
