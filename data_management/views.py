@@ -118,6 +118,13 @@ class ConcertSalesListView(ListView):
                         current_date += timedelta(days=1)
                 context['sales_date_list'] = json.dumps(date_list, ensure_ascii=False)
                 
+                # 실제 저장된 매출 데이터가 있는 날짜 리스트
+                saved_dates = ConcertDailySales.objects.filter(
+                    performance=performance
+                ).values_list('date', flat=True).distinct()
+                saved_date_list = [date.strftime('%Y-%m-%d') for date in saved_dates]
+                context['saved_date_list'] = json.dumps(saved_date_list, ensure_ascii=False)
+                
                 # 재사용 가능한 상수들 추가 (템플릿용 리스트 + JavaScript용 JSON)
                 context['age_groups'] = AGE_GROUPS
                 context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)
@@ -136,6 +143,7 @@ class ConcertSalesListView(ListView):
                 context['discount_types'] = []
                 context['discount_types_json'] = '[]'
                 context['sales_date_list'] = '[]'
+                context['saved_date_list'] = '[]'
                 context['age_groups'] = AGE_GROUPS
                 context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)
                 context['regions'] = REGIONS
@@ -152,6 +160,7 @@ class ConcertSalesListView(ListView):
             context['discount_types'] = []
             context['discount_types_json'] = '[]'
             context['sales_date_list'] = '[]'
+            context['saved_date_list'] = '[]'
             context['age_groups'] = AGE_GROUPS
             context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)
             context['regions'] = REGIONS

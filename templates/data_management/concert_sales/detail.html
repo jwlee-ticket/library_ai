@@ -17,23 +17,20 @@
     <!-- 데일리 매출 입력 섹션 -->
     {% if performance and booking_sites %}
         <div class="mb-12">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-semibold text-black">데일리 매출 입력</h2>
-                <div class="flex items-center gap-4">
-                    <input type="date" id="new-date-input" class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                    <button 
-                        type="button"
-                        onclick="addDateSection()"
-                        class="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm"
-                    >
-                        날짜 추가
-                    </button>
+            <h2 class="text-2xl font-semibold text-black mb-6">데일리 매출 입력</h2>
+            
+            <!-- 캘린더 컨테이너 -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                <div id="calendar-container">
+                    <!-- JavaScript로 동적 생성 -->
                 </div>
             </div>
-            
-            <!-- 날짜별 섹션 컨테이너 -->
-            <div id="date-sections-container" class="space-y-4">
-                <!-- JavaScript로 동적 생성 -->
+        </div>
+        
+        <!-- 모달 오버레이 -->
+        <div id="date-modal-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 transition-all duration-200 opacity-0">
+            <div id="date-modal" class="bg-white rounded-xl border border-gray-100 shadow-sm max-w-4xl w-full max-h-[90vh] overflow-y-auto transition-all duration-200 scale-95 opacity-0">
+                <!-- 모달 내용은 JavaScript로 동적 생성 -->
             </div>
         </div>
     {% endif %}
@@ -428,106 +425,306 @@
         const bookingSites = {{ booking_sites|safe }};
         const seatGrades = {{ seat_grades_json|safe }};
         const salesDateList = {{ sales_date_list|safe }};
+        const savedDateList = {{ saved_date_list|safe }};
         const ageGroups = {{ age_groups_json|safe }};
         const regions = {{ regions_json|safe }};
         const seoulRegions = {{ seoul_regions_json|safe }};
         const gyeonggiRegions = {{ gyeonggi_regions_json|safe }};
-        const selectedDates = new Set();
+        // 오늘 날짜 정보
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+        const currentDate = today.getDate();
         
-        // 페이지 로드 시 판매 기간의 모든 날짜 섹션 자동 생성
+        // 캘린더 표시 월 (오늘 날짜 기준)
+        let displayYear = currentYear;
+        let displayMonth = currentMonth;
+        
+        // 날짜별 상태 저장 (입력 전: null, 완료: 'completed')
+        const dateStatuses = {};
+        
+        // 현재 선택된 날짜
+        let selectedDate = null;
+        
+        // 페이지 로드 시 캘린더 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            if (salesDateList && salesDateList.length > 0) {
-                salesDateList.forEach(dateStr => {
-                    selectedDates.add(dateStr);
-                    createDateSection(dateStr);
+            initCalendar();
+            
+            // 실제 저장된 매출 데이터가 있는 날짜만 'completed' 상태로 설정
+            if (savedDateList && savedDateList.length > 0) {
+                savedDateList.forEach(dateStr => {
+                    dateStatuses[dateStr] = 'completed';
                 });
             }
-            
-            // 최종 매출 입력은 HTML에 이미 포함되어 있음 (예매처 통합)
         });
         
-        function addDateSection() {
-            const dateInput = document.getElementById('new-date-input');
-            const dateStr = dateInput.value;
-            
-            if (!dateStr) {
-                alert('날짜를 선택해주세요');
-                return;
-            }
-            
-            // 이미 추가된 날짜인지 확인
-            if (selectedDates.has(dateStr)) {
-                alert('이미 추가된 날짜예요');
-                return;
-            }
-            
-            // 공연 기간 내의 날짜인지 확인
-            const dateObj = new Date(dateStr);
-            const performanceStart = new Date('{{ performance.performance_start|date:"Y-m-d" }}');
-            const performanceEnd = new Date('{{ performance.performance_end|date:"Y-m-d" }}');
-            
-            if (dateObj < performanceStart || dateObj > performanceEnd) {
-                alert('공연 기간 내의 날짜를 선택해주세요');
-                return;
-            }
-            
-            selectedDates.add(dateStr);
-            createDateSection(dateStr);
-            dateInput.value = ''; // 입력 필드 초기화
+        // 캘린더 초기화
+        function initCalendar() {
+            renderCalendar();
         }
         
-        function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
-        }
-        
-        function createDateSection(dateStr) {
-            const container = document.getElementById('date-sections-container');
-            const dateObj = new Date(dateStr);
-            const dateFormatted = dateObj.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+        // 캘린더 렌더링
+        function renderCalendar() {
+            const container = document.getElementById('calendar-container');
+            if (!container) return;
             
-            const sectionId = `date-section-${dateStr}`;
-            const section = document.createElement('div');
-            section.id = sectionId;
-            section.className = 'bg-white rounded-xl border border-gray-100 overflow-hidden';
-            section.innerHTML = `
-                <div class="p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleDateSection('${dateStr}')">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <svg id="arrow-${dateStr}" class="w-5 h-5 text-gray-600 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            // 월의 첫 번째 날과 마지막 날
+            const firstDay = new Date(displayYear, displayMonth, 1);
+            const lastDay = new Date(displayYear, displayMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay(); // 0=일요일
+            
+            // 월 이름
+            const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+            const monthName = monthNames[displayMonth];
+            
+            let html = `
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 hover:shadow-sm rounded-lg transition-all duration-200 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                             </svg>
-                            <h3 class="text-lg font-semibold text-black">${dateFormatted}</h3>
-                            <span id="status-${dateStr}" class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">입력 전</span>
-                        </div>
+                        </button>
+                        <h3 class="text-xl font-semibold text-black">${displayYear}년 ${monthName}</h3>
+                        <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 hover:shadow-sm rounded-lg transition-all duration-200 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
                     </div>
-                </div>
-                <div id="content-${dateStr}" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                    <div class="p-6">
-                        <div class="space-y-6">
-                            <!-- 예매처별 입금/미입금 -->
-                            <div class="space-y-4">
-                                ${bookingSites.map(site => createBookingSiteForm(dateStr, site)).join('')}
-                            </div>
-                            
-                            <!-- 초대 영역 (별도) -->
-                            ${seatGrades.length > 0 ? createInviteSection(dateStr) : ''}
-                        </div>
-                        <div class="mt-6 flex justify-end">
-                            <button 
-                                type="button"
-                                onclick="saveDateSales('${dateStr}')"
-                                class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm"
-                            >
-                                저장
-                            </button>
-                        </div>
+                    
+                    <!-- 요일 헤더 -->
+                    <div class="grid grid-cols-7 gap-1 mb-2">
+                        <div class="text-center text-sm font-semibold text-secondary py-2">일</div>
+                        <div class="text-center text-sm font-semibold text-secondary py-2">월</div>
+                        <div class="text-center text-sm font-semibold text-secondary py-2">화</div>
+                        <div class="text-center text-sm font-semibold text-secondary py-2">수</div>
+                        <div class="text-center text-sm font-semibold text-secondary py-2">목</div>
+                        <div class="text-center text-sm font-semibold text-secondary py-2">금</div>
+                        <div class="text-center text-sm font-semibold text-secondary py-2">토</div>
+                    </div>
+                    
+                    <!-- 날짜 그리드 -->
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-0 border border-gray-100 rounded-lg overflow-hidden">
+            `;
+            
+            // 총 셀 개수 계산 (빈 칸 + 날짜)
+            const totalCells = startingDayOfWeek + daysInMonth;
+            const totalRows = Math.ceil(totalCells / 7);
+            
+            // 빈 칸 (이전 달의 마지막 날들)
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const rowIndex = Math.floor(i / 7);
+                const colIndex = i % 7;
+                const isLastRow = rowIndex === totalRows - 1;
+                const isLastCol = colIndex === 6;
+                let emptyCellClass = 'h-14 border-r border-b border-gray-100 bg-gray-50 w-full';
+                if (isLastCol) {
+                    emptyCellClass = emptyCellClass.replace('border-r', '');
+                }
+                if (isLastRow) {
+                    emptyCellClass = emptyCellClass.replace('border-b', '');
+                }
+                html += `<div class="${emptyCellClass}"></div>`;
+            }
+            
+            // 날짜 셀들
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const cellIndex = startingDayOfWeek + day - 1;
+                const rowIndex = Math.floor(cellIndex / 7);
+                const colIndex = cellIndex % 7;
+                const isLastRow = rowIndex === totalRows - 1;
+                const isLastCol = colIndex === 6;
+                html += createDateCell(displayYear, displayMonth, day, dateStr, isLastRow, isLastCol);
+            }
+            
+            // 마지막 행의 빈 칸들 (다음 달의 첫 날들)
+            const remainingCells = totalCells % 7;
+            if (remainingCells !== 0) {
+                const emptyCellsAfter = 7 - remainingCells;
+                for (let i = 0; i < emptyCellsAfter; i++) {
+                    const colIndex = remainingCells + i;
+                    const isLastCol = colIndex === 6;
+                    let emptyCellClass = 'h-14 border-r border-b border-gray-100 bg-gray-50 w-full';
+                    if (isLastCol) {
+                        emptyCellClass = emptyCellClass.replace('border-r', '');
+                    }
+                    // 마지막 행이므로 아래 테두리 제거
+                    emptyCellClass = emptyCellClass.replace('border-b', '');
+                    html += `<div class="${emptyCellClass}"></div>`;
+                }
+            }
+            
+            html += `
                     </div>
                 </div>
             `;
             
-            container.appendChild(section);
+            container.innerHTML = html;
         }
+        
+        // 날짜 셀 생성
+        function createDateCell(year, month, day, dateStr, isLastRow, isLastCol) {
+            const isToday = year === currentYear && month === currentMonth && day === currentDate;
+            const status = getDateStatus(dateStr);
+            
+            let cellClass = 'h-14 cursor-pointer flex items-center justify-center transition-all duration-200 text-sm font-medium relative border-r border-b border-gray-100 w-full';
+            
+            // 마지막 열이면 오른쪽 테두리 제거
+            if (isLastCol) {
+                cellClass = cellClass.replace('border-r', '');
+            }
+            // 마지막 행이면 아래 테두리 제거
+            if (isLastRow) {
+                cellClass = cellClass.replace('border-b', '');
+            }
+            
+            if (isToday) {
+                // 오늘 날짜: 브랜드 컬러
+                cellClass += ' bg-brand text-white font-semibold shadow-sm hover:bg-brand-900';
+            } else {
+                // 상태별 스타일
+                switch(status) {
+                    case 'completed':
+                        cellClass += ' bg-success/10 text-success hover:bg-success/20 hover:shadow-sm';
+                        break;
+                    default:
+                        cellClass += ' bg-white text-gray-700 hover:bg-gray-50 hover:shadow-sm';
+                }
+            }
+            
+            return `<div class="${cellClass}" onclick="openDateModal('${dateStr}')" data-date="${dateStr}">${day}</div>`;
+        }
+        
+        // 날짜 상태 확인
+        function getDateStatus(dateStr) {
+            return dateStatuses[dateStr] || null;
+        }
+        
+        // 날짜 상태 업데이트
+        function updateDateStatus(dateStr, status) {
+            dateStatuses[dateStr] = status;
+            renderCalendar(); // 캘린더 다시 렌더링
+        }
+        
+        // 월 변경
+        function changeMonth(direction) {
+            displayMonth += direction;
+            if (displayMonth < 0) {
+                displayMonth = 11;
+                displayYear--;
+            } else if (displayMonth > 11) {
+                displayMonth = 0;
+                displayYear++;
+            }
+            renderCalendar();
+        }
+        
+        // 모달 열기
+        function openDateModal(dateStr) {
+            selectedDate = dateStr;
+            const overlay = document.getElementById('date-modal-overlay');
+            const modal = document.getElementById('date-modal');
+            
+            if (!overlay || !modal) return;
+            
+            // 모달 내용 생성
+            const dateObj = new Date(dateStr);
+            const dateFormatted = dateObj.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+            
+            modal.innerHTML = `
+                <div class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold text-black">${dateFormatted}</h3>
+                        <button onclick="closeDateModal()" class="p-2 hover:bg-gray-100 hover:shadow-sm rounded-lg transition-all duration-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="space-y-6">
+                        <!-- 예매처별 입금/미입금 -->
+                        <div class="space-y-4">
+                            ${bookingSites.map(site => createBookingSiteForm(dateStr, site)).join('')}
+                        </div>
+                        
+                        <!-- 초대 영역 (별도) -->
+                        ${seatGrades.length > 0 ? createInviteSection(dateStr) : ''}
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button 
+                            type="button"
+                            onclick="closeDateModal()"
+                            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 hover:shadow-sm transition-all duration-200"
+                        >
+                            취소
+                        </button>
+                        <button 
+                            type="button"
+                            onclick="saveDateSales('${dateStr}')"
+                            class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm"
+                        >
+                            저장
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 모달에 tabindex 추가하여 포커스 받을 수 있게 하기
+            modal.setAttribute('tabindex', '-1');
+            
+            // 모달 애니메이션 효과
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.add('opacity-100');
+                modal.classList.add('scale-100', 'opacity-100');
+                // 모달에 포커스 주기
+                modal.focus();
+            }, 10);
+        }
+        
+        // 모달 닫기
+        function closeDateModal() {
+            const overlay = document.getElementById('date-modal-overlay');
+            const modal = document.getElementById('date-modal');
+            
+            if (overlay && modal) {
+                // 애니메이션 효과
+                overlay.classList.remove('opacity-100');
+                modal.classList.remove('scale-100', 'opacity-100');
+                modal.classList.add('scale-95', 'opacity-0');
+                
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    selectedDate = null;
+                }, 200);
+            }
+        }
+        
+        // 모달 외부 클릭 시 닫기
+        document.addEventListener('click', function(event) {
+            const overlay = document.getElementById('date-modal-overlay');
+            const modal = document.getElementById('date-modal');
+            
+            if (overlay && modal && event.target === overlay) {
+                closeDateModal();
+            }
+        });
+        
+        // ESC 키로 모달 닫기 (전역 이벤트 리스너)
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' || event.keyCode === 27) {
+                const overlay = document.getElementById('date-modal-overlay');
+                // 모달이 열려있는지 확인 (hidden 클래스가 없고 selectedDate가 있으면 열려있음)
+                if (overlay && selectedDate && !overlay.classList.contains('hidden')) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    closeDateModal();
+                }
+            }
+        }, true); // capture phase에서 처리하여 입력 필드에서도 작동하도록
         
         function createBookingSiteForm(dateStr, bookingSite) {
             const siteId = `${dateStr}_${bookingSite}`;
@@ -543,11 +740,11 @@
                             <div class="grid grid-cols-2 gap-4 mb-3">
                                 <div>
                                     <label class="block text-xs text-gray-600 mb-1">판매액 (원)</label>
-                                    <input type="number" id="${siteId}_paid_revenue" name="${bookingSite}_paid_revenue" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                    <input type="number" id="${siteId}_paid_revenue" name="${bookingSite}_paid_revenue" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-600 mb-1">판매 매수</label>
-                                    <input type="number" id="${siteId}_paid_ticket_count" name="${bookingSite}_paid_ticket_count" min="0" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"'}">
+                                    <input type="number" id="${siteId}_paid_ticket_count" name="${bookingSite}_paid_ticket_count" min="0" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"'}">
                                 </div>
                             </div>
                             ${seatGrades.length > 0 ? `
@@ -557,7 +754,7 @@
                                         ${seatGrades.map(grade => `
                                             <div class="relative">
                                                 <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
-                                                <input type="number" id="${siteId}_paid_grade_${grade}" name="${bookingSite}_paid_grade_${grade}" min="0" placeholder="0" oninput="updateTicketCount('${siteId}', 'paid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                                <input type="number" id="${siteId}_paid_grade_${grade}" name="${bookingSite}_paid_grade_${grade}" min="0" placeholder="0" oninput="updateTicketCount('${siteId}', 'paid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                                             </div>
                                         `).join('')}
                                     </div>
@@ -571,11 +768,11 @@
                             <div class="grid grid-cols-2 gap-4 mb-3">
                                 <div>
                                     <label class="block text-xs text-gray-600 mb-1">판매액 (원)</label>
-                                    <input type="number" id="${siteId}_unpaid_revenue" name="${bookingSite}_unpaid_revenue" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                    <input type="number" id="${siteId}_unpaid_revenue" name="${bookingSite}_unpaid_revenue" min="0" placeholder="0" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-600 mb-1">판매 매수</label>
-                                    <input type="number" id="${siteId}_unpaid_ticket_count" name="${bookingSite}_unpaid_ticket_count" min="0" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"'}">
+                                    <input type="number" id="${siteId}_unpaid_ticket_count" name="${bookingSite}_unpaid_ticket_count" min="0" placeholder="0" ${seatGrades.length > 0 ? 'readonly class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"' : 'class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"'}">
                                 </div>
                             </div>
                             ${seatGrades.length > 0 ? `
@@ -585,7 +782,7 @@
                                         ${seatGrades.map(grade => `
                                             <div class="relative">
                                                 <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
-                                                <input type="number" id="${siteId}_unpaid_grade_${grade}" name="${bookingSite}_unpaid_grade_${grade}" min="0" placeholder="0" oninput="updateTicketCount('${siteId}', 'unpaid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                                <input type="number" id="${siteId}_unpaid_grade_${grade}" name="${bookingSite}_unpaid_grade_${grade}" min="0" placeholder="0" oninput="updateTicketCount('${siteId}', 'unpaid')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                                             </div>
                                         `).join('')}
                                     </div>
@@ -614,7 +811,7 @@
                             return `
                                 <div class="relative">
                                     <label class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">${grade} :</label>
-                                    <input type="number" id="${firstSiteId}_free_grade_${grade}" name="${bookingSites[0]}_free_grade_${grade}" min="0" placeholder="0" oninput="syncInviteInputs('${dateStr}', '${grade}')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
+                                    <input type="number" id="${firstSiteId}_free_grade_${grade}" name="${bookingSites[0]}_free_grade_${grade}" min="0" placeholder="0" oninput="syncInviteInputs('${dateStr}', '${grade}')" class="w-full pl-12 pr-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200">
                                     ${hiddenInputs}
                                 </div>
                             `;
@@ -656,25 +853,6 @@
             }
         }
         
-        function toggleDateSection(dateStr) {
-            const content = document.getElementById(`content-${dateStr}`);
-            const arrow = document.getElementById(`arrow-${dateStr}`);
-            
-            if (content.classList.contains('max-h-0')) {
-                content.classList.remove('max-h-0');
-                content.classList.add('max-h-[2000px]');
-                arrow.classList.add('rotate-90');
-            } else {
-                content.classList.remove('max-h-[2000px]');
-                content.classList.add('max-h-0');
-                arrow.classList.remove('rotate-90');
-            }
-        }
-        
-        function removeDateSection(dateStr) {
-            // 판매 기간 날짜는 삭제 불가 (항상 표시되어야 함)
-        }
-        
         function saveDateSales(dateStr) {
             const formData = new FormData();
             formData.append('date', dateStr);
@@ -709,9 +887,8 @@
             .then(data => {
                 if (data.success) {
                     alert(data.message);
-                    updateDateStatus(dateStr, '입력 완료');
-                    // 페이지 새로고침하여 목록 업데이트
-                    window.location.reload();
+                    updateDateStatus(dateStr, 'completed');
+                    closeDateModal(); // 모달 닫기
                 } else {
                     alert('저장 실패: ' + (data.error || '알 수 없는 오류'));
                 }
