@@ -10,5 +10,6 @@ urlpatterns = [
     path('dashboard-performance/<int:pk>/data/', views.get_concert_dashboard_data, name='concert_dashboard_data'),
     path('concert-overview/', views.ConcertOverviewDashboardView.as_view(), name='concert_overview'),
     path('concert-overview/summary/', views.get_concert_aggregated_summary_data, name='concert_aggregated_summary'),
+    path('concert-overview/period-revenue/', views.get_concert_period_revenue_data, name='concert_period_revenue'),
 ]
 

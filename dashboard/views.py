@@ -7,6 +7,7 @@ from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
 from decimal import Decimal
 import json
+from collections import defaultdict
 from performance.models import Performance
 from data_management.models import ConcertDailySales, ConcertFinalSales
 
@@ -156,6 +157,33 @@ def get_concert_aggregated_summary_data(request):
                     if isinstance(count, (int, float)):
                         total_seats += count
         
+        # 개별 콘서트 목록 데이터
+        concert_list = []
+        for concert in concerts:
+            # 각 콘서트의 총 매출 계산
+            concert_sales = ConcertDailySales.objects.filter(performance=concert)
+            concert_revenue_result = concert_sales.aggregate(
+                total_paid=Sum('paid_revenue'),
+                total_unpaid=Sum('unpaid_revenue')
+            )
+            concert_revenue = float(concert_revenue_result['total_paid'] or 0) + float(concert_revenue_result['total_unpaid'] or 0)
+            
+            # 목표액
+            target_revenue = float(concert.target_revenue) if concert.target_revenue else 0
+            
+            # 달성율 계산
+            achievement_rate = 0
+            if target_revenue > 0:
+                achievement_rate = (concert_revenue / target_revenue) * 100
+            
+            concert_list.append({
+                'id': concert.id,
+                'title': concert.title,
+                'target_revenue': target_revenue,
+                'total_revenue': concert_revenue,
+                'achievement_rate': achievement_rate,
+            })
+        
         return JsonResponse({
             'success': True,
             'data': {
@@ -166,6 +194,96 @@ def get_concert_aggregated_summary_data(request):
                 'total_target_revenue': total_target_revenue,
                 'total_break_even_point': total_break_even_point,
                 'total_seats': total_seats,
+                'concert_list': concert_list,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_concert_period_revenue_data(request):
+    """콘서트 통합 대시보드 기간별 매출 데이터 API"""
+    try:
+        # 파라미터
+        period_type = request.GET.get('period_type', 'daily')  # daily, weekly, monthly
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        
+        # 기본값 설정
+        today = datetime.now().date()
+        if not start_date_str or not end_date_str:
+            if period_type == 'daily':
+                end_date = today
+                start_date = end_date - timedelta(days=29)  # 최근 30일
+            elif period_type == 'weekly':
+                end_date = today
+                start_date = end_date - timedelta(weeks=3, days=end_date.weekday())  # 최근 4주
+            else:  # monthly
+                end_date = today
+                # 최근 3개월 (현재 월 포함)
+                if today.month >= 3:
+                    start_date = today.replace(month=today.month - 2, day=1)
+                else:
+                    start_date = today.replace(year=today.year - 1, month=12 + today.month - 2, day=1)
+        else:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'success': False, 'error': '올바른 날짜 형식이 아니에요'}, status=400)
+        
+        # 모든 콘서트 조회
+        concerts = Performance.objects.filter(genre='concert').order_by('id')
+        concert_dict = {concert.id: concert.title for concert in concerts}
+        
+        # 일일 매출 데이터 조회
+        daily_sales = ConcertDailySales.objects.filter(
+            performance__genre='concert',
+            date__gte=start_date,
+            date__lte=end_date
+        ).select_related('performance')
+        
+        # 기간별로 데이터 그룹화
+        period_data = defaultdict(lambda: defaultdict(float))
+        
+        for sale in daily_sales:
+            sale_date = sale.date
+            performance_id = sale.performance.id
+            revenue = float(sale.paid_revenue or 0) + float(sale.unpaid_revenue or 0)
+            
+            if period_type == 'daily':
+                period_key = sale_date.strftime('%Y-%m-%d')
+            elif period_type == 'weekly':
+                # 주 시작일 계산 (월요일)
+                week_start = sale_date - timedelta(days=sale_date.weekday())
+                period_key = week_start.strftime('%Y-%m-%d')
+            else:  # monthly
+                period_key = sale_date.strftime('%Y-%m')
+            
+            period_data[period_key][performance_id] += revenue
+        
+        # 기간 목록 정렬
+        periods = sorted(period_data.keys())
+        
+        # 공연 목록
+        performances = [{'id': cid, 'title': title} for cid, title in concert_dict.items()]
+        
+        # 데이터 형식 변환
+        data = {}
+        for period_key in periods:
+            data[period_key] = dict(period_data[period_key])
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'periods': periods,
+                'performances': performances,
+                'data': data,
             }
         })
     except Exception as e:

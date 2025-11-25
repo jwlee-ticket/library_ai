@@ -90,10 +90,191 @@
         </div>
     </div>
     
+    <!-- 목표액 달성 현황 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
+        <h2 class="text-xl font-semibold text-black mb-6">목표액 달성 현황</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연명</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">총 매출</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">목표 매출</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black">달성율</th>
+                    </tr>
+                </thead>
+                <tbody id="concert-list-tbody" class="divide-y divide-gray-100">
+                    <!-- JavaScript로 동적 생성 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 기간별 매출 그래프 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
+        <!-- 타이틀과 필터를 같은 행에 배치 -->
+        <div class="mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <h2 class="text-xl font-semibold text-black">기간별 매출 그래프</h2>
+                
+                <!-- 필터 섹션 - 오른쪽 상단 정렬 -->
+                <div class="flex flex-col items-end gap-4">
+                    <!-- 기간 선택 라디오 버튼 -->
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="period-type" 
+                                value="daily" 
+                                id="period-daily"
+                                class="w-4 h-4 text-primary border-gray-300 focus:ring-primary-200 focus:ring-2"
+                            >
+                            <span class="text-sm text-black">일간</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="period-type" 
+                                value="weekly" 
+                                id="period-weekly"
+                                class="w-4 h-4 text-primary border-gray-300 focus:ring-primary-200 focus:ring-2"
+                            >
+                            <span class="text-sm text-black">주간</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="period-type" 
+                                value="monthly" 
+                                id="period-monthly"
+                                checked
+                                class="w-4 h-4 text-primary border-gray-300 focus:ring-primary-200 focus:ring-2"
+                            >
+                            <span class="text-sm text-black">월간</span>
+                        </label>
+                    </div>
+                    
+                    <!-- 날짜 입력 필드 -->
+                    <div class="flex items-center gap-4">
+                        <label class="text-sm font-medium text-gray-700 whitespace-nowrap">시작일</label>
+                        <input 
+                            type="date" 
+                            id="period-start-date"
+                            class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                        >
+                        <label class="text-sm font-medium text-gray-700 whitespace-nowrap">종료일</label>
+                        <input 
+                            type="date" 
+                            id="period-end-date"
+                            class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                        >
+                        <button 
+                            id="period-apply-btn"
+                            class="px-4 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm whitespace-nowrap"
+                        >
+                            적용
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 차트 -->
+        <div class="relative" style="height: 400px;">
+            <canvas id="period-revenue-chart"></canvas>
+        </div>
+    </div>
+    
+    <!-- 기간별 매출 테이블 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
+        <!-- 타이틀과 필터를 같은 행에 배치 -->
+        <div class="mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <h2 class="text-xl font-semibold text-black">기간별 매출 테이블</h2>
+                
+                <!-- 테이블 전용 필터 섹션 - 오른쪽 상단 정렬 -->
+                <div class="flex flex-col items-end gap-4">
+                    <!-- 기간 선택 라디오 버튼 -->
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="table-period-type" 
+                                value="daily" 
+                                id="table-period-daily"
+                                class="w-4 h-4 text-primary border-gray-300 focus:ring-primary-200 focus:ring-2"
+                            >
+                            <span class="text-sm text-black">일간</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="table-period-type" 
+                                value="weekly" 
+                                id="table-period-weekly"
+                                class="w-4 h-4 text-primary border-gray-300 focus:ring-primary-200 focus:ring-2"
+                            >
+                            <span class="text-sm text-black">주간</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="table-period-type" 
+                                value="monthly" 
+                                id="table-period-monthly"
+                                checked
+                                class="w-4 h-4 text-primary border-gray-300 focus:ring-primary-200 focus:ring-2"
+                            >
+                            <span class="text-sm text-black">월간</span>
+                        </label>
+                    </div>
+                    
+                    <!-- 날짜 입력 필드 -->
+                    <div class="flex items-center gap-4">
+                        <label class="text-sm font-medium text-gray-700 whitespace-nowrap">시작일</label>
+                        <input 
+                            type="date" 
+                            id="table-period-start-date"
+                            class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                        >
+                        <label class="text-sm font-medium text-gray-700 whitespace-nowrap">종료일</label>
+                        <input 
+                            type="date" 
+                            id="table-period-end-date"
+                            class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                        >
+                        <button 
+                            id="table-period-apply-btn"
+                            class="px-4 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm whitespace-nowrap"
+                        >
+                            적용
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 테이블 -->
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr id="table-header-row">
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black sticky left-0 bg-gray-50 z-10">날짜</th>
+                        <!-- JavaScript로 동적 생성 -->
+                    </tr>
+                </thead>
+                <tbody id="table-tbody" class="divide-y divide-gray-100">
+                    <!-- JavaScript로 동적 생성 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
     <!-- 데이터 전달용 JSON 스크립트 -->
     <script type="application/json" id="concert-aggregated-data">
     {
-        "summaryUrl": "{% url 'dashboard:concert_aggregated_summary' %}"
+        "summaryUrl": "{% url 'dashboard:concert_aggregated_summary' %}",
+        "periodRevenueUrl": "{% url 'dashboard:concert_period_revenue' %}"
     }
     </script>
 {% endblock %}
