@@ -328,36 +328,6 @@ function renderRevenueChart() {
         }
     });
     
-    // 목표액 라인 데이터셋
-    if (currentData.target_revenue) {
-        datasets.push({
-            type: 'line',
-            label: '목표액',
-            data: dates.map(() => currentData.target_revenue),
-            borderColor: '#f65938', // 브랜드 컬러
-            borderWidth: 2,
-            fill: false,
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            order: 1, // 라인 차트는 위에 그리기
-        });
-    }
-    
-    // 손익분기점 라인 데이터셋
-    if (currentData.break_even_point) {
-        datasets.push({
-            type: 'line',
-            label: '손익분기점',
-            data: dates.map(() => currentData.break_even_point),
-            borderColor: '#16a34a', // Success 컬러
-            borderWidth: 2,
-            fill: false,
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            order: 1, // 라인 차트는 위에 그리기
-        });
-    }
-    
     revenueChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -377,11 +347,7 @@ function renderRevenueChart() {
                         label: function(context) {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
-                            if (context.dataset.type === 'line') {
-                                return label + ': ' + formatNumber(Math.round(value)) + '원';
-                            } else {
-                                return label + ': ' + formatNumber(Math.round(value)) + '원';
-                            }
+                            return label + ': ' + formatNumber(Math.round(value)) + '원';
                         },
                     },
                 },
@@ -454,21 +420,6 @@ function renderTicketChart() {
         }
     });
     
-    // 총 좌석수 라인 데이터셋
-    if (currentData.total_seats) {
-        datasets.push({
-            type: 'line',
-            label: '총 좌석수',
-            data: dates.map(() => currentData.total_seats),
-            borderColor: '#78716c', // Secondary 컬러
-            borderWidth: 2,
-            fill: false,
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            order: 1, // 라인 차트는 위에 그리기
-        });
-    }
-    
     ticketChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -488,11 +439,7 @@ function renderTicketChart() {
                         label: function(context) {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
-                            if (context.dataset.type === 'line') {
-                                return label + ': ' + formatNumber(value) + '석';
-                            } else {
-                                return label + ': ' + formatNumber(value) + '매';
-                            }
+                            return label + ': ' + formatNumber(value) + '매';
                         },
                     },
                 },
