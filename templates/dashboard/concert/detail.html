@@ -21,30 +21,63 @@
             <h3 class="text-lg font-semibold text-black mb-6">매출 현황</h3>
             <div class="space-y-4">
                 <div class="flex items-center justify-between pb-4 border-b border-gray-100">
-                    <span class="text-sm font-medium text-gray-600">총 매출</span>
-                    <span class="text-2xl font-semibold text-black" id="summary-total-revenue">
+                    <span class="text-sm font-medium text-gray-600">어제 매출</span>
+                    <span class="text-2xl font-semibold text-black" id="summary-yesterday-revenue">
                         <span class="text-gray-400">-</span>
                     </span>
                 </div>
-                <div class="flex items-center justify-between pb-4 border-b border-gray-100">
-                    <span class="text-sm font-medium text-gray-600">목표액</span>
-                    <span class="text-xl font-semibold text-black" id="summary-target-revenue">
-                        {% if performance.target_revenue %}
-                            <span class="target-value">{{ performance.target_revenue|floatformat:0 }}</span>원
-                        {% else %}
-                            <span class="text-gray-400">미설정</span>
-                        {% endif %}
-                    </span>
+            </div>
+            
+            <!-- 매출 프로그래스 바 -->
+            <div class="mt-6 space-y-4">
+                <!-- 총 매출 프로그래스바 -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-600">총 매출</span>
+                        <span class="text-sm font-semibold text-black" id="summary-total-revenue-text">-</span>
+                    </div>
+                    <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                            id="revenue-progress-bar"
+                            class="h-full bg-primary rounded-full transition-all duration-500"
+                            style="width: 0%;"
+                        ></div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1 text-xs text-gray-400">
+                        <span>0원</span>
+                        <span id="summary-target-revenue-text">
+                            {% if performance.target_revenue %}
+                                {{ performance.target_revenue|floatformat:0 }}원
+                            {% else %}
+                                목표 미설정
+                            {% endif %}
+                        </span>
+                    </div>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-600">손익분기점</span>
-                    <span class="text-xl font-semibold text-black" id="summary-break-even">
-                        {% if performance.break_even_point %}
-                            <span class="breakeven-value">{{ performance.break_even_point|floatformat:0 }}</span>원
-                        {% else %}
-                            <span class="text-gray-400">미설정</span>
-                        {% endif %}
-                    </span>
+                
+                <!-- 손익분기점 프로그래스바 -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-600">손익분기점</span>
+                        <span class="text-sm font-semibold text-black" id="summary-break-even-text">-</span>
+                    </div>
+                    <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                            id="bep-progress-bar"
+                            class="h-full bg-red-400 rounded-full transition-all duration-500"
+                            style="width: 0%;"
+                        ></div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1 text-xs text-gray-400">
+                        <span>0원</span>
+                        <span id="summary-target-revenue-text-bep">
+                            {% if performance.target_revenue %}
+                                {{ performance.target_revenue|floatformat:0 }}원
+                            {% else %}
+                                목표 미설정
+                            {% endif %}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -54,16 +87,29 @@
             <h3 class="text-lg font-semibold text-black mb-6">판매 매수 현황</h3>
             <div class="space-y-4">
                 <div class="flex items-center justify-between pb-4 border-b border-gray-100">
-                    <span class="text-sm font-medium text-gray-600">총 판매 매수</span>
-                    <span class="text-2xl font-semibold text-black" id="summary-total-tickets">
+                    <span class="text-sm font-medium text-gray-600">어제 판매 매수</span>
+                    <span class="text-2xl font-semibold text-black" id="summary-yesterday-tickets">
                         <span class="text-gray-400">-</span>
                     </span>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-600">총 좌석수</span>
-                    <span class="text-xl font-semibold text-black" id="summary-total-seats">
-                        <span class="text-gray-400">-</span>
-                    </span>
+            </div>
+            
+            <!-- 판매 매수 프로그래스 바 -->
+            <div class="mt-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-600">총 판매 매수</span>
+                    <span class="text-sm font-semibold text-black" id="summary-total-tickets-text">-</span>
+                </div>
+                <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                        id="tickets-progress-bar"
+                        class="h-full bg-primary rounded-full transition-all duration-500"
+                        style="width: 0%;"
+                    ></div>
+                </div>
+                <div class="flex items-center justify-between mt-1 text-xs text-gray-400">
+                    <span>0매</span>
+                    <span id="summary-total-seats-text">-</span>
                 </div>
             </div>
         </div>

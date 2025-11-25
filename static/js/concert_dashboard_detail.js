@@ -105,31 +105,72 @@ async function loadDashboardData(startDate, endDate) {
 function updateSummaryCards() {
     if (!currentData) return;
     
-    const targetRevenueEl = document.querySelector('#summary-target-revenue .target-value');
-    const breakEvenEl = document.querySelector('#summary-break-even .breakeven-value');
-    const totalSeatsEl = document.getElementById('summary-total-seats');
-    const totalRevenueEl = document.getElementById('summary-total-revenue');
-    const totalTicketsEl = document.getElementById('summary-total-tickets');
+    const yesterdayRevenueEl = document.getElementById('summary-yesterday-revenue');
+    const yesterdayTicketsEl = document.getElementById('summary-yesterday-tickets');
     
-    if (targetRevenueEl && currentData.target_revenue) {
-        targetRevenueEl.textContent = formatNumber(Math.round(currentData.target_revenue));
+    // 매출 프로그래스바 계산
+    const targetRevenue = currentData.target_revenue || 0;
+    const breakEvenPoint = currentData.break_even_point || 0;
+    const totalRevenue = currentData.total_revenue || 0;
+    
+    const revenueBar = document.getElementById('revenue-progress-bar');
+    const revenueText = document.getElementById('summary-total-revenue-text');
+    const bepBar = document.getElementById('bep-progress-bar');
+    const bepText = document.getElementById('summary-break-even-text');
+    
+    // 총 매출 프로그래스바
+    if (revenueBar && revenueText) {
+        if (targetRevenue > 0) {
+            const rate = Math.min(100, (totalRevenue / targetRevenue) * 100);
+            revenueBar.style.width = rate + '%';
+            revenueText.textContent = formatNumber(Math.round(totalRevenue)) + '원';
+        } else {
+            revenueBar.style.width = '0%';
+            revenueText.textContent = '-';
+        }
     }
     
-    if (breakEvenEl && currentData.break_even_point) {
-        breakEvenEl.textContent = formatNumber(Math.round(currentData.break_even_point));
+    // 손익분기점 프로그래스바
+    if (bepBar && bepText) {
+        if (targetRevenue > 0) {
+            const bepRate = Math.min(100, (breakEvenPoint / targetRevenue) * 100);
+            bepBar.style.width = bepRate + '%';
+            bepText.textContent = formatNumber(Math.round(breakEvenPoint)) + '원';
+        } else {
+            bepBar.style.width = '0%';
+            bepText.textContent = '-';
+        }
     }
     
-    if (totalSeatsEl && currentData.total_seats) {
-        totalSeatsEl.innerHTML = '<span class="text-black">' + formatNumber(currentData.total_seats) + '</span>석';
-    }
+    // 어제 날짜 계산
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
     
-    if (totalRevenueEl && currentData.total_revenue) {
-        totalRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(currentData.total_revenue)) + '</span>원';
+    // 어제 매출 계산
+    if (yesterdayRevenueEl && currentData.daily_revenue) {
+        let yesterdayRevenue = 0;
+        const bookingSites = currentData.booking_sites || [];
+        
+        if (currentData.daily_revenue[yesterdayStr]) {
+            bookingSites.forEach(site => {
+                if (currentData.daily_revenue[yesterdayStr][site]) {
+                    yesterdayRevenue += (currentData.daily_revenue[yesterdayStr][site].paid || 0);
+                    yesterdayRevenue += (currentData.daily_revenue[yesterdayStr][site].unpaid || 0);
+                }
+            });
+        }
+        
+        if (yesterdayRevenue > 0) {
+            yesterdayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(yesterdayRevenue)) + '</span>원';
+        } else {
+            yesterdayRevenueEl.innerHTML = '<span class="text-gray-400">-</span>';
+        }
     }
     
     // 총 판매 매수 계산
-    if (totalTicketsEl && currentData.daily_tickets) {
-        let totalTickets = 0;
+    let totalTickets = 0;
+    if (currentData.daily_tickets) {
         const dates = currentData.dates;
         const bookingSites = currentData.booking_sites;
         
@@ -141,8 +182,52 @@ function updateSummaryCards() {
                 }
             });
         });
+    }
+    
+    // 판매 매수 프로그래스바 계산
+    const totalSeats = currentData.total_seats || 0;
+    const ticketsBar = document.getElementById('tickets-progress-bar');
+    const ticketsText = document.getElementById('summary-total-tickets-text');
+    const seatsText = document.getElementById('summary-total-seats-text');
+    
+    if (ticketsBar && ticketsText) {
+        if (totalSeats > 0) {
+            const ticketsRate = Math.min(100, (totalTickets / totalSeats) * 100);
+            ticketsBar.style.width = ticketsRate + '%';
+            ticketsText.textContent = formatNumber(totalTickets) + '매';
+        } else {
+            ticketsBar.style.width = '0%';
+            ticketsText.textContent = '-';
+        }
+    }
+    
+    if (seatsText) {
+        if (totalSeats > 0) {
+            seatsText.textContent = formatNumber(totalSeats) + '매';
+        } else {
+            seatsText.textContent = '-';
+        }
+    }
+    
+    // 어제 판매 매수 계산
+    if (yesterdayTicketsEl && currentData.daily_tickets) {
+        let yesterdayTickets = 0;
+        const bookingSites = currentData.booking_sites || [];
         
-        totalTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(totalTickets) + '</span>매';
+        if (currentData.daily_tickets[yesterdayStr]) {
+            bookingSites.forEach(site => {
+                if (currentData.daily_tickets[yesterdayStr][site]) {
+                    yesterdayTickets += (currentData.daily_tickets[yesterdayStr][site].paid || 0);
+                    yesterdayTickets += (currentData.daily_tickets[yesterdayStr][site].unpaid || 0);
+                }
+            });
+        }
+        
+        if (yesterdayTickets > 0) {
+            yesterdayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(yesterdayTickets) + '</span>매';
+        } else {
+            yesterdayTicketsEl.innerHTML = '<span class="text-gray-400">-</span>';
+        }
     }
 }
 
