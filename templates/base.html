@@ -41,7 +41,7 @@
                             <div class="mt-1 space-y-1">
                                 <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">연극</a>
                                 <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">뮤지컬</a>
-                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">콘서트</a>
+                                <a href="{% url 'dashboard:concert_overview' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'concert_overview' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-colors">콘서트</a>
                                 <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">전시</a>
                             </div>
                         </div>

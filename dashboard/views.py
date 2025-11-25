@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, TemplateView
 from django.db.models import Q, Sum
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -73,6 +73,106 @@ class PerformanceDashboardDetailView(DetailView):
         
         # 장르별 템플릿이 있으면 사용, 없으면 기본 템플릿 사용
         return [genre_template_map.get(genre, 'dashboard/detail.html')]
+
+
+class ConcertOverviewDashboardView(TemplateView):
+    """콘서트 통합 대시보드 뷰"""
+    template_name = 'dashboard/concert/overview.html'
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_concert_aggregated_summary_data(request):
+    """콘서트 통합 대시보드 요약 데이터 API"""
+    try:
+        # 모든 콘서트 공연 조회
+        concerts = Performance.objects.filter(genre='concert')
+        
+        if not concerts.exists():
+            return JsonResponse({
+                'success': True,
+                'data': {
+                    'total_revenue': 0,
+                    'total_ticket_count': 0,
+                    'today_revenue': 0,
+                    'today_ticket_count': 0,
+                }
+            })
+        
+        # 오늘 날짜
+        today = datetime.now().date()
+        
+        # 모든 콘서트의 일일 매출 데이터 조회
+        all_daily_sales = ConcertDailySales.objects.filter(
+            performance__genre='concert'
+        )
+        
+        # 총 매출 계산 (모든 날짜의 모든 콘서트)
+        total_revenue_result = all_daily_sales.aggregate(
+            total_paid=Sum('paid_revenue'),
+            total_unpaid=Sum('unpaid_revenue')
+        )
+        total_revenue = float(total_revenue_result['total_paid'] or 0) + float(total_revenue_result['total_unpaid'] or 0)
+        
+        # 총 판매 매수 계산 (모든 날짜의 모든 콘서트)
+        total_ticket_result = all_daily_sales.aggregate(
+            total_paid_tickets=Sum('paid_ticket_count'),
+            total_unpaid_tickets=Sum('unpaid_ticket_count')
+        )
+        total_ticket_count = (total_ticket_result['total_paid_tickets'] or 0) + (total_ticket_result['total_unpaid_tickets'] or 0)
+        
+        # 오늘 매출 계산
+        today_sales = all_daily_sales.filter(date=today)
+        today_revenue_result = today_sales.aggregate(
+            total_paid=Sum('paid_revenue'),
+            total_unpaid=Sum('unpaid_revenue')
+        )
+        today_revenue = float(today_revenue_result['total_paid'] or 0) + float(today_revenue_result['total_unpaid'] or 0)
+        
+        # 오늘 판매 매수 계산
+        today_ticket_result = today_sales.aggregate(
+            total_paid_tickets=Sum('paid_ticket_count'),
+            total_unpaid_tickets=Sum('unpaid_ticket_count')
+        )
+        today_ticket_count = (today_ticket_result['total_paid_tickets'] or 0) + (today_ticket_result['total_unpaid_tickets'] or 0)
+        
+        # 총 목표 매출 계산 (모든 콘서트의 target_revenue 합계)
+        total_target_revenue = 0
+        for concert in concerts:
+            if concert.target_revenue:
+                total_target_revenue += float(concert.target_revenue)
+        
+        # 총 손익분기점 계산 (모든 콘서트의 break_even_point 합계)
+        total_break_even_point = 0
+        for concert in concerts:
+            if concert.break_even_point:
+                total_break_even_point += float(concert.break_even_point)
+        
+        # 총 오픈 판매 매수 계산 (모든 콘서트의 seat_counts 합계)
+        total_seats = 0
+        for concert in concerts:
+            if concert.seat_counts:
+                for grade, count in concert.seat_counts.items():
+                    if isinstance(count, (int, float)):
+                        total_seats += count
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'total_revenue': total_revenue,
+                'total_ticket_count': total_ticket_count,
+                'today_revenue': today_revenue,
+                'today_ticket_count': today_ticket_count,
+                'total_target_revenue': total_target_revenue,
+                'total_break_even_point': total_break_even_point,
+                'total_seats': total_seats,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 @login_required
