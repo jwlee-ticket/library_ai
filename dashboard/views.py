@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import json
 from performance.models import Performance
-from data_management.models import ConcertDailySales
+from data_management.models import ConcertDailySales, ConcertFinalSales
 
 
 @login_required
@@ -163,6 +163,37 @@ def get_concert_dashboard_data(request, pk):
     unpaid_total = sales_data.aggregate(total=Sum('unpaid_revenue'))['total'] or 0
     total_revenue = float(paid_total) + float(unpaid_total)
     
+    # 등급별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    grade_sales_data = {}
+    final_sales = ConcertFinalSales.objects.filter(performance=performance)
+    
+    # 모든 예매처의 등급별 데이터를 합산
+    for final_sale in final_sales:
+        if final_sale.grade_sales_summary:
+            for grade, grade_data in final_sale.grade_sales_summary.items():
+                if grade not in grade_sales_data:
+                    grade_sales_data[grade] = {
+                        'paid_count': 0,
+                        'free_count': 0,
+                        'revenue': 0,
+                        'paid_occupancy_rate': 0,
+                        'total_occupancy_rate': 0,
+                        'total_count': 0,
+                    }
+                
+                # 데이터 합산
+                grade_sales_data[grade]['paid_count'] += grade_data.get('paid_count', 0)
+                grade_sales_data[grade]['free_count'] += grade_data.get('free_count', 0)
+                grade_sales_data[grade]['revenue'] += float(grade_data.get('revenue', 0))
+                grade_sales_data[grade]['total_count'] += grade_data.get('total_count', 0)
+                
+                # 점유율은 가중 평균으로 계산 (또는 마지막 값 사용)
+                # 간단하게는 마지막 값 사용
+                if grade_data.get('paid_occupancy_rate'):
+                    grade_sales_data[grade]['paid_occupancy_rate'] = grade_data.get('paid_occupancy_rate', 0)
+                if grade_data.get('total_occupancy_rate'):
+                    grade_sales_data[grade]['total_occupancy_rate'] = grade_data.get('total_occupancy_rate', 0)
+    
     return JsonResponse({
         'success': True,
         'data': {
@@ -174,5 +205,6 @@ def get_concert_dashboard_data(request, pk):
             'break_even_point': break_even_point,
             'total_seats': total_seats,
             'total_revenue': total_revenue,
+            'grade_sales': grade_sales_data,
         }
     })

@@ -190,6 +190,29 @@
     <!-- 구분선 -->
     <div class="border-t-2 border-gray-200 my-8"></div>
     
+    <!-- 등급별 판매현황 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+        <h2 class="text-xl font-semibold text-black mb-6">등급별 판매현황</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black">등급</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">매수(유료)</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">매수(무료)</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">금액</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">유료 점유율</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">객석 점유율</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">총 판매 좌석</th>
+                    </tr>
+                </thead>
+                <tbody id="grade-sales-tbody" class="divide-y divide-gray-100">
+                    <!-- JavaScript로 동적 생성 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
     <!-- 데이터 전달용 JSON 스크립트 -->
     <script type="application/json" id="concert-dashboard-data">
     {
