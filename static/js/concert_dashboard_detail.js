@@ -199,7 +199,7 @@ function updateSummaryCards() {
         if (yesterdayRevenue > 0) {
             yesterdayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(yesterdayRevenue)) + '</span>원';
         } else {
-            yesterdayRevenueEl.innerHTML = '<span class="text-gray-400">-</span>';
+            yesterdayRevenueEl.innerHTML = '<span class="text-secondary">-</span>';
         }
     }
     
@@ -261,7 +261,7 @@ function updateSummaryCards() {
         if (yesterdayTickets > 0) {
             yesterdayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(yesterdayTickets) + '</span>매';
         } else {
-            yesterdayTicketsEl.innerHTML = '<span class="text-gray-400">-</span>';
+            yesterdayTicketsEl.innerHTML = '<span class="text-secondary">-</span>';
         }
     }
 }

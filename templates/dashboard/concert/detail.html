@@ -16,7 +16,7 @@
     </div>
     
     <!-- 요약 카드 섹션 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <!-- 매출 관련 카드 -->
         <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
             <h3 class="text-lg font-semibold text-black mb-6">매출 현황</h3>
@@ -24,7 +24,7 @@
                 <div class="flex items-center justify-between pb-4 border-b border-gray-100">
                     <span class="text-sm font-medium text-gray-700">어제 매출</span>
                     <span class="text-2xl font-semibold text-black" id="summary-yesterday-revenue">
-                        <span class="text-gray-400">-</span>
+                        <span class="text-secondary">-</span>
                     </span>
                 </div>
             </div>
@@ -48,7 +48,7 @@
                         style="left: 0%;"
                     ></div>
                 </div>
-                <div class="flex items-center justify-between mt-1 text-xs text-gray-400">
+                <div class="flex items-center justify-between mt-1 text-xs text-secondary">
                     <span>0원</span>
                     <span id="summary-target-revenue-text">
                         {% if performance.target_revenue %}
@@ -72,7 +72,7 @@
                 <div class="flex items-center justify-between pb-4 border-b border-gray-100">
                     <span class="text-sm font-medium text-gray-700">어제 판매 매수</span>
                     <span class="text-2xl font-semibold text-black" id="summary-yesterday-tickets">
-                        <span class="text-gray-400">-</span>
+                        <span class="text-secondary">-</span>
                     </span>
                 </div>
             </div>
@@ -90,7 +90,7 @@
                         style="width: 0%;"
                     ></div>
                 </div>
-                <div class="flex items-center justify-between mt-1 text-xs text-gray-400">
+                <div class="flex items-center justify-between mt-1 text-xs text-secondary">
                     <span>0매</span>
                     <span id="summary-total-seats-text">-</span>
                 </div>
@@ -99,7 +99,7 @@
     </div>
     
     <!-- 일간 그래프 섹션 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
         <!-- 타이틀과 필터를 같은 행에 배치 -->
         <div class="mb-6">
             <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -189,7 +189,7 @@
     </div>
     
     <!-- 등급별 판매현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
         <h2 class="text-xl font-semibold text-black mb-6">등급별 판매현황</h2>
         
         <!-- 테이블과 차트를 같은 행에 배치 (7:3 비율) -->
@@ -226,7 +226,7 @@
     </div>
     
     <!-- 할인권종별 판매현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
         <h2 class="text-xl font-semibold text-black mb-6">할인권종별 판매현황</h2>
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -246,7 +246,7 @@
     </div>
     
     <!-- 성별, 연령대별 판매현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
         <h2 class="text-xl font-semibold text-black mb-6">성별, 연령대별 판매현황</h2>
         <div class="relative" style="height: 400px;">
             <canvas id="age-gender-chart"></canvas>
@@ -254,7 +254,7 @@
     </div>
     
     <!-- 결제수단별 판매현황, 카드별 매출집계 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
         <!-- 결제수단별 판매현황 -->
         <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
             <h2 class="text-xl font-semibold text-black mb-6">결제수단별 판매현황</h2>
@@ -295,7 +295,7 @@
     </div>
     
     <!-- 판매경로별 판매현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
         <h2 class="text-xl font-semibold text-black mb-6">판매경로별 판매현황</h2>
         
         <!-- 테이블과 차트를 같은 행에 배치 -->
@@ -328,7 +328,7 @@
     </div>
     
     <!-- 지역별 판매현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
         <h2 class="text-xl font-semibold text-black mb-6">지역별 판매현황</h2>
         
         <!-- 테이블과 차트를 같은 행에 배치 -->
