@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load performance_tags %}
+{% load custom_filters %}
 {% load static %}
 
 {% block breadcrumb %}
@@ -51,7 +52,7 @@
                     <span>0원</span>
                     <span id="summary-target-revenue-text">
                         {% if performance.target_revenue %}
-                            {{ performance.target_revenue|floatformat:0 }}원
+                            <span class="target-revenue-value">{{ performance.target_revenue|floatformat:0|intcomma }}</span>원
                         {% else %}
                             목표 미설정
                         {% endif %}
@@ -207,6 +208,26 @@
                     </tr>
                 </thead>
                 <tbody id="grade-sales-tbody" class="divide-y divide-gray-100">
+                    <!-- JavaScript로 동적 생성 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 할인권종별 판매현황 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+        <h2 class="text-xl font-semibold text-black mb-6">할인권종별 판매현황</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black">예매처</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black">할인권종</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">판매 매수</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">매출액</th>
+                    </tr>
+                </thead>
+                <tbody id="discount-sales-tbody" class="divide-y divide-gray-100">
                     <!-- JavaScript로 동적 생성 -->
                 </tbody>
             </table>

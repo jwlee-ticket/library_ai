@@ -165,6 +165,8 @@ def get_concert_dashboard_data(request, pk):
     
     # 등급별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
     grade_sales_data = {}
+    # 할인권종별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    discount_sales_data = {}
     final_sales = ConcertFinalSales.objects.filter(performance=performance)
     
     # 모든 예매처의 등급별 데이터를 합산
@@ -193,6 +195,20 @@ def get_concert_dashboard_data(request, pk):
                     grade_sales_data[grade]['paid_occupancy_rate'] = grade_data.get('paid_occupancy_rate', 0)
                 if grade_data.get('total_occupancy_rate'):
                     grade_sales_data[grade]['total_occupancy_rate'] = grade_data.get('total_occupancy_rate', 0)
+        
+        # 할인권종별 판매현황 데이터
+        if final_sale.booking_site_discount_sales:
+            site = final_sale.booking_site
+            if site not in discount_sales_data:
+                discount_sales_data[site] = []
+            
+            # 할인권종별 데이터 추가
+            if isinstance(final_sale.booking_site_discount_sales, dict):
+                for discount_type, discount_data in final_sale.booking_site_discount_sales.items():
+                    if isinstance(discount_data, list):
+                        discount_sales_data[site].extend(discount_data)
+                    elif isinstance(discount_data, dict):
+                        discount_sales_data[site].append(discount_data)
     
     return JsonResponse({
         'success': True,
@@ -206,5 +222,6 @@ def get_concert_dashboard_data(request, pk):
             'total_seats': total_seats,
             'total_revenue': total_revenue,
             'grade_sales': grade_sales_data,
+            'discount_sales': discount_sales_data,
         }
     })

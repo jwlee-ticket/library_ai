@@ -104,6 +104,7 @@ async function loadDashboardData(startDate, endDate) {
             updateBookingSiteFilters();
             renderCharts();
             renderGradeSales();
+            renderDiscountSales();
         } else {
             console.error('데이터 로드 실패:', data.error);
             alert('데이터를 불러올 수 없습니다: ' + (data.error || '알 수 없는 오류'));
@@ -132,6 +133,12 @@ function updateSummaryCards() {
     const revenueText = document.getElementById('summary-total-revenue-text');
     const bepMarker = document.getElementById('revenue-bep-marker');
     const bepText = document.getElementById('summary-break-even-text');
+    const targetRevenueText = document.querySelector('.target-revenue-value');
+    
+    // 목표액 텍스트 업데이트 (천 단위 콤마 적용)
+    if (targetRevenueText && targetRevenue > 0) {
+        targetRevenueText.textContent = formatNumber(Math.round(targetRevenue));
+    }
     
     // 총 매출 프로그래스바
     if (revenueBar && revenueText) {
@@ -553,6 +560,57 @@ function renderGradeSales() {
         `;
         
         tbody.appendChild(row);
+    });
+}
+
+/**
+ * 할인권종별 판매현황 렌더링
+ */
+function renderDiscountSales() {
+    if (!currentData || !currentData.discount_sales) return;
+    
+    const tbody = document.getElementById('discount-sales-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    const discountSales = currentData.discount_sales;
+    const sites = Object.keys(discountSales).sort();
+    
+    if (sites.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-600">할인권종별 판매 데이터가 없습니다</td></tr>';
+        return;
+    }
+    
+    sites.forEach(site => {
+        const discounts = discountSales[site];
+        if (!discounts || discounts.length === 0) return;
+        
+        discounts.forEach(discount => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors';
+            
+            const discountType = discount.discount_type || '-';
+            const salesCount = discount.sales_count || 0;
+            const revenue = discount.revenue || 0;
+            
+            row.innerHTML = `
+                <td class="px-6 py-4">
+                    <span class="text-base font-medium text-black">${site}</span>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="text-sm text-black">${discountType}</span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <span class="text-sm text-black">${formatNumber(salesCount)}</span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <span class="text-sm text-black">${formatNumber(Math.round(revenue))}원</span>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
     });
 }
 
