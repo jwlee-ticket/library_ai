@@ -19,11 +19,6 @@ sleep 1
 echo "Git에서 최신 코드 가져오는 중..."
 git pull
 
-# 소유권을 www-data로 변경 (Gunicorn이 정상 동작하도록)
-echo "소유권을 www-data로 변경 중..."
-sudo chown -R www-data:www-data /var/www/library-ai
-sleep 1
-
 # 의존성 업데이트
 echo "의존성 설치 중..."
 pip install -r requirements.txt
@@ -39,6 +34,11 @@ python manage.py collectstatic --noinput
 # 데이터베이스 마이그레이션
 echo "데이터베이스 마이그레이션 실행 중..."
 python manage.py migrate
+
+# 소유권을 www-data로 변경 (Gunicorn이 정상 동작하도록)
+echo "소유권을 www-data로 변경 중..."
+sudo chown -R www-data:www-data /var/www/library-ai
+sleep 1
 
 # Gunicorn 재시작
 echo "Gunicorn 재시작 중..."
