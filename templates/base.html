@@ -27,7 +27,7 @@
                 <h2 class="text-2xl font-semibold text-brand mb-6 pb-6 border-b border-[#2a3038]/10">Library AI</h2>
                 <nav class="space-y-1">
                     <!-- 전체 -->
-                    <a href="{% url 'dashboard:index' %}" class="hidden block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-all duration-200 hover:shadow-sm">전체</a>
+                    <a href="{% url 'dashboard:index' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-all duration-200 hover:shadow-sm">전체</a>
                     
                     <!-- 장르별 대시보드 드롭다운 -->
                     <div class="relative">
