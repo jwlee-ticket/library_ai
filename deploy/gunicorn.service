@@ -1,0 +1,17 @@
+[Unit]
+Description=Gunicorn daemon for Library AI
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/library-ai
+Environment="PATH=/var/www/library-ai/venv/bin"
+ExecStart=/var/www/library-ai/venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/var/www/library-ai/library-ai.sock \
+    config.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+
