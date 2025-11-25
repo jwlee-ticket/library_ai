@@ -115,7 +115,7 @@ function updateSummaryCards() {
     
     const revenueBar = document.getElementById('revenue-progress-bar');
     const revenueText = document.getElementById('summary-total-revenue-text');
-    const bepBar = document.getElementById('bep-progress-bar');
+    const bepMarker = document.getElementById('revenue-bep-marker');
     const bepText = document.getElementById('summary-break-even-text');
     
     // 총 매출 프로그래스바
@@ -130,14 +130,15 @@ function updateSummaryCards() {
         }
     }
     
-    // 손익분기점 프로그래스바
-    if (bepBar && bepText) {
-        if (targetRevenue > 0) {
+    // 손익분기점 마커
+    if (bepMarker && bepText) {
+        if (targetRevenue > 0 && breakEvenPoint > 0) {
             const bepRate = Math.min(100, (breakEvenPoint / targetRevenue) * 100);
-            bepBar.style.width = bepRate + '%';
+            bepMarker.style.left = bepRate + '%';
+            bepMarker.classList.remove('hidden');
             bepText.textContent = formatNumber(Math.round(breakEvenPoint)) + '원';
         } else {
-            bepBar.style.width = '0%';
+            bepMarker.classList.add('hidden');
             bepText.textContent = '-';
         }
     }
