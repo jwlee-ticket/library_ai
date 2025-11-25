@@ -43,7 +43,7 @@ sleep 2
 # 소유권을 www-data로 변경 (Gunicorn이 정상 동작하도록)
 # venv 디렉토리는 제외 (현재 사용자가 계속 사용해야 함)
 echo "소유권을 www-data로 변경 "
-sudo chown -R www-data:www-datahisto /var/www/library-ai
+sudo chown -R www-data:www-data /var/www/library-ai
 sleep 2
 
 # Gunicorn 재시작
