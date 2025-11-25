@@ -31,20 +31,41 @@
                     
                     <!-- 장르별 대시보드 드롭다운 -->
                     <div class="relative">
-                        <button onclick="toggleGenreDropdown()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-all duration-200 hover:shadow-sm">
-                            <span>장르별 대시보드</span>
-                            <svg id="genre-arrow" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div id="genre-dropdown" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                            <div class="mt-1 space-y-1">
-                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">연극</a>
-                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">뮤지컬</a>
-                                <a href="{% url 'dashboard:concert_overview' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'concert_overview' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-colors">콘서트</a>
-                                <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">전시</a>
-                            </div>
-                        </div>
+                        {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'concert_overview' %}
+                            {% with genre_dropdown_open=True %}
+                                <button onclick="toggleGenreDropdown()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-all duration-200 hover:shadow-sm">
+                                    <span>장르별 대시보드</span>
+                                    <svg id="genre-arrow" class="w-4 h-4 transition-transform duration-200 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div id="genre-dropdown" class="max-h-96 overflow-hidden transition-all duration-300 ease-in-out">
+                                    <div class="mt-1 space-y-1">
+                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">연극</a>
+                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">뮤지컬</a>
+                                        <a href="{% url 'dashboard:concert_overview' %}" class="block px-4 py-3 rounded-xl text-sm bg-primary-200 text-primary font-semibold transition-colors">콘서트</a>
+                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">전시</a>
+                                    </div>
+                                </div>
+                            {% endwith %}
+                        {% else %}
+                            {% with genre_dropdown_open=False %}
+                                <button onclick="toggleGenreDropdown()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-all duration-200 hover:shadow-sm">
+                                    <span>장르별 대시보드</span>
+                                    <svg id="genre-arrow" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div id="genre-dropdown" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                                    <div class="mt-1 space-y-1">
+                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">연극</a>
+                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">뮤지컬</a>
+                                        <a href="{% url 'dashboard:concert_overview' %}" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">콘서트</a>
+                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">전시</a>
+                                    </div>
+                                </div>
+                            {% endwith %}
+                        {% endif %}
                     </div>
                     
                     <!-- 공연별 대시보드 -->
