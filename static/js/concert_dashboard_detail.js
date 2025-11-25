@@ -8,16 +8,30 @@ let revenueChart = null;
 let ticketChart = null;
 let currentData = null;
 
-// 예매처 색상 매핑
+/**
+ * CSS 변수에서 색상 가져오기
+ */
+function getCSSVariable(variableName) {
+    return getComputedStyle(document.documentElement)
+        .getPropertyValue(variableName)
+        .trim();
+}
+
+// 예매처 색상 매핑 (CSS 변수에서 가져옴)
 const bookingSiteColors = {
-    '놀티켓': '#1e3a8a',      // 남색
-    '예스24': '#0ea5e9',       // 하늘색
-    '멜론티켓': '#10b981',     // 초록색
-    '티켓링크': '#ef4444',     // 빨간색
+    '놀티켓': getCSSVariable('--color-chart-nolticket'),
+    '예스24': getCSSVariable('--color-chart-yes24'),
+    '멜론티켓': getCSSVariable('--color-chart-melonticket'),
+    '티켓링크': getCSSVariable('--color-chart-ticketlink'),
 };
 
-// 동적 색상 팔레트 (예매처가 4개 이상일 때 사용)
-const dynamicColors = ['#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
+// 동적 색상 팔레트 (CSS 변수에서 가져옴)
+const dynamicColors = [
+    getCSSVariable('--color-chart-site-5'),
+    getCSSVariable('--color-chart-site-6'),
+    getCSSVariable('--color-chart-site-7'),
+    getCSSVariable('--color-chart-site-8'),
+];
 
 /**
  * JSON 안전 파싱 함수
@@ -360,6 +374,14 @@ function renderRevenueChart() {
                             return formatNumber(value);
                         },
                     },
+                    grid: {
+                        display: false,
+                    },
+                },
+                x: {
+                    grid: {
+                        display: false,
+                    },
                 },
             },
         },
@@ -451,6 +473,14 @@ function renderTicketChart() {
                         callback: function(value) {
                             return formatNumber(value);
                         },
+                    },
+                    grid: {
+                        display: false,
+                    },
+                },
+                x: {
+                    grid: {
+                        display: false,
                     },
                 },
             },
