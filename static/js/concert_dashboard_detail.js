@@ -6,6 +6,10 @@ let performanceId = null;
 let dataUrl = null;
 let revenueChart = null;
 let ticketChart = null;
+let ageGenderChart = null;
+let salesChannelChart = null;
+let regionChart = null;
+let gradeChart = null;
 let currentData = null;
 
 /**
@@ -104,7 +108,15 @@ async function loadDashboardData(startDate, endDate) {
             updateBookingSiteFilters();
             renderCharts();
             renderGradeSales();
+            renderGradeChart();
             renderDiscountSales();
+            renderAgeGenderChart();
+            renderPaymentMethodSales();
+            renderCardSales();
+            renderSalesChannelSales();
+            renderSalesChannelChart();
+            renderRegionSales();
+            renderRegionChart();
         } else {
             console.error('데이터 로드 실패:', data.error);
             alert('데이터를 불러올 수 없습니다: ' + (data.error || '알 수 없는 오류'));
@@ -294,6 +306,103 @@ function renderCharts() {
     
     renderRevenueChart();
     renderTicketChart();
+}
+
+/**
+ * 성별, 연령대별 판매현황 차트 렌더링
+ */
+function renderAgeGenderChart() {
+    const ctx = document.getElementById('age-gender-chart');
+    if (!ctx) return;
+    
+    // 기존 차트 제거
+    if (ageGenderChart) {
+        ageGenderChart.destroy();
+    }
+    
+    const ageGenderData = currentData?.age_gender_sales || [];
+    
+    // 연령대별로 정렬
+    let sortedData = [];
+    if (ageGenderData.length > 0) {
+        sortedData = [...ageGenderData].sort((a, b) => {
+            const aNum = parseInt(a.age_group.split('~')[0].trim()) || 0;
+            const bNum = parseInt(b.age_group.split('~')[0].trim()) || 0;
+            return aNum - bNum;
+        });
+    }
+    
+    const ageGroups = sortedData.length > 0 ? sortedData.map(item => item.age_group) : [];
+    const maleCounts = sortedData.length > 0 ? sortedData.map(item => item.male_count || 0) : [];
+    const femaleCounts = sortedData.length > 0 ? sortedData.map(item => item.female_count || 0) : [];
+    const unknownCounts = sortedData.length > 0 ? sortedData.map(item => item.unknown_count || 0) : [];
+    
+    ageGenderChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ageGroups,
+            datasets: [
+                {
+                    label: '남성',
+                    data: maleCounts,
+                    backgroundColor: '#3b82f6', // 파란색
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                },
+                {
+                    label: '여성',
+                    data: femaleCounts,
+                    backgroundColor: '#ec4899', // 핑크색
+                    borderColor: '#ec4899',
+                    borderWidth: 1,
+                },
+                {
+                    label: '성별모름',
+                    data: unknownCounts,
+                    backgroundColor: '#78716c', // Secondary 컬러
+                    borderColor: '#78716c',
+                    borderWidth: 1,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y;
+                            return label + ': ' + formatNumber(value) + '명';
+                        },
+                    },
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return formatNumber(value);
+                        },
+                    },
+                    grid: {
+                        display: false,
+                    },
+                },
+                x: {
+                    grid: {
+                        display: false,
+                    },
+                },
+            },
+        },
+    });
 }
 
 /**
@@ -564,6 +673,124 @@ function renderGradeSales() {
 }
 
 /**
+ * 등급별 판매현황 파이 차트 렌더링
+ */
+function renderGradeChart() {
+    const ctx = document.getElementById('grade-chart');
+    if (!ctx) return;
+    
+    // 기존 차트 제거
+    if (gradeChart) {
+        gradeChart.destroy();
+    }
+    
+    if (!currentData || !currentData.grade_sales) {
+        // 데이터가 없을 때 빈 차트 표시
+        gradeChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                },
+            },
+        });
+        return;
+    }
+    
+    const gradeSales = currentData.grade_sales;
+    const grades = Object.keys(gradeSales).sort();
+    
+    if (grades.length === 0) {
+        // 데이터가 없을 때 빈 차트 표시
+        gradeChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                },
+            },
+        });
+        return;
+    }
+    
+    const labels = grades;
+    const paidCounts = grades.map(grade => gradeSales[grade].paid_count || 0);
+    
+    // 총 매수(유료) 계산
+    const totalPaidCount = paidCounts.reduce((sum, count) => sum + count, 0);
+    
+    // 색상 생성 (동적 색상 팔레트 사용)
+    const backgroundColors = grades.map((_, index) => {
+        return dynamicColors[index % dynamicColors.length];
+    });
+    
+    gradeChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '매수(유료)',
+                    data: paidCounts,
+                    backgroundColor: backgroundColors,
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12,
+                        },
+                        usePointStyle: true,
+                    },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const percentage = totalPaidCount > 0 ? ((value / totalPaidCount) * 100).toFixed(1) : 0;
+                            return label + ': ' + formatNumber(value) + '매 (' + percentage + '%)';
+                        },
+                    },
+                },
+            },
+        },
+    });
+}
+
+/**
  * 할인권종별 판매현황 렌더링
  */
 function renderDiscountSales() {
@@ -611,6 +838,410 @@ function renderDiscountSales() {
             
             tbody.appendChild(row);
         });
+    });
+}
+
+/**
+ * 결제수단별 판매현황 렌더링
+ */
+function renderPaymentMethodSales() {
+    if (!currentData || !currentData.payment_method_sales) return;
+    
+    const tbody = document.getElementById('payment-method-sales-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    const paymentMethodSales = currentData.payment_method_sales;
+    const paymentMethods = Object.keys(paymentMethodSales).sort();
+    
+    if (paymentMethods.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-gray-600">결제수단별 판매 데이터가 없습니다</td></tr>';
+        return;
+    }
+    
+    paymentMethods.forEach(paymentMethod => {
+        const data = paymentMethodSales[paymentMethod];
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-colors';
+        
+        const count = data.count || 0;
+        const amount = data.amount || 0;
+        
+        row.innerHTML = `
+            <td class="px-6 py-4">
+                <span class="text-base font-medium text-black">${paymentMethod}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${formatNumber(count)}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${formatNumber(Math.round(amount))}원</span>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * 카드별 매출집계 렌더링
+ */
+function renderCardSales() {
+    if (!currentData || !currentData.card_sales) return;
+    
+    const tbody = document.getElementById('card-sales-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    const cardSales = currentData.card_sales;
+    const cardTypes = Object.keys(cardSales).sort();
+    
+    if (cardTypes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-gray-600">카드별 매출 데이터가 없습니다</td></tr>';
+        return;
+    }
+    
+    cardTypes.forEach(cardType => {
+        const data = cardSales[cardType];
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-colors';
+        
+        const count = data.count || 0;
+        const amount = data.amount || 0;
+        
+        row.innerHTML = `
+            <td class="px-6 py-4">
+                <span class="text-base font-medium text-black">${cardType}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${formatNumber(count)}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${formatNumber(Math.round(amount))}원</span>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * 판매경로별 판매현황 테이블 렌더링
+ */
+function renderSalesChannelSales() {
+    if (!currentData || !currentData.sales_channel_sales) return;
+    
+    const tbody = document.getElementById('sales-channel-sales-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    const salesChannelSales = currentData.sales_channel_sales;
+    const salesChannels = Object.keys(salesChannelSales).sort();
+    
+    if (salesChannels.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-gray-600">판매경로별 판매 데이터가 없습니다</td></tr>';
+        return;
+    }
+    
+    salesChannels.forEach(salesChannel => {
+        const data = salesChannelSales[salesChannel];
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-colors';
+        
+        const count = data.count || 0;
+        const amount = data.amount || 0;
+        
+        row.innerHTML = `
+            <td class="px-6 py-4">
+                <span class="text-base font-medium text-black">${salesChannel}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${formatNumber(count)}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${formatNumber(Math.round(amount))}원</span>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * 판매경로별 판매현황 차트 렌더링
+ */
+function renderSalesChannelChart() {
+    const ctx = document.getElementById('sales-channel-chart');
+    if (!ctx) return;
+    
+    // 기존 차트 제거
+    if (salesChannelChart) {
+        salesChannelChart.destroy();
+    }
+    
+    if (!currentData || !currentData.sales_channel_sales) {
+        // 데이터가 없을 때 빈 차트 표시
+        salesChannelChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                },
+            },
+        });
+        return;
+    }
+    
+    const salesChannelSales = currentData.sales_channel_sales;
+    const salesChannels = Object.keys(salesChannelSales).sort();
+    
+    if (salesChannels.length === 0) {
+        // 데이터가 없을 때 빈 차트 표시
+        salesChannelChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                },
+            },
+        });
+        return;
+    }
+    
+    const labels = salesChannels;
+    const counts = salesChannels.map(channel => salesChannelSales[channel].count || 0);
+    
+    // 총 판매 매수 계산
+    const totalCount = counts.reduce((sum, count) => sum + count, 0);
+    
+    // 색상 생성 (동적 색상 팔레트 사용)
+    const backgroundColors = salesChannels.map((_, index) => {
+        return dynamicColors[index % dynamicColors.length];
+    });
+    
+    salesChannelChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '판매 매수',
+                    data: counts,
+                    backgroundColor: backgroundColors,
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12,
+                        },
+                        usePointStyle: true,
+                    },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const percentage = totalCount > 0 ? ((value / totalCount) * 100).toFixed(1) : 0;
+                            return label + ': ' + formatNumber(value) + '매 (' + percentage + '%)';
+                        },
+                    },
+                },
+            },
+        },
+    });
+}
+
+/**
+ * 지역별 판매현황 테이블 렌더링
+ */
+function renderRegionSales() {
+    if (!currentData || !currentData.region_sales) return;
+    
+    const tbody = document.getElementById('region-sales-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    const regionSales = currentData.region_sales;
+    const regions = Object.keys(regionSales).sort();
+    
+    if (regions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="px-6 py-8 text-center text-gray-600">지역별 판매 데이터가 없습니다</td></tr>';
+        return;
+    }
+    
+    regions.forEach(region => {
+        const data = regionSales[region];
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-colors';
+        
+        const count = data.count || 0;
+        
+        row.innerHTML = `
+            <td class="px-6 py-4">
+                <span class="text-base font-medium text-black">${region}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${formatNumber(count)}</span>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * 지역별 판매현황 차트 렌더링
+ */
+function renderRegionChart() {
+    const ctx = document.getElementById('region-chart');
+    if (!ctx) return;
+    
+    // 기존 차트 제거
+    if (regionChart) {
+        regionChart.destroy();
+    }
+    
+    if (!currentData || !currentData.region_sales) {
+        // 데이터가 없을 때 빈 차트 표시
+        regionChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                },
+            },
+        });
+        return;
+    }
+    
+    const regionSales = currentData.region_sales;
+    const regions = Object.keys(regionSales).sort();
+    
+    if (regions.length === 0) {
+        // 데이터가 없을 때 빈 차트 표시
+        regionChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                },
+            },
+        });
+        return;
+    }
+    
+    const labels = regions;
+    const counts = regions.map(region => regionSales[region].count || 0);
+    
+    // 총 판매 매수 계산
+    const totalCount = counts.reduce((sum, count) => sum + count, 0);
+    
+    // 색상 생성 (동적 색상 팔레트 사용)
+    const backgroundColors = regions.map((_, index) => {
+        return dynamicColors[index % dynamicColors.length];
+    });
+    
+    regionChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '판매 매수',
+                    data: counts,
+                    backgroundColor: backgroundColors,
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12,
+                        },
+                        usePointStyle: true,
+                    },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const percentage = totalCount > 0 ? ((value / totalCount) * 100).toFixed(1) : 0;
+                            return label + ': ' + formatNumber(value) + '매 (' + percentage + '%)';
+                        },
+                    },
+                },
+            },
+        },
     });
 }
 

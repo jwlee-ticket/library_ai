@@ -167,6 +167,16 @@ def get_concert_dashboard_data(request, pk):
     grade_sales_data = {}
     # 할인권종별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
     discount_sales_data = {}
+    # 성별, 연령대별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    age_gender_sales_data = []
+    # 결제수단별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    payment_method_sales_data = {}
+    # 카드별 매출집계 데이터 (ConcertFinalSales에서 가져오기)
+    card_sales_data = {}
+    # 판매경로별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    sales_channel_sales_data = {}
+    # 지역별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    region_sales_data = {}
     final_sales = ConcertFinalSales.objects.filter(performance=performance)
     
     # 모든 예매처의 등급별 데이터를 합산
@@ -209,6 +219,94 @@ def get_concert_dashboard_data(request, pk):
                         discount_sales_data[site].extend(discount_data)
                     elif isinstance(discount_data, dict):
                         discount_sales_data[site].append(discount_data)
+        
+        # 성별, 연령대별 판매현황 데이터
+        if final_sale.age_gender_sales:
+            if isinstance(final_sale.age_gender_sales, list):
+                # 모든 예매처의 데이터를 합산
+                for age_gender_item in final_sale.age_gender_sales:
+                    age_group = age_gender_item.get('age_group')
+                    if age_group:
+                        # 기존에 같은 연령대가 있는지 확인
+                        existing_item = next((item for item in age_gender_sales_data if item.get('age_group') == age_group), None)
+                        if existing_item:
+                            # 기존 항목에 합산
+                            existing_item['male_count'] = existing_item.get('male_count', 0) + age_gender_item.get('male_count', 0)
+                            existing_item['female_count'] = existing_item.get('female_count', 0) + age_gender_item.get('female_count', 0)
+                            existing_item['unknown_count'] = existing_item.get('unknown_count', 0) + age_gender_item.get('unknown_count', 0)
+                            existing_item['total_count'] = existing_item.get('total_count', 0) + age_gender_item.get('total_count', 0)
+                        else:
+                            # 새 항목 추가
+                            age_gender_sales_data.append({
+                                'age_group': age_group,
+                                'male_count': age_gender_item.get('male_count', 0),
+                                'female_count': age_gender_item.get('female_count', 0),
+                                'unknown_count': age_gender_item.get('unknown_count', 0),
+                                'total_count': age_gender_item.get('total_count', 0),
+                            })
+        
+        # 결제수단별 판매현황 데이터
+        if final_sale.payment_method_sales:
+            if isinstance(final_sale.payment_method_sales, list):
+                for payment_item in final_sale.payment_method_sales:
+                    payment_method = payment_item.get('payment_method', '')
+                    if payment_method:
+                        if payment_method not in payment_method_sales_data:
+                            payment_method_sales_data[payment_method] = {
+                                'count': 0,
+                                'amount': 0,
+                            }
+                        payment_method_sales_data[payment_method]['count'] += payment_item.get('count', 0)
+                        payment_method_sales_data[payment_method]['amount'] += float(payment_item.get('amount', 0))
+        
+        # 카드별 매출집계 데이터
+        if final_sale.card_sales_summary:
+            if isinstance(final_sale.card_sales_summary, list):
+                for card_item in final_sale.card_sales_summary:
+                    card_type = card_item.get('card_type', '')
+                    if card_type:
+                        if card_type not in card_sales_data:
+                            card_sales_data[card_type] = {
+                                'count': 0,
+                                'amount': 0,
+                            }
+                        card_sales_data[card_type]['count'] += card_item.get('count', 0)
+                        card_sales_data[card_type]['amount'] += float(card_item.get('amount', 0))
+        
+        # 판매경로별 판매현황 데이터
+        if final_sale.sales_channel_sales:
+            if isinstance(final_sale.sales_channel_sales, list):
+                for channel_item in final_sale.sales_channel_sales:
+                    sales_channel = channel_item.get('sales_channel', '')
+                    if sales_channel:
+                        if sales_channel not in sales_channel_sales_data:
+                            sales_channel_sales_data[sales_channel] = {
+                                'count': 0,
+                                'amount': 0,
+                            }
+                        sales_channel_sales_data[sales_channel]['count'] += channel_item.get('count', 0)
+                        sales_channel_sales_data[sales_channel]['amount'] += float(channel_item.get('amount', 0))
+        
+        # 지역별 판매현황 데이터
+        if final_sale.region_sales:
+            if isinstance(final_sale.region_sales, list):
+                for region_item in final_sale.region_sales:
+                    region = region_item.get('region', '')
+                    if region:
+                        if region not in region_sales_data:
+                            region_sales_data[region] = {
+                                'count': 0,
+                            }
+                        region_sales_data[region]['count'] += region_item.get('count', 0)
+    
+    # 연령대별로 정렬 (나이 순서대로)
+    def sort_age_group(item):
+        age_group = item.get('age_group', '')
+        # 숫자 추출하여 정렬
+        numbers = [int(x) for x in age_group.split() if x.isdigit()]
+        return numbers[0] if numbers else 999
+    
+    age_gender_sales_data.sort(key=sort_age_group)
     
     return JsonResponse({
         'success': True,
@@ -223,5 +321,10 @@ def get_concert_dashboard_data(request, pk):
             'total_revenue': total_revenue,
             'grade_sales': grade_sales_data,
             'discount_sales': discount_sales_data,
+            'age_gender_sales': age_gender_sales_data,
+            'payment_method_sales': payment_method_sales_data,
+            'card_sales': card_sales_data,
+            'sales_channel_sales': sales_channel_sales_data,
+            'region_sales': region_sales_data,
         }
     })

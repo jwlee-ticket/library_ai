@@ -188,29 +188,40 @@
         </div>
     </div>
     
-    <!-- 구분선 -->
-    <div class="border-t-2 border-gray-200 my-8"></div>
-    
     <!-- 등급별 판매현황 -->
     <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
         <h2 class="text-xl font-semibold text-black mb-6">등급별 판매현황</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-black">등급</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">매수(유료)</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">매수(무료)</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">금액</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">유료 점유율</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">객석 점유율</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">총 판매 좌석</th>
-                    </tr>
-                </thead>
-                <tbody id="grade-sales-tbody" class="divide-y divide-gray-100">
-                    <!-- JavaScript로 동적 생성 -->
-                </tbody>
-            </table>
+        
+        <!-- 테이블과 차트를 같은 행에 배치 (7:3 비율) -->
+        <div class="grid grid-cols-1 lg:grid-cols-10 gap-8">
+            <!-- 테이블 -->
+            <div class="lg:col-span-7">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-black">등급</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">매수(유료)</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">매수(무료)</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">금액</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">유료 점유율</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">객석 점유율</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">총 판매 좌석</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grade-sales-tbody" class="divide-y divide-gray-100">
+                            <!-- JavaScript로 동적 생성 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 파이 차트 -->
+            <div class="lg:col-span-3">
+                <div class="relative" style="height: 400px;">
+                    <canvas id="grade-chart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -231,6 +242,120 @@
                     <!-- JavaScript로 동적 생성 -->
                 </tbody>
             </table>
+        </div>
+    </div>
+    
+    <!-- 성별, 연령대별 판매현황 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+        <h2 class="text-xl font-semibold text-black mb-6">성별, 연령대별 판매현황</h2>
+        <div class="relative" style="height: 400px;">
+            <canvas id="age-gender-chart"></canvas>
+        </div>
+    </div>
+    
+    <!-- 결제수단별 판매현황, 카드별 매출집계 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- 결제수단별 판매현황 -->
+        <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+            <h2 class="text-xl font-semibold text-black mb-6">결제수단별 판매현황</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">결제수단</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">판매 매수</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">매출액</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payment-method-sales-tbody" class="divide-y divide-gray-100">
+                        <!-- JavaScript로 동적 생성 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 카드별 매출집계 -->
+        <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+            <h2 class="text-xl font-semibold text-black mb-6">카드별 매출집계</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">카드 종류</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">판매 매수</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">매출액</th>
+                        </tr>
+                    </thead>
+                    <tbody id="card-sales-tbody" class="divide-y divide-gray-100">
+                        <!-- JavaScript로 동적 생성 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 판매경로별 판매현황 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+        <h2 class="text-xl font-semibold text-black mb-6">판매경로별 판매현황</h2>
+        
+        <!-- 테이블과 차트를 같은 행에 배치 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 테이블 -->
+            <div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-black">판매경로</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">판매 매수</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">매출액</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-channel-sales-tbody" class="divide-y divide-gray-100">
+                            <!-- JavaScript로 동적 생성 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 차트 -->
+            <div>
+                <div class="relative" style="height: 400px;">
+                    <canvas id="sales-channel-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 지역별 판매현황 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-8">
+        <h2 class="text-xl font-semibold text-black mb-6">지역별 판매현황</h2>
+        
+        <!-- 테이블과 차트를 같은 행에 배치 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 테이블 -->
+            <div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-black">지역</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">판매 매수</th>
+                            </tr>
+                        </thead>
+                        <tbody id="region-sales-tbody" class="divide-y divide-gray-100">
+                            <!-- JavaScript로 동적 생성 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 차트 -->
+            <div>
+                <div class="relative" style="height: 400px;">
+                    <canvas id="region-chart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
     
