@@ -133,8 +133,8 @@ async function loadDashboardData(startDate, endDate) {
 function updateSummaryCards() {
     if (!currentData) return;
     
-    const yesterdayRevenueEl = document.getElementById('summary-yesterday-revenue');
-    const yesterdayTicketsEl = document.getElementById('summary-yesterday-tickets');
+    const todayRevenueEl = document.getElementById('summary-today-revenue');
+    const todayTicketsEl = document.getElementById('summary-today-tickets');
     
     // 매출 프로그래스바 계산
     const targetRevenue = currentData.target_revenue || 0;
@@ -177,29 +177,28 @@ function updateSummaryCards() {
         }
     }
     
-    // 어제 날짜 계산
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    // 오늘 날짜 계산
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
     
-    // 어제 매출 계산
-    if (yesterdayRevenueEl && currentData.daily_revenue) {
-        let yesterdayRevenue = 0;
+    // 오늘 매출 계산
+    if (todayRevenueEl && currentData.daily_revenue) {
+        let todayRevenue = 0;
         const bookingSites = currentData.booking_sites || [];
         
-        if (currentData.daily_revenue[yesterdayStr]) {
+        if (currentData.daily_revenue[todayStr]) {
             bookingSites.forEach(site => {
-                if (currentData.daily_revenue[yesterdayStr][site]) {
-                    yesterdayRevenue += (currentData.daily_revenue[yesterdayStr][site].paid || 0);
-                    yesterdayRevenue += (currentData.daily_revenue[yesterdayStr][site].unpaid || 0);
+                if (currentData.daily_revenue[todayStr][site]) {
+                    todayRevenue += (currentData.daily_revenue[todayStr][site].paid || 0);
+                    todayRevenue += (currentData.daily_revenue[todayStr][site].unpaid || 0);
                 }
             });
         }
         
-        if (yesterdayRevenue > 0) {
-            yesterdayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(yesterdayRevenue)) + '</span>원';
+        if (todayRevenue > 0) {
+            todayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(todayRevenue)) + '</span>원';
         } else {
-            yesterdayRevenueEl.innerHTML = '<span class="text-secondary">-</span>';
+            todayRevenueEl.innerHTML = '<span class="text-secondary">-</span>';
         }
     }
     
@@ -244,24 +243,24 @@ function updateSummaryCards() {
         }
     }
     
-    // 어제 판매 매수 계산
-    if (yesterdayTicketsEl && currentData.daily_tickets) {
-        let yesterdayTickets = 0;
+    // 오늘 판매 매수 계산
+    if (todayTicketsEl && currentData.daily_tickets) {
+        let todayTickets = 0;
         const bookingSites = currentData.booking_sites || [];
         
-        if (currentData.daily_tickets[yesterdayStr]) {
+        if (currentData.daily_tickets[todayStr]) {
             bookingSites.forEach(site => {
-                if (currentData.daily_tickets[yesterdayStr][site]) {
-                    yesterdayTickets += (currentData.daily_tickets[yesterdayStr][site].paid || 0);
-                    yesterdayTickets += (currentData.daily_tickets[yesterdayStr][site].unpaid || 0);
+                if (currentData.daily_tickets[todayStr][site]) {
+                    todayTickets += (currentData.daily_tickets[todayStr][site].paid || 0);
+                    todayTickets += (currentData.daily_tickets[todayStr][site].unpaid || 0);
                 }
             });
         }
         
-        if (yesterdayTickets > 0) {
-            yesterdayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(yesterdayTickets) + '</span>매';
+        if (todayTickets > 0) {
+            todayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(todayTickets) + '</span>매';
         } else {
-            yesterdayTicketsEl.innerHTML = '<span class="text-secondary">-</span>';
+            todayTicketsEl.innerHTML = '<span class="text-secondary">-</span>';
         }
     }
 }
