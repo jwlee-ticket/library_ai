@@ -26,7 +26,8 @@ Library AI 프로젝트의 개발 가이드입니다.
 
 ### Environment & Deployment
 - **django-environ**: 0.12.0 - 환경 변수 관리
-- **Deployment**: GCP (Cloud Run / App Engine)
+- **gunicorn**: 21.2.0 - WSGI 서버 (프로덕션)
+- **Deployment**: GCP Compute Engine (VM) + Nginx + Gunicorn
 
 ### Utilities
 - **python-dateutil**: 2.9.0.post0 - 날짜/시간 처리 유틸리티
@@ -41,6 +42,7 @@ pandas==2.3.3
 openpyxl==3.1.5
 Pillow==11.0.0
 python-dateutil==2.9.0.post0
+gunicorn==21.2.0
 ```
 
 ---
@@ -77,7 +79,16 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-#### 4. PostgreSQL 데이터베이스 설정
+#### 4. 환경 변수 설정
+```bash
+# .env 파일 생성
+cp .env.example .env
+
+# .env 파일 편집 (필요한 값 설정)
+# SECRET_KEY, DEBUG, DATABASE_URL, ALLOWED_HOSTS 등
+```
+
+#### 5. PostgreSQL 데이터베이스 설정
 ```bash
 # PostgreSQL 접속
 psql -U postgres
@@ -127,6 +138,24 @@ python manage.py tailwind dev
 2. Tailwind CSS 자동 빌드 (개발 모드 실행 시)
 3. 브라우저에서 확인 (`http://localhost:8000`)
 
+### 환경 변수 설정
+
+프로젝트 루트에 `.env` 파일을 생성하고 다음 변수들을 설정합니다:
+
+```bash
+# 필수 설정
+SECRET_KEY=your-secret-key-here
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# 데이터베이스 설정
+DATABASE_URL=postgresql://library_ai_user:your_password@localhost:5432/library_ai
+
+# 프로덕션 설정 (프로덕션 환경에서만)
+SECURE_SSL_REDIRECT=False
+DB_CONN_MAX_AGE=600
+```
+
 ---
 
 ## 3. 프로젝트 구조
@@ -164,8 +193,13 @@ library_ai/
 │   └── urls.py               # 데이터 관리 URL
 │
 ├── dashboard/                # 대시보드 앱
-│   ├── views.py              # 대시보드 뷰
+│   ├── views.py              # 대시보드 뷰 (공연별, 장르별)
 │   └── urls.py               # 대시보드 URL
+│
+├── deploy/                    # 배포 설정 파일
+│   ├── deploy-vm.sh          # VM 배포 스크립트
+│   ├── gunicorn.service      # Gunicorn systemd 서비스 파일
+│   └── nginx.conf            # Nginx 설정 파일
 │
 ├── theme/                    # Tailwind CSS 설정
 │   ├── static_src/
@@ -190,19 +224,32 @@ library_ai/
 │   │   ├── detail.html
 │   │   ├── form.html
 │   │   └── confirm_delete.html
-│   └── data_management/      # 데이터 관리 템플릿
-│       ├── performance_list.html
-│       └── concert_sales/
-│           ├── list.html
-│           ├── form.html
-│           └── confirm_delete.html
+│   ├── data_management/      # 데이터 관리 템플릿
+│   │   ├── performance_list.html
+│   │   └── concert_sales/
+│   │       ├── list.html
+│   │       ├── form.html
+│   │       └── confirm_delete.html
+│   └── dashboard/            # 대시보드 템플릿
+│       ├── main.html         # 통합 대시보드
+│       ├── list.html         # 공연 목록 대시보드
+│       ├── detail.html       # 공통 상세 대시보드
+│       └── concert/          # 콘서트 장르별 대시보드
+│           ├── detail.html   # 콘서트 상세 대시보드
+│           └── overview.html # 콘서트 통합 대시보드
 │
 ├── docs/                      # 문서
 │   ├── design-system.md      # 디자인 시스템 가이드
 │   └── development-guide.md  # 개발 가이드 (본 문서)
 │
-├── media/                     # 업로드 파일
 ├── static/                    # 정적 파일
+│   ├── js/                    # JavaScript 파일
+│   │   ├── base.js            # 공통 JavaScript
+│   │   ├── concert_sales_detail.js      # 콘서트 매출 상세 페이지
+│   │   ├── concert_dashboard_detail.js  # 콘서트 대시보드 상세
+│   │   └── concert_aggregated_dashboard.js  # 콘서트 통합 대시보드
+│   └── css/                   # CSS 파일 (빌드된 파일)
+├── media/                     # 업로드 파일
 ├── venv/                      # 가상환경 (gitignore)
 ├── manage.py                  # Django 관리 스크립트
 ├── requirements.txt           # Python 의존성
@@ -228,9 +275,23 @@ library_ai/
 - 공연 기반 데이터 입력 및 관리
 
 #### dashboard
-- 통합 대시보드
-- 장르별 대시보드 (개발 예정)
-- 공연별 대시보드 (개발 예정)
+- 공연 목록 대시보드 (장르별 필터링, 검색)
+- 공연별 상세 대시보드 (장르별 동적 템플릿 로딩)
+- 콘서트 상세 대시보드:
+  - 일간 매출/판매 매수 그래프 (Chart.js)
+  - 예매처별, 입금/미입금 필터링
+  - 등급별 판매 현황 (테이블 + 파이 차트)
+  - 할인권종별 판매 현황
+  - 성별/연령대별 판매 현황 (바 차트)
+  - 결제수단별 판매 현황
+  - 카드별 매출 집계
+  - 판매경로별 판매 현황 (테이블 + 파이 차트)
+  - 지역별 판매 현황 (테이블 + 파이 차트)
+- 콘서트 통합 대시보드:
+  - 전체 콘서트 매출/판매 매수 현황
+  - 목표액 달성 현황 (개별 공연별 진행률)
+  - 기간별 매출 그래프 (일간/주간/월간, Stacked Bar Chart)
+  - 기간별 매출 테이블
 
 ---
 
@@ -375,7 +436,8 @@ sequenceDiagram
 ```mermaid
 erDiagram
     USER ||--o{ PERFORMANCE : creates
-    PERFORMANCE ||--o{ CONCERT_SALES : has
+    PERFORMANCE ||--o{ CONCERT_DAILY_SALES : has
+    PERFORMANCE ||--o{ CONCERT_FINAL_SALES : has
     PERFORMANCE ||--o{ MUSICAL_SALES : has
     PERFORMANCE ||--o{ THEATER_SALES : has
     PERFORMANCE ||--o{ MARKETING : has
@@ -394,10 +456,14 @@ erDiagram
         string title "공연명"
         string genre "연극/뮤지컬/콘서트/전시"
         string venue "공연장"
+        string address "공연장 주소"
         date performance_start
         date performance_end
         date sales_start
         date sales_end
+        decimal target_revenue "목표 매출"
+        decimal break_even_point "손익분기점"
+        int total_seats "총 좌석 수"
         json seat_grades "동적 설정: 좌석 등급"
         json ticket_prices "동적 설정: 티켓 가격"
         json seat_counts "동적 설정: 좌석 수"
@@ -410,19 +476,28 @@ erDiagram
         datetime updated_at
     }
     
-    CONCERT_SALES {
+    CONCERT_DAILY_SALES {
         int id PK
         int performance_id FK
-        string sales_type "데일리/최종"
-        date date
-        string booking_site "Performance의 booking_sites에서 참조"
-        decimal paid_revenue
-        int paid_ticket_count
-        json paid_by_grade "Performance의 seat_grades 기반"
-        decimal unpaid_revenue
-        int unpaid_ticket_count
-        json unpaid_by_grade "Performance의 seat_grades 기반"
-        json free_by_grade "Performance의 seat_grades 기반"
+        date date "판매일"
+        string booking_site "예매처"
+        decimal revenue "매출"
+        int ticket_count "판매 매수"
+        boolean is_paid "입금 여부"
+        datetime created_at
+        datetime updated_at
+    }
+    
+    CONCERT_FINAL_SALES {
+        int id PK
+        int performance_id FK
+        json grade_sales_summary "등급별 판매 현황"
+        json booking_site_discount_sales "예매처별 할인 판매"
+        json age_gender_sales "성별/연령대별 판매"
+        json payment_method_sales "결제수단별 판매"
+        json card_sales_summary "카드별 매출 집계"
+        json sales_channel_sales "판매경로별 판매"
+        json region_sales "지역별 판매"
         datetime created_at
         datetime updated_at
     }
@@ -464,11 +539,13 @@ erDiagram
   - `discounts`: 할인율 딕셔너리 (예: {"VIP": {"조조할인": 10}})
 
 #### 2. Sales (매출) - Performance 기반
-- `ConcertSales`, `MusicalSales`, `TheaterSales` 등 장르별 모델
+- **ConcertDailySales**: 일별 매출 데이터 (예매처별, 입금/미입금 구분)
+- **ConcertFinalSales**: 최종 집계 데이터 (등급별, 성별/연령대별, 결제수단별 등)
+- `MusicalSales`, `TheaterSales` 등 장르별 모델 (개발 예정)
 - `performance` ForeignKey로 Performance 참조
 - Performance에서 정의한 값만 사용 가능:
   - `booking_site`: Performance의 `booking_sites`에서 선택
-  - `paid_by_grade`, `unpaid_by_grade`, `free_by_grade`: Performance의 `seat_grades` 기반
+  - `grade_sales_summary`: Performance의 `seat_grades` 기반
 
 #### 3. 데이터 무결성 보장
 - Performance에서 정의하지 않은 값은 Sales에서 사용 불가
@@ -539,6 +616,192 @@ erDiagram
   - 앱별 독립적인 구조
   - 공통 인터페이스 활용
   - 재사용 가능한 컴포넌트
+
+---
+
+## 7. 배포 가이드
+
+### 배포 환경
+- **인프라**: GCP Compute Engine (VM)
+- **웹 서버**: Nginx
+- **WSGI 서버**: Gunicorn
+- **데이터베이스**: GCP Cloud SQL (PostgreSQL)
+
+### 배포 구조
+
+```mermaid
+graph TB
+    subgraph "Client"
+        Browser[사용자 브라우저]
+    end
+    
+    subgraph "GCP Compute Engine VM"
+        subgraph "Web Server Layer"
+            Nginx[Nginx<br/>포트 80<br/>Reverse Proxy]
+        end
+        
+        subgraph "Application Layer"
+            Gunicorn[Gunicorn<br/>WSGI 서버<br/>Django Application]
+        end
+        
+        subgraph "File System"
+            StaticFiles[정적 파일<br/>/var/www/library-ai/staticfiles]
+            MediaFiles[미디어 파일<br/>/var/www/library-ai/media]
+            SocketFile[Unix Socket<br/>/var/www/library-ai/library-ai.sock]
+        end
+    end
+    
+    subgraph "GCP Cloud SQL"
+        PostgreSQL[(PostgreSQL<br/>Database)]
+    end
+    
+    Browser -->|HTTP Request| Nginx
+    Nginx -->|정적 파일| StaticFiles
+    Nginx -->|미디어 파일| MediaFiles
+    Nginx -->|Unix Socket| SocketFile
+    SocketFile --> Gunicorn
+    Gunicorn -->|TCP/IP<br/>SQL Query| PostgreSQL
+    PostgreSQL -->|Query Result| Gunicorn
+    Gunicorn -->|Response| SocketFile
+    SocketFile --> Nginx
+    Nginx -->|HTTP Response| Browser
+    
+    style Browser fill:#f65938,color:#fff
+    style Nginx fill:#009639,color:#fff
+    style Gunicorn fill:#2a3038,color:#fff
+    style PostgreSQL fill:#336791,color:#fff
+    style SocketFile fill:#78716c,color:#fff
+```
+
+### 배포 파일 구조
+
+```
+deploy/
+├── deploy-vm.sh          # VM 배포 스크립트
+├── gunicorn.service      # Gunicorn systemd 서비스 파일
+└── nginx.conf            # Nginx 서버 설정 파일
+```
+
+### 배포 프로세스
+
+#### 1. VM 초기 설정 (최초 1회)
+
+VM에 SSH 접속 후 다음 명령어 실행:
+
+```bash
+# 시스템 업데이트 및 필수 패키지 설치
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y python3.11 python3.11-venv python3-pip postgresql-client nginx git
+
+# 프로젝트 디렉토리 생성
+sudo mkdir -p /var/www/library-ai
+sudo chown -R $USER:$USER /var/www/library-ai
+
+# Git 저장소 클론
+cd /var/www/library-ai
+git clone <repository-url> .
+
+# 가상환경 생성 및 의존성 설치
+python3.11 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 환경 변수 설정
+cp .env.example .env
+# .env 파일 편집 (DATABASE_URL, SECRET_KEY 등)
+
+# Tailwind CSS 빌드 및 정적 파일 수집
+python manage.py tailwind build
+python manage.py collectstatic --noinput
+
+# 데이터베이스 마이그레이션
+python manage.py migrate
+
+# Gunicorn 서비스 설정
+sudo cp deploy/gunicorn.service /etc/systemd/system/library-ai.service
+sudo systemctl daemon-reload
+sudo systemctl enable library-ai
+sudo systemctl start library-ai
+
+# Nginx 설정
+sudo cp deploy/nginx.conf /etc/nginx/sites-available/library-ai
+sudo ln -s /etc/nginx/sites-available/library-ai /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+#### 2. 배포 스크립트 실행
+
+코드 변경 후 VM에서 배포:
+
+```bash
+cd /var/www/library-ai
+source venv/bin/activate
+./deploy/deploy-vm.sh
+```
+
+배포 스크립트가 자동으로 수행하는 작업:
+1. 소유권을 현재 사용자로 변경
+2. `git pull` 실행
+3. 의존성 설치 (`pip install -r requirements.txt`)
+4. Tailwind CSS 빌드 (`python manage.py tailwind build`)
+5. 정적 파일 수집 (`python manage.py collectstatic`)
+6. 데이터베이스 마이그레이션 (`python manage.py migrate`)
+7. 소유권을 `www-data`로 변경 (venv 제외)
+8. Gunicorn 재시작 (`sudo systemctl restart library-ai`)
+
+### 환경 변수 설정 (프로덕션)
+
+VM의 `/var/www/library-ai/.env` 파일에 다음 변수 설정:
+
+```bash
+# 필수 설정
+SECRET_KEY=your-production-secret-key
+DEBUG=False
+ALLOWED_HOSTS=your-domain.com,your-vm-ip
+
+# 데이터베이스 설정 (Cloud SQL)
+DATABASE_URL=postgresql://library_ai_user:password@cloud-sql-ip:5432/library_ai
+
+# 프로덕션 보안 설정
+SECURE_SSL_REDIRECT=False  # Nginx가 HTTPS 처리
+DB_CONN_MAX_AGE=600
+```
+
+### 서비스 관리
+
+```bash
+# Gunicorn 서비스 상태 확인
+sudo systemctl status library-ai
+
+# Gunicorn 재시작
+sudo systemctl restart library-ai
+
+# Gunicorn 로그 확인
+sudo journalctl -u library-ai -f
+
+# Nginx 재시작
+sudo systemctl restart nginx
+
+# Nginx 로그 확인
+sudo tail -f /var/log/nginx/error.log
+```
+
+### 주의사항
+
+1. **소유권 관리**: 
+   - Git 작업 시: 현재 사용자 소유 필요
+   - Gunicorn 실행 시: `www-data` 소유 필요
+   - 배포 스크립트가 자동으로 처리
+
+2. **venv 디렉토리**: 
+   - 항상 현재 사용자 소유로 유지 (실행 권한 보장)
+
+3. **정적 파일**: 
+   - `collectstatic` 후 `staticfiles` 디렉토리는 `www-data` 소유
+
+4. **데이터베이스 연결**: 
+   - Cloud SQL 인스턴스의 Authorized Networks에 VM IP 추가 필요
 
 ---
 
