@@ -17,7 +17,7 @@ sleep 2
 
 # Git에서 최신 코드 가져오기
 echo "--------------------------------- git pull 실행 ---------------------------------"
-git pull
+git pull origin main
 sleep 2
 
 # 의존성 업데이트
