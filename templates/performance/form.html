@@ -533,9 +533,12 @@
                                             type="button"
                                             onclick="openApplicableGradesDropdown('{{ form.applicable_grades.id_for_label }}', {{ forloop.counter0 }})"
                                             id="applicable-grades-btn-{{ forloop.counter0 }}"
-                                            class="w-full px-4 py-3 bg-white border-2 border-gray-200 text-black rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors text-left"
+                                            class="w-full flex items-center px-4 py-3 bg-white border-2 border-gray-200 text-black rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
                                         >
-                                            <span id="applicable-grades-text-{{ forloop.counter0 }}">등급 선택</span>
+                                            <svg id="applicable-grades-arrow-{{ forloop.counter0 }}" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                            <span id="applicable-grades-text-{{ forloop.counter0 }}" class="flex-1 text-left">등급 선택</span>
                                         </button>
                                         <div 
                                             id="applicable-grades-dropdown-{{ forloop.counter0 }}"
@@ -681,6 +684,7 @@
     // 적용 가능한 등급 드롭다운 열기/닫기 (전역 함수로 등록)
     window.openApplicableGradesDropdown = function(selectId, formIndex) {
         const dropdown = document.getElementById('applicable-grades-dropdown-' + formIndex);
+        const arrow = document.getElementById('applicable-grades-arrow-' + formIndex);
         if (!dropdown) {
             console.error('드롭다운을 찾을 수 없습니다:', 'applicable-grades-dropdown-' + formIndex);
             return;
@@ -691,6 +695,14 @@
             if (dd !== dropdown) {
                 dd.classList.remove('max-h-96');
                 dd.classList.add('max-h-0');
+                // 다른 드롭다운의 화살표도 원래대로
+                const otherFormIndex = dd.id.match(/applicable-grades-dropdown-(\d+)/)?.[1];
+                if (otherFormIndex) {
+                    const otherArrow = document.getElementById('applicable-grades-arrow-' + otherFormIndex);
+                    if (otherArrow) {
+                        otherArrow.classList.remove('rotate-180');
+                    }
+                }
             }
         });
         
@@ -698,12 +710,18 @@
         if (dropdown.classList.contains('max-h-0')) {
             dropdown.classList.remove('max-h-0');
             dropdown.classList.add('max-h-96');
+            if (arrow) {
+                arrow.classList.add('rotate-180');
+            }
             
             // 드롭다운 내용 업데이트
             updateApplicableGradesDropdown(formIndex);
         } else {
             dropdown.classList.remove('max-h-96');
             dropdown.classList.add('max-h-0');
+            if (arrow) {
+                arrow.classList.remove('rotate-180');
+            }
         }
     }
     
@@ -809,9 +827,13 @@
         
         // 드롭다운 닫기
         const dropdown = document.getElementById('applicable-grades-dropdown-' + formIndex);
+        const arrow = document.getElementById('applicable-grades-arrow-' + formIndex);
         if (dropdown) {
             dropdown.classList.remove('max-h-96');
             dropdown.classList.add('max-h-0');
+        }
+        if (arrow) {
+            arrow.classList.remove('rotate-180');
         }
     }
     
@@ -862,6 +884,14 @@
             document.querySelectorAll('[id^="applicable-grades-dropdown-"]').forEach(dd => {
                 dd.classList.remove('max-h-96');
                 dd.classList.add('max-h-0');
+                // 화살표도 원래대로
+                const formIndex = dd.id.match(/applicable-grades-dropdown-(\d+)/)?.[1];
+                if (formIndex) {
+                    const arrow = document.getElementById('applicable-grades-arrow-' + formIndex);
+                    if (arrow) {
+                        arrow.classList.remove('rotate-180');
+                    }
+                }
             });
         }
     });
@@ -1375,6 +1405,12 @@
             applicableGradesButton.id = 'applicable-grades-btn-' + totalForms;
             const selectId = 'id_discount_type_formset-' + totalForms + '-applicable_grades';
             applicableGradesButton.setAttribute('onclick', `openApplicableGradesDropdown('${selectId}', ${totalForms})`);
+        }
+        
+        // 화살표 아이콘 ID 업데이트
+        const applicableGradesArrow = newForm.querySelector('[id^="applicable-grades-arrow-"]');
+        if (applicableGradesArrow) {
+            applicableGradesArrow.id = 'applicable-grades-arrow-' + totalForms;
         }
         
         const applicableGradesText = newForm.querySelector('[id^="applicable-grades-text-"]');
