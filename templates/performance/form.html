@@ -327,7 +327,7 @@
                                             <button 
                                                 type="button" 
                                                 onclick="removeCastingRoleItem(this)"
-                                                class="mt-6 p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                                                class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                                             >
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -434,49 +434,59 @@
             <!-- 좌석 정보 -->
             <div class="mb-8 pb-8 border-b border-gray-100">
                 <h2 class="text-xl font-semibold text-black mb-6">좌석 정보</h2>
-                {{ seat_grade_formset.management_form }}
+                <div id="seat-grade-management-form">
+                    {{ seat_grade_formset.management_form }}
+                </div>
                 <div id="seat-grade-formset" class="space-y-4">
                     {% for form in seat_grade_formset %}
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center seat-grade-form" data-form-index="{{ forloop.counter0 }}">
+                        <div class="flex items-center gap-4 seat-grade-form" data-form-index="{{ forloop.counter0 }}">
                             {{ form.id }}
-                            <div>
-                                <label class="block text-sm font-medium text-black mb-2">등급명</label>
+                            <div style="display: none;">{{ form.order }}</div>
+                            <div class="flex-1">
                                 {{ form.name }}
                                 {% if form.name.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.name.errors|first }}</p>
                                 {% endif %}
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-black mb-2">티켓 가격 (원)</label>
+                            <div class="flex-1">
                                 {{ form.price }}
                                 {% if form.price.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.price.errors|first }}</p>
                                 {% endif %}
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-black mb-2">좌석 수</label>
-                                {{ form.seat_count }}
-                                {% if form.seat_count.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.seat_count.errors|first }}</p>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-black mb-2">정렬 순서</label>
-                                {{ form.order }}
-                                {% if form.order.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.order.errors|first }}</p>
-                                {% endif %}
-                            </div>
-                            <div class="flex items-end">
+                            <div class="flex-1 flex items-center gap-2">
+                                <div class="flex-1">
+                                    {{ form.seat_count }}
+                                    {% if form.seat_count.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.seat_count.errors|first }}</p>
+                                    {% endif %}
+                                </div>
                                 {% if form.DELETE %}
-                                    <label class="flex items-center">
-                                        {{ form.DELETE }} 삭제
-                                    </label>
+                                    <button 
+                                        type="button" 
+                                        onclick="removeSeatGradeItem(this)"
+                                        class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                    <div style="display: none;">{{ form.DELETE }}</div>
                                 {% endif %}
                             </div>
                         </div>
                     {% endfor %}
                 </div>
+                <button 
+                    type="button" 
+                    onclick="addSeatGradeItem()"
+                    class="mt-4 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm whitespace-nowrap flex items-center gap-2"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    추가하기
+                </button>
                 {% if seat_grade_formset.non_form_errors %}
                     <p class="mt-2 text-sm text-red-600">{{ seat_grade_formset.non_form_errors|first }}</p>
                 {% endif %}
@@ -485,114 +495,157 @@
             <!-- 할인 정보 -->
             <div class="mb-8 pb-8 border-b border-gray-100">
                 <h2 class="text-xl font-semibold text-black mb-6">할인 정보</h2>
-                {{ discount_type_formset.management_form }}
+                <div id="discount-type-management-form">
+                    {{ discount_type_formset.management_form }}
+                </div>
                 <div id="discount-type-formset" class="space-y-4">
                     {% for form in discount_type_formset %}
-                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end discount-type-form" data-form-index="{{ forloop.counter0 }}">
+                        <div class="flex items-center gap-4 discount-type-form" data-form-index="{{ forloop.counter0 }}">
                             {{ form.id }}
-                            <div>
-                                <label class="block text-sm font-medium text-black mb-2">할인권종명</label>
+                            <div class="flex-1">
                                 {{ form.name }}
                                 {% if form.name.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.name.errors|first }}</p>
                                 {% endif %}
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-black mb-2">시작일</label>
+                            <div class="flex-1">
                                 {{ form.start_date }}
                                 {% if form.start_date.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors|first }}</p>
                                 {% endif %}
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-black mb-2">종료일</label>
+                            <div class="flex-1">
                                 {{ form.end_date }}
                                 {% if form.end_date.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.end_date.errors|first }}</p>
                                 {% endif %}
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-black mb-2">할인율 (%)</label>
+                            <div class="flex-1">
                                 {{ form.discount_rate }}
                                 {% if form.discount_rate.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.discount_rate.errors|first }}</p>
                                 {% endif %}
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-black mb-2">적용 가능한 등급</label>
-                                {{ form.applicable_grades }}
-                                {% if form.applicable_grades.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.applicable_grades.errors|first }}</p>
-                                {% endif %}
-                            </div>
-                            <div class="flex items-end">
+                            <div class="flex-1 flex items-center gap-2">
+                                <div class="flex-1">
+                                    <div class="relative">
+                                        <button 
+                                            type="button"
+                                            onclick="openApplicableGradesDropdown('{{ form.applicable_grades.id_for_label }}', {{ forloop.counter0 }})"
+                                            id="applicable-grades-btn-{{ forloop.counter0 }}"
+                                            class="w-full px-4 py-3 bg-white border-2 border-gray-200 text-black rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors text-left"
+                                        >
+                                            <span id="applicable-grades-text-{{ forloop.counter0 }}">등급 선택</span>
+                                        </button>
+                                        <div 
+                                            id="applicable-grades-dropdown-{{ forloop.counter0 }}"
+                                            class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out"
+                                        >
+                                            <div class="py-1 max-h-60 overflow-y-auto" id="applicable-grades-dropdown-content-{{ forloop.counter0 }}">
+                                                <!-- JavaScript로 동적 생성 -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: none;">{{ form.applicable_grades }}</div>
+                                    {% if form.applicable_grades.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.applicable_grades.errors|first }}</p>
+                                    {% endif %}
+                                </div>
                                 {% if form.DELETE %}
-                                    <label class="flex items-center">
-                                        {{ form.DELETE }} 삭제
-                                    </label>
+                                    <button 
+                                        type="button" 
+                                        onclick="removeDiscountTypeItem(this)"
+                                        class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                    <div style="display: none;">{{ form.DELETE }}</div>
                                 {% endif %}
                             </div>
                         </div>
                     {% endfor %}
                 </div>
+                <button 
+                    type="button" 
+                    onclick="addDiscountTypeItem()"
+                    class="mt-4 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm whitespace-nowrap flex items-center gap-2"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    추가하기
+                </button>
                 {% if discount_type_formset.non_form_errors %}
                     <p class="mt-2 text-sm text-red-600">{{ discount_type_formset.non_form_errors|first }}</p>
                 {% endif %}
             </div>
             
-            <!-- 예매 및 기타 -->
+            <!-- 예매처 -->
             <div class="mb-8 pb-8 border-b border-gray-100">
-                <h2 class="text-xl font-semibold text-black mb-6">예매 및 기타</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-black mb-2">예매처</label>
-                        {{ booking_site_formset.management_form }}
-                        <div id="booking-site-formset" class="space-y-4">
-                            {% for form in booking_site_formset %}
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end booking-site-form" data-form-index="{{ forloop.counter0 }}">
-                                    {{ form.id }}
-                                    <div>
-                                        <label class="block text-sm font-medium text-black mb-2">예매처명</label>
-                                        {{ form.name }}
-                                        {% if form.name.errors %}
-                                            <p class="mt-1 text-sm text-red-600">{{ form.name.errors|first }}</p>
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-black mb-2">예매 URL</label>
-                                        {{ form.url }}
-                                        {% if form.url.errors %}
-                                            <p class="mt-1 text-sm text-red-600">{{ form.url.errors|first }}</p>
-                                        {% endif %}
-                                    </div>
-                                    <div class="flex items-end">
-                                        {% if form.DELETE %}
-                                            <label class="flex items-center">
-                                                {{ form.DELETE }} 삭제
-                                            </label>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                        {% if booking_site_formset.non_form_errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ booking_site_formset.non_form_errors|first }}</p>
-                        {% endif %}
-                    </div>
-                    
-                    <div>
-                        <label for="{{ form.seat_map.id_for_label }}" class="block text-sm font-medium text-black mb-2">
-                            {{ form.seat_map.label }}
-                        </label>
-                        {{ form.seat_map }}
-                        {% if object and object.seat_map %}
-                            <p class="mt-2 text-sm text-gray-600">현재 파일: <a href="{{ object.seat_map.url }}" target="_blank" class="text-primary hover:underline">{{ object.seat_map.name }}</a></p>
-                        {% endif %}
-                        {% if form.seat_map.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.seat_map.errors|first }}</p>
-                        {% endif %}
-                    </div>
+                <h2 class="text-xl font-semibold text-black mb-6">예매처</h2>
+                <div id="booking-site-management-form">
+                    {{ booking_site_formset.management_form }}
                 </div>
+                <div id="booking-site-formset" class="space-y-4">
+                    {% for form in booking_site_formset %}
+                        <div class="flex items-center gap-4 booking-site-form" data-form-index="{{ forloop.counter0 }}">
+                            {{ form.id }}
+                            <div class="flex-1">
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors|first }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1 flex items-center gap-2">
+                                <div class="flex-1">
+                                    {{ form.url }}
+                                    {% if form.url.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.url.errors|first }}</p>
+                                    {% endif %}
+                                </div>
+                                {% if form.DELETE %}
+                                    <button 
+                                        type="button" 
+                                        onclick="removeBookingSiteItem(this)"
+                                        class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                    <div style="display: none;">{{ form.DELETE }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button 
+                    type="button" 
+                    onclick="addBookingSiteItem()"
+                    class="mt-4 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm whitespace-nowrap flex items-center gap-2"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    추가하기
+                </button>
+                {% if booking_site_formset.non_form_errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ booking_site_formset.non_form_errors|first }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- 좌석 배치도 -->
+            <div class="mb-8 pb-8 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-black mb-6">좌석 배치도</h2>
+                {{ form.seat_map }}
+                {% if object and object.seat_map %}
+                    <p class="mt-2 text-sm text-gray-600">현재 파일: <a href="{{ object.seat_map.url }}" target="_blank" class="text-primary hover:underline">{{ object.seat_map.name }}</a></p>
+                {% endif %}
+                {% if form.seat_map.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.seat_map.errors|first }}</p>
+                {% endif %}
             </div>
             
             <!-- 하단 버튼 -->
@@ -600,7 +653,7 @@
                 <a href="{% url 'performance:list' %}" class="px-6 py-3 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
                     취소
                 </a>
-                <button type="submit" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm">
+                <button type="submit" onclick="syncApplicableGradesBeforeSubmit()" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm">
                     저장
                 </button>
             </div>
@@ -610,18 +663,208 @@
 
 {% block extra_js %}
 <script>
-    // 좌석 등급 목록 가져오기
+    // 좌석 등급 목록 가져오기 (좌석 정보에서)
     function getSeatGrades() {
-        // 티켓 가격 및 좌석 수 리스트에서 입력된 좌석 등급들을 가져옴
-        const grades = new Set();
-        document.querySelectorAll('#ticket-prices-seat-counts-list input.seat-grade-input').forEach(input => {
-            const value = input.value.trim();
-            if (value) {
-                grades.add(value);
+        const grades = [];
+        document.querySelectorAll('#seat-grade-formset .seat-grade-form').forEach(form => {
+            const nameInput = form.querySelector('input[name*="-name"]');
+            if (nameInput && nameInput.value.trim()) {
+                grades.push({
+                    name: nameInput.value.trim(),
+                    id: nameInput.name.match(/seat_grade_formset-(\d+)-name/)?.[1] || null
+                });
             }
         });
-        return Array.from(grades);
+        return grades;
     }
+    
+    // 적용 가능한 등급 드롭다운 열기/닫기 (전역 함수로 등록)
+    window.openApplicableGradesDropdown = function(selectId, formIndex) {
+        const dropdown = document.getElementById('applicable-grades-dropdown-' + formIndex);
+        if (!dropdown) {
+            console.error('드롭다운을 찾을 수 없습니다:', 'applicable-grades-dropdown-' + formIndex);
+            return;
+        }
+        
+        // 다른 드롭다운 닫기
+        document.querySelectorAll('[id^="applicable-grades-dropdown-"]').forEach(dd => {
+            if (dd !== dropdown) {
+                dd.classList.remove('max-h-96');
+                dd.classList.add('max-h-0');
+            }
+        });
+        
+        // 현재 드롭다운 토글
+        if (dropdown.classList.contains('max-h-0')) {
+            dropdown.classList.remove('max-h-0');
+            dropdown.classList.add('max-h-96');
+            
+            // 드롭다운 내용 업데이트
+            updateApplicableGradesDropdown(formIndex);
+        } else {
+            dropdown.classList.remove('max-h-96');
+            dropdown.classList.add('max-h-0');
+        }
+    }
+    
+    // 적용 가능한 등급 드롭다운 내용 업데이트
+    function updateApplicableGradesDropdown(formIndex) {
+        const dropdownContent = document.getElementById('applicable-grades-dropdown-content-' + formIndex);
+        if (!dropdownContent) return;
+        
+        const grades = getSeatGrades();
+        dropdownContent.innerHTML = '';
+        
+        if (grades.length === 0) {
+            const noItem = document.createElement('div');
+            noItem.className = 'px-4 py-2 text-sm text-gray-500';
+            noItem.textContent = '좌석 정보에 등급을 먼저 입력해주세요';
+            dropdownContent.appendChild(noItem);
+            return;
+        }
+        
+        const selectId = 'id_discount_type_formset-' + formIndex + '-applicable_grades';
+        const buttonText = document.getElementById('applicable-grades-text-' + formIndex);
+        const selectedGrades = buttonText && buttonText.dataset.selectedGrades ? JSON.parse(buttonText.dataset.selectedGrades) : [];
+        
+        grades.forEach(grade => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            const isSelected = selectedGrades.includes(grade.name);
+            button.className = 'w-full text-left px-4 py-2 text-sm transition-colors ' + 
+                (isSelected ? 'bg-primary-50 text-primary font-medium' : 'text-black hover:bg-gray-50');
+            button.textContent = grade.name;
+            if (isSelected) {
+                const checkmark = document.createElement('span');
+                checkmark.className = 'ml-2';
+                checkmark.textContent = '✓';
+                button.appendChild(checkmark);
+            }
+            button.onclick = function() {
+                selectApplicableGrade(selectId, grade.name, formIndex);
+            };
+            dropdownContent.appendChild(button);
+        });
+    }
+    
+    // 적용 가능한 등급 선택
+    function selectApplicableGrade(selectId, gradeName, formIndex) {
+        // ManyToManyField는 여러 값을 선택할 수 있으므로, 선택된 값들을 배열로 관리
+        const buttonText = document.getElementById('applicable-grades-text-' + formIndex);
+        if (!buttonText) return;
+        
+        // 현재 선택된 값들 가져오기
+        const selectedGrades = buttonText.dataset.selectedGrades ? JSON.parse(buttonText.dataset.selectedGrades) : [];
+        
+        // 이미 선택된 값인지 확인
+        const index = selectedGrades.indexOf(gradeName);
+        if (index > -1) {
+            // 이미 선택된 경우 제거
+            selectedGrades.splice(index, 1);
+        } else {
+            // 선택되지 않은 경우 추가
+            selectedGrades.push(gradeName);
+        }
+        
+        // 버튼 텍스트 업데이트
+        if (selectedGrades.length === 0) {
+            buttonText.textContent = '등급 선택';
+        } else {
+            buttonText.textContent = selectedGrades.join(', ');
+        }
+        buttonText.dataset.selectedGrades = JSON.stringify(selectedGrades);
+        
+        // Django ManyToManyField SelectMultiple 업데이트
+        // 등급명을 기반으로 좌석 정보에서 해당 등급의 formset 인덱스를 찾아서 ID로 변환
+        const hiddenSelect = document.querySelector(`select[name="discount_type_formset-${formIndex}-applicable_grades"]`);
+        if (hiddenSelect) {
+            // 기존 선택 제거
+            Array.from(hiddenSelect.options).forEach(option => {
+                option.selected = false;
+            });
+            
+            // 선택된 등급명에 해당하는 좌석 등급 찾기
+            selectedGrades.forEach(gradeName => {
+                // 좌석 정보 formset에서 해당 등급명을 가진 항목 찾기
+                document.querySelectorAll('#seat-grade-formset .seat-grade-form').forEach((seatForm, seatIndex) => {
+                    const nameInput = seatForm.querySelector('input[name*="-name"]');
+                    if (nameInput && nameInput.value.trim() === gradeName) {
+                        // 해당 좌석 등급의 ID input 찾기
+                        const idInput = seatForm.querySelector('input[name*="-id"]');
+                        if (idInput && idInput.value) {
+                            // 기존 SeatGrade인 경우 ID로 선택
+                            const option = Array.from(hiddenSelect.options).find(opt => opt.value === idInput.value);
+                            if (option) {
+                                option.selected = true;
+                            }
+                        } else {
+                            // 새로 추가한 좌석 등급인 경우, formset 인덱스를 기반으로 임시 ID 생성
+                            // Django formset은 폼 제출 시 자동으로 처리하므로, 여기서는 등급명만 저장
+                            // 실제 매칭은 뷰에서 처리해야 함
+                        }
+                    }
+                });
+            });
+        }
+        
+        // 드롭다운 닫기
+        const dropdown = document.getElementById('applicable-grades-dropdown-' + formIndex);
+        if (dropdown) {
+            dropdown.classList.remove('max-h-96');
+            dropdown.classList.add('max-h-0');
+        }
+    }
+    
+    // 폼 제출 전에 등급명을 ID로 변환하여 ManyToManyField 동기화
+    function syncApplicableGradesBeforeSubmit() {
+        // 모든 할인 정보 항목에 대해 처리
+        document.querySelectorAll('#discount-type-formset .discount-type-form').forEach((discountForm, discountIndex) => {
+            const buttonText = document.getElementById('applicable-grades-text-' + discountIndex);
+            if (!buttonText) return;
+            
+            const selectedGrades = buttonText.dataset.selectedGrades ? JSON.parse(buttonText.dataset.selectedGrades) : [];
+            if (selectedGrades.length === 0) return;
+            
+            const hiddenSelect = document.querySelector(`select[name="discount_type_formset-${discountIndex}-applicable_grades"]`);
+            if (!hiddenSelect) return;
+            
+            // 기존 선택 제거
+            Array.from(hiddenSelect.options).forEach(option => {
+                option.selected = false;
+            });
+            
+            // 선택된 등급명에 해당하는 좌석 등급 찾기
+            selectedGrades.forEach(gradeName => {
+                // 좌석 정보 formset에서 해당 등급명을 가진 항목 찾기
+                document.querySelectorAll('#seat-grade-formset .seat-grade-form').forEach((seatForm) => {
+                    const nameInput = seatForm.querySelector('input[name*="-name"]');
+                    if (nameInput && nameInput.value.trim() === gradeName) {
+                        // 해당 좌석 등급의 ID input 찾기
+                        const idInput = seatForm.querySelector('input[name*="-id"]');
+                        if (idInput && idInput.value) {
+                            // 기존 SeatGrade인 경우 ID로 선택
+                            const option = Array.from(hiddenSelect.options).find(opt => opt.value === idInput.value);
+                            if (option) {
+                                option.selected = true;
+                            }
+                        }
+                        // 새로 추가한 좌석 등급인 경우, 폼 제출 시 뷰에서 처리해야 함
+                        // 여기서는 등급명을 기반으로 매칭하므로, 뷰에서 등급명으로 SeatGrade를 찾아야 함
+                    }
+                });
+            });
+        });
+    }
+    
+    // 외부 클릭 시 적용 가능한 등급 드롭다운 닫기
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('[id^="applicable-grades-btn-"]') && !event.target.closest('[id^="applicable-grades-dropdown-"]')) {
+            document.querySelectorAll('[id^="applicable-grades-dropdown-"]').forEach(dd => {
+                dd.classList.remove('max-h-96');
+                dd.classList.add('max-h-0');
+            });
+        }
+    });
     
     // 좌석 등급 드롭다운 옵션 업데이트
     function updateSeatGradeDropdowns() {
@@ -888,111 +1131,114 @@
     }
     
     // 할인권종 관련 함수
-    function addDiscountTypeItem() {
-        const container = document.getElementById('discount-types-list');
-        const index = container.querySelectorAll('div.flex').length;
-        const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center w-full';
-        
-        const prefix = 'discount-type-grade-' + index;
-        
-        // 이름 입력
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.placeholder = '할인권종명';
-        nameInput.className = 'flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
-        
-        // 시작날짜 입력
-        const startDateInput = document.createElement('input');
-        startDateInput.type = 'date';
-        startDateInput.className = 'px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
-        startDateInput.style.width = '150px';
-        
-        // 종료날짜 입력
-        const endDateInput = document.createElement('input');
-        endDateInput.type = 'date';
-        endDateInput.className = 'px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
-        endDateInput.style.width = '150px';
-        
-        // 등급 드롭다운 컨테이너
-        const gradeDropdownContainer = document.createElement('div');
-        gradeDropdownContainer.className = 'w-40 relative seat-grade-dropdown-container';
-        
-        // 할인율 입력
-        const discountRateInput = document.createElement('input');
-        discountRateInput.type = 'number';
-        discountRateInput.placeholder = '할인율(%)';
-        discountRateInput.min = '0';
-        discountRateInput.max = '100';
-        discountRateInput.className = 'px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm';
-        discountRateInput.style.width = '120px';
-        
-        // 삭제 버튼
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.onclick = function() { removeDiscountTypeItem(this); };
-        removeButton.className = 'p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0';
-        removeButton.innerHTML = `
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-        `;
-        
-        div.appendChild(nameInput);
-        div.appendChild(startDateInput);
-        div.appendChild(endDateInput);
-        div.appendChild(gradeDropdownContainer);
-        div.appendChild(discountRateInput);
-        div.appendChild(removeButton);
-        container.appendChild(div);
-        
-        // 드롭다운 초기화
-        setTimeout(() => {
-            gradeDropdownContainer.innerHTML = `
-                <input type="hidden" id="${prefix}-input" value="">
-                <button 
-                    type="button"
-                    onclick="toggleDropdown('${prefix}')"
-                    class="w-full flex items-center px-3 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors text-sm"
-                >
-                    <svg id="${prefix}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                    <span id="${prefix}-text" class="flex-1 text-left text-sm">좌석 등급 선택</span>
-                </button>
-                <div id="${prefix}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                    <div class="py-1">
-                    </div>
-                </div>
-            `;
-            updateSeatGradeDropdowns();
-        }, 100);
-    }
-    
-    function removeDiscountTypeItem(button) {
-        button.closest('div.flex').remove();
-    }
     
     // 예매처 관련 함수
+    // 예매처 항목 추가 함수
     function addBookingSiteItem() {
-        const container = document.getElementById('booking-sites-list');
-        const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center';
-        div.innerHTML = `
-            <input type="text" placeholder="예매처명" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-            <span class="text-gray-400">:</span>
-            <input type="url" placeholder="예매 링크" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-            <button type="button" onclick="removeBookingSiteItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-            </button>
-        `;
-        container.appendChild(div);
+        const container = document.getElementById('booking-site-formset');
+        if (!container) {
+            console.error('예매처 폼셋 컨테이너를 찾을 수 없습니다.');
+            return;
+        }
+        
+        // TOTAL_FORMS input 찾기
+        const managementFormContainer = document.getElementById('booking-site-management-form');
+        let totalFormsInput = null;
+        
+        if (managementFormContainer) {
+            totalFormsInput = managementFormContainer.querySelector('input[name*="TOTAL_FORMS"]');
+        }
+        
+        if (!totalFormsInput) {
+            totalFormsInput = document.querySelector('input[name="booking_site_formset-TOTAL_FORMS"]');
+        }
+        if (!totalFormsInput) {
+            totalFormsInput = document.querySelector('input[id="id_booking_site_formset-TOTAL_FORMS"]');
+        }
+        
+        if (!totalFormsInput) {
+            console.error('TOTAL_FORMS 입력 필드를 찾을 수 없습니다.');
+            return;
+        }
+        
+        const totalForms = parseInt(totalFormsInput.value) || 0;
+        
+        // 첫 번째 폼을 템플릿으로 사용
+        const firstForm = container.querySelector('.booking-site-form');
+        if (!firstForm) {
+            console.error('템플릿 폼을 찾을 수 없습니다.');
+            return;
+        }
+        
+        // 새 폼 생성
+        const newForm = firstForm.cloneNode(true);
+        newForm.setAttribute('data-form-index', totalForms);
+        
+        // 모든 입력 필드의 name과 id 업데이트
+        const inputs = newForm.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.name) {
+                input.name = input.name.replace(/booking_site_formset-\d+-/, `booking_site_formset-${totalForms}-`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_booking_site_formset-\d+-/, `id_booking_site_formset-${totalForms}-`);
+            }
+            // 값 초기화
+            if (input.type !== 'hidden' && input.type !== 'checkbox') {
+                input.value = '';
+            }
+            if (input.type === 'checkbox') {
+                input.checked = false;
+            }
+        });
+        
+        // 라벨의 for 속성도 업데이트
+        const labels = newForm.querySelectorAll('label');
+        labels.forEach(label => {
+            const forAttr = label.getAttribute('for');
+            if (forAttr) {
+                label.setAttribute('for', forAttr.replace(/id_booking_site_formset-\d+-/, `id_booking_site_formset-${totalForms}-`));
+            }
+        });
+        
+        // DELETE 체크박스는 숨겨진 상태로 유지
+        const deleteCheckbox = newForm.querySelector('input[name*="-DELETE"]');
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = false;
+        }
+        
+        // 삭제 버튼 이벤트 리스너 추가
+        const deleteButton = newForm.querySelector('button[onclick*="removeBookingSiteItem"]');
+        if (deleteButton) {
+            deleteButton.onclick = function() {
+                removeBookingSiteItem(this);
+            };
+        }
+        
+        // 에러 메시지 제거
+        const errorMessages = newForm.querySelectorAll('.text-red-600');
+        errorMessages.forEach(msg => msg.remove());
+        
+        // 새 폼을 컨테이너에 추가
+        container.appendChild(newForm);
+        
+        // TOTAL_FORMS 값 증가
+        totalFormsInput.value = totalForms + 1;
     }
     
+    // 예매처 항목 삭제 함수
     function removeBookingSiteItem(button) {
-        button.closest('div').remove();
+        const formElement = button.closest('.booking-site-form');
+        if (!formElement) return;
+        
+        // DELETE 체크박스 찾기
+        const deleteInput = formElement.querySelector('input[name*="-DELETE"]');
+        if (deleteInput) {
+            deleteInput.checked = true;
+        }
+        
+        // 항목 숨기기
+        formElement.style.display = 'none';
     }
     
     // 캐스팅 아티스트 모달 열기 (플레이스홀더)
@@ -1014,6 +1260,278 @@
         // 항목 숨기기
         formElement.style.display = 'none';
     }
+    
+    // 좌석 등급 항목 삭제
+    function removeSeatGradeItem(button) {
+        const formElement = button.closest('.seat-grade-form');
+        if (!formElement) return;
+        
+        const deleteInput = formElement.querySelector('input[name*="-DELETE"]');
+        if (deleteInput) {
+            deleteInput.checked = true;
+        }
+        
+        // 항목 숨기기
+        formElement.style.display = 'none';
+    }
+    
+    // 할인 정보 항목 삭제
+    function removeDiscountTypeItem(button) {
+        const formElement = button.closest('.discount-type-form');
+        if (!formElement) return;
+        
+        const deleteInput = formElement.querySelector('input[name*="-DELETE"]');
+        if (deleteInput) {
+            deleteInput.checked = true;
+        }
+        
+        // 항목 숨기기
+        formElement.style.display = 'none';
+    }
+    
+    // 할인 정보 추가 함수
+    function addDiscountTypeItem() {
+        const container = document.getElementById('discount-type-formset');
+        if (!container) {
+            console.error('할인 정보 폼셋 컨테이너를 찾을 수 없습니다.');
+            return;
+        }
+        
+        // TOTAL_FORMS input 찾기
+        const managementFormContainer = document.getElementById('discount-type-management-form');
+        let totalFormsInput = null;
+        
+        if (managementFormContainer) {
+            totalFormsInput = managementFormContainer.querySelector('input[name*="TOTAL_FORMS"]');
+        }
+        
+        if (!totalFormsInput) {
+            totalFormsInput = document.querySelector('input[name="discount_type_formset-TOTAL_FORMS"]');
+        }
+        if (!totalFormsInput) {
+            totalFormsInput = document.querySelector('input[id="id_discount_type_formset-TOTAL_FORMS"]');
+        }
+        if (!totalFormsInput) {
+            const prevElement = container.previousElementSibling;
+            if (prevElement) {
+                totalFormsInput = prevElement.querySelector('input[name*="TOTAL_FORMS"]');
+            }
+        }
+        
+        if (!totalFormsInput) {
+            console.error('TOTAL_FORMS 입력 필드를 찾을 수 없습니다.');
+            return;
+        }
+        
+        const totalForms = parseInt(totalFormsInput.value) || 0;
+        
+        // 첫 번째 폼을 템플릿으로 사용
+        const firstForm = container.querySelector('.discount-type-form');
+        if (!firstForm) {
+            console.error('템플릿 폼을 찾을 수 없습니다.');
+            return;
+        }
+        
+        // 새 폼 생성
+        const newForm = firstForm.cloneNode(true);
+        newForm.setAttribute('data-form-index', totalForms);
+        
+        // 모든 입력 필드의 name과 id 업데이트
+        const inputs = newForm.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.name) {
+                input.name = input.name.replace(/discount_type_formset-\d+-/, `discount_type_formset-${totalForms}-`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_discount_type_formset-\d+-/, `id_discount_type_formset-${totalForms}-`);
+            }
+            // 값 초기화
+            if (input.type !== 'hidden' && input.type !== 'checkbox') {
+                input.value = '';
+            }
+            if (input.type === 'checkbox') {
+                input.checked = false;
+            }
+        });
+        
+        // 라벨의 for 속성도 업데이트
+        const labels = newForm.querySelectorAll('label');
+        labels.forEach(label => {
+            const forAttr = label.getAttribute('for');
+            if (forAttr) {
+                label.setAttribute('for', forAttr.replace(/id_discount_type_formset-\d+-/, `id_discount_type_formset-${totalForms}-`));
+            }
+        });
+        
+        // DELETE 체크박스는 숨겨진 상태로 유지
+        const deleteCheckbox = newForm.querySelector('input[name*="-DELETE"]');
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = false;
+        }
+        
+        // 적용 가능한 등급 드롭다운 버튼 업데이트
+        const applicableGradesButton = newForm.querySelector('[id^="applicable-grades-btn-"]');
+        if (applicableGradesButton) {
+            applicableGradesButton.id = 'applicable-grades-btn-' + totalForms;
+            const selectId = 'id_discount_type_formset-' + totalForms + '-applicable_grades';
+            applicableGradesButton.setAttribute('onclick', `openApplicableGradesDropdown('${selectId}', ${totalForms})`);
+        }
+        
+        const applicableGradesText = newForm.querySelector('[id^="applicable-grades-text-"]');
+        if (applicableGradesText) {
+            applicableGradesText.id = 'applicable-grades-text-' + totalForms;
+            applicableGradesText.textContent = '등급 선택';
+            applicableGradesText.dataset.selectedGrades = '[]';
+        }
+        
+        const applicableGradesDropdown = newForm.querySelector('[id^="applicable-grades-dropdown-"]');
+        if (applicableGradesDropdown) {
+            applicableGradesDropdown.id = 'applicable-grades-dropdown-' + totalForms;
+            applicableGradesDropdown.classList.remove('max-h-96');
+            applicableGradesDropdown.classList.add('max-h-0');
+        }
+        
+        const applicableGradesDropdownContent = newForm.querySelector('[id^="applicable-grades-dropdown-content-"]');
+        if (applicableGradesDropdownContent) {
+            applicableGradesDropdownContent.id = 'applicable-grades-dropdown-content-' + totalForms;
+            applicableGradesDropdownContent.innerHTML = '';
+        }
+        
+        // 삭제 버튼 이벤트 리스너 추가
+        const deleteButton = newForm.querySelector('button[onclick*="removeDiscountTypeItem"]');
+        if (deleteButton) {
+            deleteButton.onclick = function() {
+                removeDiscountTypeItem(this);
+            };
+        }
+        
+        // 에러 메시지 제거
+        const errorMessages = newForm.querySelectorAll('.text-red-600');
+        errorMessages.forEach(msg => msg.remove());
+        
+        // 새 폼을 컨테이너에 추가
+        container.appendChild(newForm);
+        
+        // TOTAL_FORMS 값 증가
+        totalFormsInput.value = totalForms + 1;
+    }
+    
+    // 좌석 등급 추가 함수
+    function addSeatGradeItem() {
+        const container = document.getElementById('seat-grade-formset');
+        if (!container) {
+            console.error('좌석 등급 폼셋 컨테이너를 찾을 수 없습니다.');
+            return;
+        }
+        
+        // TOTAL_FORMS input 찾기
+        const managementFormContainer = document.getElementById('seat-grade-management-form');
+        let totalFormsInput = null;
+        
+        if (managementFormContainer) {
+            totalFormsInput = managementFormContainer.querySelector('input[name*="TOTAL_FORMS"]');
+        }
+        
+        if (!totalFormsInput) {
+            totalFormsInput = document.querySelector('input[name="seat_grade_formset-TOTAL_FORMS"]');
+        }
+        if (!totalFormsInput) {
+            totalFormsInput = document.querySelector('input[id="id_seat_grade_formset-TOTAL_FORMS"]');
+        }
+        if (!totalFormsInput) {
+            const prevElement = container.previousElementSibling;
+            if (prevElement) {
+                totalFormsInput = prevElement.querySelector('input[name*="TOTAL_FORMS"]');
+            }
+        }
+        
+        if (!totalFormsInput) {
+            console.error('TOTAL_FORMS 입력 필드를 찾을 수 없습니다.');
+            return;
+        }
+        
+        const totalForms = parseInt(totalFormsInput.value) || 0;
+        
+        // 첫 번째 폼을 템플릿으로 사용
+        const firstForm = container.querySelector('.seat-grade-form');
+        if (!firstForm) {
+            console.error('템플릿 폼을 찾을 수 없습니다.');
+            return;
+        }
+        
+        // 새 폼 생성
+        const newForm = firstForm.cloneNode(true);
+        newForm.setAttribute('data-form-index', totalForms);
+        
+        // 모든 입력 필드의 name과 id 업데이트
+        const inputs = newForm.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.name) {
+                input.name = input.name.replace(/seat_grade_formset-\d+-/, `seat_grade_formset-${totalForms}-`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_seat_grade_formset-\d+-/, `id_seat_grade_formset-${totalForms}-`);
+            }
+            // 값 초기화
+            if (input.type !== 'hidden' && input.type !== 'checkbox') {
+                input.value = '';
+            }
+            if (input.type === 'checkbox') {
+                input.checked = false;
+            }
+        });
+        
+        // 라벨의 for 속성도 업데이트
+        const labels = newForm.querySelectorAll('label');
+        labels.forEach(label => {
+            const forAttr = label.getAttribute('for');
+            if (forAttr) {
+                label.setAttribute('for', forAttr.replace(/id_seat_grade_formset-\d+-/, `id_seat_grade_formset-${totalForms}-`));
+            }
+        });
+        
+        // DELETE 체크박스는 숨겨진 상태로 유지
+        const deleteCheckbox = newForm.querySelector('input[name*="-DELETE"]');
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = false;
+        }
+        
+        // 삭제 버튼 이벤트 리스너 추가
+        const deleteButton = newForm.querySelector('button[onclick*="removeSeatGradeItem"]');
+        if (deleteButton) {
+            deleteButton.onclick = function() {
+                removeSeatGradeItem(this);
+            };
+        }
+        
+        // 에러 메시지 제거
+        const errorMessages = newForm.querySelectorAll('.text-red-600');
+        errorMessages.forEach(msg => msg.remove());
+        
+        // 새 폼을 컨테이너에 추가
+        container.appendChild(newForm);
+        
+        // TOTAL_FORMS 값 증가
+        totalFormsInput.value = totalForms + 1;
+        
+        // 새로 추가된 등급명 입력 필드에 이벤트 리스너 추가
+        const nameInput = newForm.querySelector('input[name*="-name"]');
+        if (nameInput) {
+            nameInput.addEventListener('input', function() {
+                updateAllApplicableGradesDropdowns();
+            });
+        }
+        
+        // 할인 정보의 적용 가능한 등급 드롭다운 업데이트
+        updateAllApplicableGradesDropdowns();
+    }
+    
+    // 좌석 등급 삭제 함수 래핑
+    const originalRemoveSeatGradeItem = removeSeatGradeItem;
+    removeSeatGradeItem = function(button) {
+        originalRemoveSeatGradeItem(button);
+        updateAllApplicableGradesDropdowns();
+    };
     
     // 캐스팅 역할 추가 함수
     function addCastingRoleItem() {
@@ -1134,8 +1652,42 @@
         totalFormsInput.value = totalForms + 1;
     }
     
+    // 좌석 정보 변경 시 할인 정보의 적용 가능한 등급 드롭다운 업데이트
+    function updateAllApplicableGradesDropdowns() {
+        document.querySelectorAll('[id^="applicable-grades-dropdown-"]').forEach(dropdown => {
+            const formIndex = dropdown.id.match(/applicable-grades-dropdown-(\d+)/)?.[1];
+            if (formIndex) {
+                updateApplicableGradesDropdown(parseInt(formIndex));
+            }
+        });
+    }
+    
     // 페이지 로드 시 좌석 등급 입력 필드 초기화
     document.addEventListener('DOMContentLoaded', function() {
+        // 좌석 정보의 등급명 입력 필드에 변경 이벤트 리스너 추가
+        document.querySelectorAll('#seat-grade-formset input[name*="-name"]').forEach(input => {
+            input.addEventListener('input', function() {
+                updateAllApplicableGradesDropdowns();
+            });
+        });
+        
+        // 좌석 정보 항목 추가/삭제 시에도 업데이트
+        const seatGradeFormset = document.getElementById('seat-grade-formset');
+        if (seatGradeFormset) {
+            const observer = new MutationObserver(function(mutations) {
+                updateAllApplicableGradesDropdowns();
+                // 새로 추가된 입력 필드에도 이벤트 리스너 추가
+                document.querySelectorAll('#seat-grade-formset input[name*="-name"]').forEach(input => {
+                    if (!input.dataset.listenerAdded) {
+                        input.addEventListener('input', function() {
+                            updateAllApplicableGradesDropdowns();
+                        });
+                        input.dataset.listenerAdded = 'true';
+                    }
+                });
+            });
+            observer.observe(seatGradeFormset, { childList: true, subtree: true });
+        }
         // 좌석 정보의 좌석 등급 입력 필드에 변경 이벤트 리스너 추가
         const seatGradeInputs = document.querySelectorAll('#ticket-prices-seat-counts-list input.seat-grade-input');
         seatGradeInputs.forEach(input => {

@@ -122,18 +122,18 @@ SeatGradeFormSet = inlineformset_factory(
     can_delete=True,
     widgets={
         'name': forms.TextInput(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '등급명 (예: VIP, R석)',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '등급명',
         }),
         'price': forms.NumberInput(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '0',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '티켓 가격',
             'min': '0',
             'step': '1',
         }),
         'seat_count': forms.NumberInput(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '0',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '좌석 수',
             'min': '0',
             'step': '1',
         }),
@@ -156,7 +156,7 @@ BookingSiteFormSet = inlineformset_factory(
     widgets={
         'name': forms.TextInput(attrs={
             'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '예매처명 (예: 인터파크, 예스24)',
+            'placeholder': '예매처명',
         }),
         'url': forms.URLInput(attrs={
             'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
@@ -174,26 +174,26 @@ DiscountTypeFormSet = inlineformset_factory(
     can_delete=True,
     widgets={
         'name': forms.TextInput(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '할인권종명 (예: 조조할인)',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '할인권종명',
         }),
         'start_date': forms.DateInput(attrs={
             'type': 'date',
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
         }),
         'end_date': forms.DateInput(attrs={
             'type': 'date',
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
         }),
         'discount_rate': forms.NumberInput(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '0',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '할인율',
             'min': '0',
             'max': '100',
             'step': '1',
         }),
         'applicable_grades': forms.SelectMultiple(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
         }),
     }
 )
