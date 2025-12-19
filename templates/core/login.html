@@ -16,56 +16,107 @@
         body {
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
         }
+        /* 영상 영역 전체 사용 */
+        .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .video-container iframe {
+            width: 100%;
+            height: 100%;
+        }
+        /* 입력 필드 스타일 (design-system.md 참고) */
+        .login-form input[type="text"],
+        .login-form input[type="email"],
+        .login-form input[type="password"] {
+            width: 100%;
+            padding: 0.75rem 1rem; /* px-4 py-3 */
+            border: 2px solid #e5e7eb; /* border-gray-200 */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: all 0.2s;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .login-form input[type="text"]:focus,
+        .login-form input[type="email"]:focus,
+        .login-form input[type="password"]:focus {
+            outline: none;
+            border-color: #2a3038; /* focus:border-[#2a3038] */
+            box-shadow: 0 0 0 2px rgba(42, 48, 56, 0.2); /* focus:ring-2 focus:ring-[#2a3038]/20 */
+        }
     </style>
 </head>
-<body class="bg-white min-h-screen flex items-center justify-center px-4">
-    <div class="w-full max-w-md">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow">
-            <!-- 브랜드명 -->
-            <h1 class="text-3xl font-semibold text-brand text-center mb-10">
-                Library AI
-            </h1>
-            
-            <!-- 에러 메시지 -->
-            {% if form.errors %}
-                <div class="mb-6 p-4 bg-red-50 border-2 border-red-100 rounded-lg text-red-600 text-sm">
-                    {{ form.non_field_errors|first|default:"이메일 또는 비밀번호가 올바르지 않습니다." }}
-                </div>
-            {% endif %}
-            
-            <!-- 로그인 폼 -->
-            <form method="post">
-                {% csrf_token %}
-                
-                <!-- 이메일 입력 -->
-                <div class="mb-6">
-                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-black mb-3">
-                        {{ form.username.label }}
-                    </label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.username.errors|first }}</p>
-                    {% endif %}
-                </div>
-                
-                <!-- 비밀번호 입력 -->
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        <!-- 영상 영역 (왼쪽 70%) -->
+        <div class="lg:w-[70%] lg:order-1 bg-black relative min-h-screen">
+            <div class="video-container">
+                <iframe 
+                    src="https://www.youtube.com/embed/yTw4R2bucL8?autoplay=1&mute=1&loop=1&playlist=yTw4R2bucL8&controls=1&rel=0&modestbranding=1" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"
+                ></iframe>
+            </div>
+        </div>
+        
+        <!-- 로그인 영역 (오른쪽 30%) -->
+        <div class="lg:w-[30%] lg:order-2 bg-white p-6 lg:p-8 flex items-center justify-center">
+            <div class="w-full max-w-sm">
+                <!-- 브랜드명 및 설명 -->
                 <div class="mb-8">
-                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-black mb-3">
-                        {{ form.password.label }}
-                    </label>
-                    {{ form.password }}
-                    {% if form.password.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.password.errors|first }}</p>
-                    {% endif %}
+                    <h1 class="text-3xl lg:text-4xl font-semibold text-[#f65938] mb-4">
+                        Library AI
+                    </h1>
+                    <p class="text-black text-sm lg:text-base leading-relaxed whitespace-pre-line">
+                        공연을 기획하고, 제작하고, 판매하는 모든 의사결정을
+                        데이터 기반으로 돕는 AI 데이터 플랫폼
+                    </p>
                 </div>
                 
-                <!-- 로그인 버튼 -->
-                <button type="submit" class="w-full bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm">
-                    로그인
-                </button>
-            </form>
+                <!-- 에러 메시지 -->
+                {% if form.errors %}
+                    <div class="mb-6 p-4 bg-red-50 border-2 border-red-100 rounded-lg text-red-600 text-sm">
+                        {{ form.non_field_errors|first|default:"이메일 또는 비밀번호가 올바르지 않습니다." }}
+                    </div>
+                {% endif %}
+                
+                <!-- 로그인 폼 -->
+                <form method="post" class="login-form">
+                    {% csrf_token %}
+                    
+                    <!-- 이메일 입력 -->
+                    <div class="mb-4">
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.username.label }}
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.username.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 비밀번호 입력 -->
+                    <div class="mb-6">
+                        <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-black mb-2">
+                            {{ form.password.label }}
+                        </label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.password.errors|first }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 로그인 버튼 -->
+                    <button type="submit" class="w-full bg-[#2a3038] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#2a3038]/90 active:bg-[#2a3038]/80 transition-colors shadow-sm">
+                        로그인
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </body>
 </html>
-

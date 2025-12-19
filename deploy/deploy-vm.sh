@@ -5,6 +5,7 @@
 #   1. 프로젝트 디렉토리로 이동: cd /var/www/library-ai
 #   2. 가상환경 활성화: source venv/bin/activate
 #   3. 배포 스크립트 실행: ./deploy/deploy-vm.sh 또는 bash deploy/deploy-vm.sh
+#   4. admin / admin2026^^
 
 set -e  # 에러 발생 시 중단
 
