@@ -1,5 +1,6 @@
 from django import forms
-from .models import Performance
+from django.forms import inlineformset_factory
+from .models import Performance, SeatGrade, BookingSite, DiscountType, Person, CrewRole, CastingRole
 
 
 class PerformanceForm(forms.ModelForm):
@@ -26,13 +27,6 @@ class PerformanceForm(forms.ModelForm):
             'target_revenue',
             'break_even_point',
             'total_production_cost',
-            'seat_grades',
-            'crew',
-            'booking_sites',
-            'ticket_prices',
-            'seat_counts',
-            'discount_types',
-            'casting',
             'seat_map',
         ]
         widgets = {
@@ -112,141 +106,143 @@ class PerformanceForm(forms.ModelForm):
                 'min': '0',
                 'step': '1',
             }),
-            'seat_grades': forms.HiddenInput(),
-            'crew': forms.HiddenInput(),
-            'booking_sites': forms.HiddenInput(),
-            'ticket_prices': forms.HiddenInput(),
-            'seat_counts': forms.HiddenInput(),
-            'discount_types': forms.HiddenInput(),
-            'casting': forms.HiddenInput(),
             'seat_map': forms.FileInput(attrs={
                 'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
                 'accept': 'image/*',
             }),
         }
-    
-    def clean_seat_grades(self):
-        """좌석 등급 JSON 검증"""
-        data = self.cleaned_data.get('seat_grades')
-        if data:
-            try:
-                import json
-                if isinstance(data, str):
-                    data = json.loads(data)
-                if not isinstance(data, list):
-                    raise forms.ValidationError('리스트 형식이어야 해요')
-            except json.JSONDecodeError:
-                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
-        else:
-            # 빈 문자열이나 None인 경우 빈 리스트로 처리
-            data = []
-        
-        # 최소 1개 이상 필수
-        if not data or len(data) == 0:
-            raise forms.ValidationError('좌석 등급을 최소 1개 이상 입력해주세요')
-        
-        return data
-    
-    def clean_crew(self):
-        """제작진 JSON 검증"""
-        data = self.cleaned_data.get('crew')
-        if data:
-            try:
-                import json
-                if isinstance(data, str):
-                    data = json.loads(data)
-                if not isinstance(data, dict):
-                    raise forms.ValidationError('딕셔너리 형식이어야 해요')
-            except json.JSONDecodeError:
-                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
-        return data
-    
-    def clean_booking_sites(self):
-        """예매처 JSON 검증"""
-        data = self.cleaned_data.get('booking_sites')
-        if data:
-            try:
-                import json
-                if isinstance(data, str):
-                    data = json.loads(data)
-                if not isinstance(data, list):
-                    raise forms.ValidationError('리스트 형식이어야 해요')
-            except json.JSONDecodeError:
-                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
-        return data
-    
-    def clean_ticket_prices(self):
-        """티켓 가격 JSON 검증"""
-        data = self.cleaned_data.get('ticket_prices')
-        if data:
-            try:
-                import json
-                if isinstance(data, str):
-                    data = json.loads(data)
-                if not isinstance(data, dict):
-                    raise forms.ValidationError('딕셔너리 형식이어야 해요')
-            except json.JSONDecodeError:
-                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
-        return data
-    
-    def clean_seat_counts(self):
-        """좌석 수 JSON 검증"""
-        data = self.cleaned_data.get('seat_counts')
-        if data:
-            try:
-                import json
-                if isinstance(data, str):
-                    data = json.loads(data)
-                if not isinstance(data, dict):
-                    raise forms.ValidationError('딕셔너리 형식이어야 해요')
-            except json.JSONDecodeError:
-                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
-        return data
-    
-    def clean_discount_types(self):
-        """할인권종 JSON 검증"""
-        data = self.cleaned_data.get('discount_types')
-        if data:
-            try:
-                import json
-                if isinstance(data, str):
-                    data = json.loads(data)
-                if not isinstance(data, list):
-                    raise forms.ValidationError('리스트 형식이어야 해요')
-                
-                # seat_grades 가져오기
-                seat_grades = self.cleaned_data.get('seat_grades', [])
-                if isinstance(seat_grades, str):
-                    seat_grades = json.loads(seat_grades) if seat_grades else []
-                
-                # 각 항목 검증
-                for item in data:
-                    if not isinstance(item, dict):
-                        raise forms.ValidationError('각 항목은 딕셔너리 형식이어야 해요')
-                    required_fields = ['name', 'start_date', 'end_date', 'grade', 'discount_rate']
-                    for field in required_fields:
-                        if field not in item:
-                            raise forms.ValidationError(f'{field} 필드가 필요해요')
-                    
-                    # 등급이 seat_grades에 있는지 검증
-                    grade = item.get('grade', '').strip()
-                    if grade and seat_grades and grade not in seat_grades:
-                        raise forms.ValidationError(f'등급 "{grade}"는 생성된 좌석 등급에 없어요. 먼저 좌석 등급을 추가해주세요.')
-            except json.JSONDecodeError:
-                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
-        return data
-    
-    def clean_casting(self):
-        """캐스팅 JSON 검증"""
-        data = self.cleaned_data.get('casting')
-        if data:
-            try:
-                import json
-                if isinstance(data, str):
-                    data = json.loads(data)
-                if not isinstance(data, dict):
-                    raise forms.ValidationError('딕셔너리 형식이어야 해요')
-            except json.JSONDecodeError:
-                raise forms.ValidationError('올바른 JSON 형식이 아니에요')
-        return data
+
+
+# 인라인 폼셋 클래스 생성
+SeatGradeFormSet = inlineformset_factory(
+    Performance,
+    SeatGrade,
+    fields=['name', 'price', 'seat_count', 'order'],
+    extra=1,
+    can_delete=True,
+    widgets={
+        'name': forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '등급명 (예: VIP, R석)',
+        }),
+        'price': forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '0',
+            'min': '0',
+            'step': '1',
+        }),
+        'seat_count': forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '0',
+            'min': '0',
+            'step': '1',
+        }),
+        'order': forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '0',
+            'min': '0',
+            'step': '1',
+        }),
+    }
+)
+
+
+BookingSiteFormSet = inlineformset_factory(
+    Performance,
+    BookingSite,
+    fields=['name', 'url'],
+    extra=1,
+    can_delete=True,
+    widgets={
+        'name': forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '예매처명 (예: 인터파크, 예스24)',
+        }),
+        'url': forms.URLInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': 'https://...',
+        }),
+    }
+)
+
+
+DiscountTypeFormSet = inlineformset_factory(
+    Performance,
+    DiscountType,
+    fields=['name', 'start_date', 'end_date', 'discount_rate', 'applicable_grades'],
+    extra=1,
+    can_delete=True,
+    widgets={
+        'name': forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '할인권종명 (예: 조조할인)',
+        }),
+        'start_date': forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+        }),
+        'end_date': forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+        }),
+        'discount_rate': forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '0',
+            'min': '0',
+            'max': '100',
+            'step': '1',
+        }),
+        'applicable_grades': forms.SelectMultiple(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+        }),
+    }
+)
+
+
+CrewRoleFormSet = inlineformset_factory(
+    Performance,
+    CrewRole,
+    fields=['person', 'role', 'order'],
+    extra=1,
+    can_delete=True,
+    widgets={
+        'person': forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+        }),
+        'role': forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '역할 (예: 감독, 음악, 작사)',
+        }),
+        'order': forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '0',
+            'min': '0',
+            'step': '1',
+        }),
+    }
+)
+
+
+CastingRoleFormSet = inlineformset_factory(
+    Performance,
+    CastingRole,
+    fields=['person', 'role', 'order'],
+    extra=1,
+    can_delete=True,
+    widgets={
+        'person': forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+        }),
+        'role': forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '배역명 (예: 홍길동, 김철수)',
+        }),
+        'order': forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '0',
+            'min': '0',
+            'step': '1',
+        }),
+    }
+)
 

@@ -5,7 +5,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.urls import reverse_lazy
 from django.db.models import Q
 from .models import Performance
-from .forms import PerformanceForm
+from .forms import PerformanceForm, SeatGradeFormSet, BookingSiteFormSet, DiscountTypeFormSet, CrewRoleFormSet, CastingRoleFormSet
 
 
 class PerformanceListView(ListView):
@@ -62,13 +62,63 @@ class PerformanceCreateView(CreateView):
         context['genre_choices'] = Performance.GENRE_CHOICES
         if self.object:
             context['genre_filter'] = self.object.genre
+            # 인라인 폼셋 초기화
+            context['seat_grade_formset'] = SeatGradeFormSet(instance=self.object)
+            context['booking_site_formset'] = BookingSiteFormSet(instance=self.object)
+            context['discount_type_formset'] = DiscountTypeFormSet(instance=self.object)
+            context['crew_role_formset'] = CrewRoleFormSet(instance=self.object)
+            context['casting_role_formset'] = CastingRoleFormSet(instance=self.object)
         else:
             context['genre_filter'] = ''
+            # 새 객체 생성 시 빈 폼셋
+            context['seat_grade_formset'] = SeatGradeFormSet()
+            context['booking_site_formset'] = BookingSiteFormSet()
+            context['discount_type_formset'] = DiscountTypeFormSet()
+            context['crew_role_formset'] = CrewRoleFormSet()
+            context['casting_role_formset'] = CastingRoleFormSet()
         return context
     
     def form_valid(self, form):
-        messages.success(self.request, '공연이 성공적으로 등록되었어요')
-        return super().form_valid(form)
+        performance = form.save()
+        
+        # 인라인 폼셋 처리
+        seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
+        booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
+        discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
+        crew_role_formset = CrewRoleFormSet(self.request.POST, instance=performance)
+        casting_role_formset = CastingRoleFormSet(self.request.POST, instance=performance)
+        
+        if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
+            discount_type_formset.is_valid() and crew_role_formset.is_valid() and 
+            casting_role_formset.is_valid()):
+            seat_grade_formset.save()
+            booking_site_formset.save()
+            discount_type_formset.save()
+            crew_role_formset.save()
+            casting_role_formset.save()
+            messages.success(self.request, '공연이 성공적으로 등록되었어요')
+            return super().form_valid(form)
+        else:
+            # 폼셋 검증 실패 시 에러 표시
+            messages.error(self.request, '입력한 정보를 확인해주세요')
+            return self.form_invalid(form)
+    
+    def form_invalid(self, form):
+        # 폼셋 검증 실패 시 폼셋을 다시 컨텍스트에 포함
+        context = self.get_context_data(form=form)
+        if hasattr(self, 'object') and self.object:
+            context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST, instance=self.object)
+            context['booking_site_formset'] = BookingSiteFormSet(self.request.POST, instance=self.object)
+            context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST, instance=self.object)
+            context['crew_role_formset'] = CrewRoleFormSet(self.request.POST, instance=self.object)
+            context['casting_role_formset'] = CastingRoleFormSet(self.request.POST, instance=self.object)
+        else:
+            context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST)
+            context['booking_site_formset'] = BookingSiteFormSet(self.request.POST)
+            context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST)
+            context['crew_role_formset'] = CrewRoleFormSet(self.request.POST)
+            context['casting_role_formset'] = CastingRoleFormSet(self.request.POST)
+        return self.render_to_response(context)
 
 
 class PerformanceUpdateView(UpdateView):
@@ -90,13 +140,50 @@ class PerformanceUpdateView(UpdateView):
         context['genre_choices'] = Performance.GENRE_CHOICES
         if self.object:
             context['genre_filter'] = self.object.genre
+            # 인라인 폼셋 초기화 (기존 데이터 로드)
+            context['seat_grade_formset'] = SeatGradeFormSet(instance=self.object)
+            context['booking_site_formset'] = BookingSiteFormSet(instance=self.object)
+            context['discount_type_formset'] = DiscountTypeFormSet(instance=self.object)
+            context['crew_role_formset'] = CrewRoleFormSet(instance=self.object)
+            context['casting_role_formset'] = CastingRoleFormSet(instance=self.object)
         else:
             context['genre_filter'] = ''
         return context
     
     def form_valid(self, form):
-        messages.success(self.request, '공연 정보가 성공적으로 수정되었어요')
-        return super().form_valid(form)
+        performance = form.save()
+        
+        # 인라인 폼셋 처리
+        seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
+        booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
+        discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
+        crew_role_formset = CrewRoleFormSet(self.request.POST, instance=performance)
+        casting_role_formset = CastingRoleFormSet(self.request.POST, instance=performance)
+        
+        if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
+            discount_type_formset.is_valid() and crew_role_formset.is_valid() and 
+            casting_role_formset.is_valid()):
+            seat_grade_formset.save()
+            booking_site_formset.save()
+            discount_type_formset.save()
+            crew_role_formset.save()
+            casting_role_formset.save()
+            messages.success(self.request, '공연 정보가 성공적으로 수정되었어요')
+            return super().form_valid(form)
+        else:
+            # 폼셋 검증 실패 시 에러 표시
+            messages.error(self.request, '입력한 정보를 확인해주세요')
+            return self.form_invalid(form)
+    
+    def form_invalid(self, form):
+        # 폼셋 검증 실패 시 폼셋을 다시 컨텍스트에 포함
+        context = self.get_context_data(form=form)
+        context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST, instance=self.object)
+        context['booking_site_formset'] = BookingSiteFormSet(self.request.POST, instance=self.object)
+        context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST, instance=self.object)
+        context['crew_role_formset'] = CrewRoleFormSet(self.request.POST, instance=self.object)
+        context['casting_role_formset'] = CastingRoleFormSet(self.request.POST, instance=self.object)
+        return self.render_to_response(context)
 
 
 class PerformanceDeleteView(DeleteView):

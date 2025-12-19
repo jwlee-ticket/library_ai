@@ -149,13 +149,11 @@ def get_concert_aggregated_summary_data(request):
             if concert.break_even_point:
                 total_break_even_point += float(concert.break_even_point)
         
-        # 총 오픈 판매 매수 계산 (모든 콘서트의 seat_counts 합계)
+        # 총 오픈 판매 매수 계산 (모든 콘서트의 seat_grades 합계)
         total_seats = 0
         for concert in concerts:
-            if concert.seat_counts:
-                for grade, count in concert.seat_counts.items():
-                    if isinstance(count, (int, float)):
-                        total_seats += count
+            for seat_grade in concert.seat_grades.all():
+                total_seats += seat_grade.seat_count
         
         # 개별 콘서트 목록 데이터
         concert_list = []
@@ -365,12 +363,10 @@ def get_concert_dashboard_data(request, pk):
         daily_ticket_data[date_str][site]['paid'] = sale.paid_ticket_count or 0
         daily_ticket_data[date_str][site]['unpaid'] = sale.unpaid_ticket_count or 0
     
-    # 총 좌석수 계산 (seat_counts JSON 필드에서 합산)
+    # 총 좌석수 계산 (seat_grades 모델에서 합산)
     total_seats = 0
-    if performance.seat_counts:
-        for grade, count in performance.seat_counts.items():
-            if isinstance(count, (int, float)):
-                total_seats += count
+    for seat_grade in performance.seat_grades.all():
+        total_seats += seat_grade.seat_count
     
     # 목표액, 손익분기점
     target_revenue = float(performance.target_revenue) if performance.target_revenue else None

@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
 import json
-from .models import ConcertDailySales, ConcertFinalSales
+from .models import ConcertDailySales, ConcertFinalSales, ConcertDailySalesGrade
 from .forms import ConcertDailySalesForm, ConcertFinalSalesForm, ConcertSalesDailyFormSet
 from .constants import AGE_GROUPS, REGIONS, SEOUL_REGIONS, GYEONGGI_REGIONS
 from performance.models import Performance
@@ -78,7 +78,7 @@ class ConcertSalesListView(ListView):
         # 예매처 필터
         booking_site = self.request.GET.get('booking_site')
         if booking_site:
-            queryset = queryset.filter(booking_site__icontains=booking_site)
+            queryset = queryset.filter(booking_site__name__icontains=booking_site)
         
         return queryset.order_by('-date', 'booking_site')
     
@@ -92,20 +92,16 @@ class ConcertSalesListView(ListView):
                 context['performance'] = performance
                 
                 # 예매처 목록 추출
-                booking_sites = []
-                if performance.booking_sites:
-                    for site_dict in performance.booking_sites:
-                        if isinstance(site_dict, dict):
-                            booking_sites.extend(site_dict.keys())
+                booking_sites = [site.name for site in performance.booking_sites.all()]
                 context['booking_sites'] = json.dumps(booking_sites, ensure_ascii=False)
                 
                 # 좌석 등급 추출 (템플릿용 리스트 + JavaScript용 JSON)
-                seat_grades = performance.seat_grades if performance.seat_grades else []
+                seat_grades = [grade.name for grade in performance.seat_grades.all()]
                 context['seat_grades'] = seat_grades
                 context['seat_grades_json'] = json.dumps(seat_grades, ensure_ascii=False)
                 
                 # 할인권종 추출 (템플릿용 리스트 + JavaScript용 JSON)
-                discount_types = performance.discount_types if performance.discount_types else []
+                discount_types = [{'name': dt.name, 'start_date': dt.start_date.strftime('%Y-%m-%d'), 'end_date': dt.end_date.strftime('%Y-%m-%d'), 'discount_rate': dt.discount_rate} for dt in performance.discount_types.all()]
                 context['discount_types'] = discount_types
                 context['discount_types_json'] = json.dumps(discount_types, ensure_ascii=False)
                 
@@ -303,17 +299,15 @@ def save_daily_sales(request, performance_id):
         return JsonResponse({'success': False, 'error': '올바른 날짜 형식이 아니에요'}, status=400)
     
     # 예매처 목록 추출
-    booking_sites = []
-    if performance.booking_sites:
-        for site_dict in performance.booking_sites:
-            if isinstance(site_dict, dict):
-                booking_sites.extend(site_dict.keys())
+    booking_sites = list(performance.booking_sites.all())
+    booking_site_names = [site.name for site in booking_sites]
     
     if not booking_sites:
         return JsonResponse({'success': False, 'error': '등록된 예매처가 없어요'}, status=400)
     
     # 좌석 등급 추출
-    seat_grades = performance.seat_grades if performance.seat_grades else []
+    seat_grades = list(performance.seat_grades.all())
+    seat_grade_names = [grade.name for grade in seat_grades]
     
     # 기존 데이터 삭제 (해당 날짜의 데일리 매출만)
     ConcertDailySales.objects.filter(
@@ -326,36 +320,33 @@ def save_daily_sales(request, performance_id):
     formset_files = {}
     
     # 각 예매처별로 폼 데이터 준비
+    grade_data = {}  # {booking_site_name: {seat_grade_name: {paid, unpaid, free}}}
+    
     for idx, booking_site in enumerate(booking_sites):
         prefix = f'form-{idx}'
+        booking_site_name = booking_site.name
         formset_data[f'{prefix}-performance'] = performance.id
         formset_data[f'{prefix}-date'] = date_str
-        formset_data[f'{prefix}-booking_site'] = booking_site
-        formset_data[f'{prefix}-paid_revenue'] = request.POST.get(f'{booking_site}_paid_revenue', '0') or '0'
-        formset_data[f'{prefix}-paid_ticket_count'] = request.POST.get(f'{booking_site}_paid_ticket_count', '0') or '0'
-        formset_data[f'{prefix}-unpaid_revenue'] = request.POST.get(f'{booking_site}_unpaid_revenue', '0') or '0'
-        formset_data[f'{prefix}-unpaid_ticket_count'] = request.POST.get(f'{booking_site}_unpaid_ticket_count', '0') or '0'
+        formset_data[f'{prefix}-booking_site'] = booking_site.id
+        formset_data[f'{prefix}-paid_revenue'] = request.POST.get(f'{booking_site_name}_paid_revenue', '0') or '0'
+        formset_data[f'{prefix}-paid_ticket_count'] = request.POST.get(f'{booking_site_name}_paid_ticket_count', '0') or '0'
+        formset_data[f'{prefix}-unpaid_revenue'] = request.POST.get(f'{booking_site_name}_unpaid_revenue', '0') or '0'
+        formset_data[f'{prefix}-unpaid_ticket_count'] = request.POST.get(f'{booking_site_name}_unpaid_ticket_count', '0') or '0'
         
-        # 등급별 매수
-        paid_by_grade = {}
-        unpaid_by_grade = {}
-        free_by_grade = {}
-        
-        for grade in seat_grades:
-            paid_value = request.POST.get(f'{booking_site}_paid_grade_{grade}', '0') or '0'
-            unpaid_value = request.POST.get(f'{booking_site}_unpaid_grade_{grade}', '0') or '0'
-            free_value = request.POST.get(f'{booking_site}_free_grade_{grade}', '0') or '0'
+        # 등급별 매수 데이터 수집 (나중에 ConcertDailySalesGrade로 저장)
+        grade_data[booking_site_name] = {}
+        for seat_grade in seat_grades:
+            seat_grade_name = seat_grade.name
+            paid_value = request.POST.get(f'{booking_site_name}_paid_grade_{seat_grade_name}', '0') or '0'
+            unpaid_value = request.POST.get(f'{booking_site_name}_unpaid_grade_{seat_grade_name}', '0') or '0'
+            free_value = request.POST.get(f'{booking_site_name}_free_grade_{seat_grade_name}', '0') or '0'
             
-            if int(paid_value) > 0:
-                paid_by_grade[grade] = int(paid_value)
-            if int(unpaid_value) > 0:
-                unpaid_by_grade[grade] = int(unpaid_value)
-            if int(free_value) > 0:
-                free_by_grade[grade] = int(free_value)
-        
-        formset_data[f'{prefix}-paid_by_grade'] = json.dumps(paid_by_grade, ensure_ascii=False)
-        formset_data[f'{prefix}-unpaid_by_grade'] = json.dumps(unpaid_by_grade, ensure_ascii=False)
-        formset_data[f'{prefix}-free_by_grade'] = json.dumps(free_by_grade, ensure_ascii=False)
+            grade_data[booking_site_name][seat_grade_name] = {
+                'seat_grade': seat_grade,
+                'paid': int(paid_value),
+                'unpaid': int(unpaid_value),
+                'free': int(free_value),
+            }
     
     formset_data['form-TOTAL_FORMS'] = len(booking_sites)
     formset_data['form-INITIAL_FORMS'] = '0'
@@ -367,10 +358,28 @@ def save_daily_sales(request, performance_id):
     
     # 각 폼에 좌석 등급 전달
     for form in formset.forms:
-        form.seat_grades = seat_grades
+        form.seat_grades = seat_grade_names
     
     if formset.is_valid():
-        formset.save()
+        # ConcertDailySales 저장
+        daily_sales_instances = formset.save()
+        
+        # ConcertDailySalesGrade 저장
+        for daily_sales in daily_sales_instances:
+            booking_site_name = daily_sales.booking_site.name if daily_sales.booking_site else None
+            if booking_site_name and booking_site_name in grade_data:
+                for seat_grade_name, grade_info in grade_data[booking_site_name].items():
+                    if grade_info['paid'] > 0 or grade_info['unpaid'] > 0 or grade_info['free'] > 0:
+                        ConcertDailySalesGrade.objects.update_or_create(
+                            daily_sales=daily_sales,
+                            seat_grade=grade_info['seat_grade'],
+                            defaults={
+                                'paid_count': grade_info['paid'],
+                                'unpaid_count': grade_info['unpaid'],
+                                'free_count': grade_info['free'],
+                            }
+                        )
+        
         return JsonResponse({'success': True, 'message': '매출이 성공적으로 저장되었어요'})
     else:
         errors = {}
@@ -403,12 +412,12 @@ def get_daily_sales(request, performance_id):
     sales_data = ConcertDailySales.objects.filter(
         performance=performance,
         date=date
-    )
+    ).select_related('booking_site').prefetch_related('grade_sales__seat_grade')
     
     # 예매처별로 데이터 정리
     result = {}
     for sales in sales_data:
-        site = sales.booking_site
+        site = sales.booking_site.name if sales.booking_site else '미지정'
         if site not in result:
             result[site] = {
                 'paid_revenue': 0,
@@ -425,23 +434,14 @@ def get_daily_sales(request, performance_id):
         result[site]['unpaid_revenue'] = float(sales.unpaid_revenue) if sales.unpaid_revenue else 0
         result[site]['unpaid_ticket_count'] = sales.unpaid_ticket_count or 0
         
-        # 등급별 매수 파싱
-        if sales.paid_by_grade:
-            try:
-                result[site]['paid_by_grade'] = json.loads(sales.paid_by_grade) if isinstance(sales.paid_by_grade, str) else sales.paid_by_grade
-            except:
-                result[site]['paid_by_grade'] = {}
-        
-        if sales.unpaid_by_grade:
-            try:
-                result[site]['unpaid_by_grade'] = json.loads(sales.unpaid_by_grade) if isinstance(sales.unpaid_by_grade, str) else sales.unpaid_by_grade
-            except:
-                result[site]['unpaid_by_grade'] = {}
-        
-        if sales.free_by_grade:
-            try:
-                result[site]['free_by_grade'] = json.loads(sales.free_by_grade) if isinstance(sales.free_by_grade, str) else sales.free_by_grade
-            except:
-                result[site]['free_by_grade'] = {}
+        # 등급별 매수 (ConcertDailySalesGrade 모델에서 가져오기)
+        for grade_sales in sales.grade_sales.all():
+            seat_grade_name = grade_sales.seat_grade.name
+            if grade_sales.paid_count > 0:
+                result[site]['paid_by_grade'][seat_grade_name] = grade_sales.paid_count
+            if grade_sales.unpaid_count > 0:
+                result[site]['unpaid_by_grade'][seat_grade_name] = grade_sales.unpaid_count
+            if grade_sales.free_count > 0:
+                result[site]['free_by_grade'][seat_grade_name] = grade_sales.free_count
     
     return JsonResponse({'success': True, 'data': result})

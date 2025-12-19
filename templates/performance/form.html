@@ -289,83 +289,95 @@
                         {% endif %}
                     </div>
                     
+                    <!-- 제작진 -->
                     <div>
                         <label class="block text-sm font-medium text-black mb-2">
-                            {{ form.crew.label }}
+                            제작진
                         </label>
-                        {{ form.crew }}
-                        <div id="crew-list" class="space-y-2 mb-3">
-                            {% if object and object.crew %}
-                                {% for role, name in object.crew.items %}
-                                    <div class="flex gap-2 items-center">
-                                        <input type="text" value="{{ role }}" placeholder="직무" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                        <span class="text-gray-400">:</span>
-                                        <input type="text" value="{{ name }}" placeholder="이름" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                        <button type="button" onclick="removeCrewItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
+                        {{ crew_role_formset.management_form }}
+                        <div id="crew-role-formset" class="space-y-4">
+                            {% for form in crew_role_formset %}
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center crew-role-form" data-form-index="{{ forloop.counter0 }}">
+                                    {{ form.id }}
+                                    <div>
+                                        <label class="block text-sm font-medium text-black mb-2">인물</label>
+                                        {{ form.person }}
+                                        {% if form.person.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.person.errors|first }}</p>
+                                        {% endif %}
                                     </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="flex gap-2 items-center">
-                                    <input type="text" placeholder="직무" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                    <span class="text-gray-400">:</span>
-                                    <input type="text" placeholder="이름" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                    <button type="button" onclick="removeCrewItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
+                                    <div>
+                                        <label class="block text-sm font-medium text-black mb-2">역할</label>
+                                        {{ form.role }}
+                                        {% if form.role.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.role.errors|first }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-black mb-2">정렬 순서</label>
+                                        {{ form.order }}
+                                        {% if form.order.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.order.errors|first }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex items-end">
+                                        {% if form.DELETE %}
+                                            <label class="flex items-center">
+                                                {{ form.DELETE }} 삭제
+                                            </label>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            {% endif %}
+                            {% endfor %}
                         </div>
-                        <button type="button" onclick="addCrewItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
-                            + 추가
-                        </button>
-                        {% if form.crew.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.crew.errors|first }}</p>
+                        {% if crew_role_formset.non_form_errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ crew_role_formset.non_form_errors|first }}</p>
                         {% endif %}
                     </div>
                     
+                    <!-- 캐스팅 -->
                     <div>
                         <label class="block text-sm font-medium text-black mb-2">
-                            {{ form.casting.label }}
+                            캐스팅
                         </label>
-                        {{ form.casting }}
-                        <div id="casting-list" class="space-y-2 mb-3">
-                            {% if object and object.casting %}
-                                {% for role, actor in object.casting.items %}
-                                    <div class="flex gap-2 items-center">
-                                        <input type="text" value="{{ role }}" placeholder="역할명" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                        <span class="text-gray-400">:</span>
-                                        <input type="text" value="{{ actor }}" placeholder="배우명" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                        <button type="button" onclick="removeCastingItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
+                        {{ casting_role_formset.management_form }}
+                        <div id="casting-role-formset" class="space-y-4">
+                            {% for form in casting_role_formset %}
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center casting-role-form" data-form-index="{{ forloop.counter0 }}">
+                                    {{ form.id }}
+                                    <div>
+                                        <label class="block text-sm font-medium text-black mb-2">인물</label>
+                                        {{ form.person }}
+                                        {% if form.person.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.person.errors|first }}</p>
+                                        {% endif %}
                                     </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="flex gap-2 items-center">
-                                    <input type="text" placeholder="역할명" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                    <span class="text-gray-400">:</span>
-                                    <input type="text" placeholder="배우명" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                    <button type="button" onclick="removeCastingItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
+                                    <div>
+                                        <label class="block text-sm font-medium text-black mb-2">배역명</label>
+                                        {{ form.role }}
+                                        {% if form.role.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.role.errors|first }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-black mb-2">정렬 순서</label>
+                                        {{ form.order }}
+                                        {% if form.order.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.order.errors|first }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex items-end">
+                                        {% if form.DELETE %}
+                                            <label class="flex items-center">
+                                                {{ form.DELETE }} 삭제
+                                            </label>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            {% endif %}
+                            {% endfor %}
                         </div>
-                        <button type="button" onclick="addCastingItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
-                            + 추가
-                        </button>
-                        {% if form.casting.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.casting.errors|first }}</p>
+                        {% if casting_role_formset.non_form_errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ casting_role_formset.non_form_errors|first }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -449,114 +461,110 @@
             <!-- 좌석 정보 -->
             <div class="mb-8 pb-8 border-b border-gray-100">
                 <h2 class="text-xl font-semibold text-black mb-6">좌석 정보</h2>
-                {{ form.seat_grades }}
-                {{ form.ticket_prices }}
-                {{ form.seat_counts }}
-                <div id="ticket-prices-seat-counts-list" class="space-y-2 mb-3">
-                    {% if object and object.ticket_prices %}
-                        {% for grade, price in object.ticket_prices.items %}
-                            <div class="grid grid-cols-3 gap-4 items-center seat-price-count-item" data-index="{{ forloop.counter0 }}">
-                                <div>
-                                    <input type="text" value="{{ grade }}" placeholder="좌석 등급" readonly class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed seat-grade-input" data-field="grade">
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <input type="text" value="{{ price|floatformat:0 }}" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input" data-field="price">
-                                    <span class="text-gray-600 text-sm whitespace-nowrap">원</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <input type="text" value="{% if object.seat_counts %}{{ object.seat_counts|get_item:grade|floatformat:0 }}{% endif %}" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input" data-field="count">
-                                    <span class="text-gray-600 text-sm whitespace-nowrap">석</span>
-                                    <button type="button" onclick="removeTicketPriceSeatCountItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="grid grid-cols-3 gap-4 items-center seat-price-count-item" data-index="0">
+                {{ seat_grade_formset.management_form }}
+                <div id="seat-grade-formset" class="space-y-4">
+                    {% for form in seat_grade_formset %}
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center seat-grade-form" data-form-index="{{ forloop.counter0 }}">
+                            {{ form.id }}
                             <div>
-                                <input type="text" placeholder="좌석 등급" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors seat-grade-input" data-field="grade">
+                                <label class="block text-sm font-medium text-black mb-2">등급명</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors|first }}</p>
+                                {% endif %}
                             </div>
-                                <div class="flex items-center gap-2">
-                                    <input type="text" placeholder="가격" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input" data-field="price">
-                                    <span class="text-gray-600 text-sm whitespace-nowrap">원</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <input type="text" placeholder="좌석 수" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors number-input" data-field="count">
-                                <span class="text-gray-600 text-sm whitespace-nowrap">석</span>
-                                <button type="button" onclick="removeTicketPriceSeatCountItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
+                            <div>
+                                <label class="block text-sm font-medium text-black mb-2">티켓 가격 (원)</label>
+                                {{ form.price }}
+                                {% if form.price.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.price.errors|first }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-black mb-2">좌석 수</label>
+                                {{ form.seat_count }}
+                                {% if form.seat_count.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.seat_count.errors|first }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-black mb-2">정렬 순서</label>
+                                {{ form.order }}
+                                {% if form.order.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.order.errors|first }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-end">
+                                {% if form.DELETE %}
+                                    <label class="flex items-center">
+                                        {{ form.DELETE }} 삭제
+                                    </label>
+                                {% endif %}
                             </div>
                         </div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
-                <button type="button" onclick="addTicketPriceSeatCountItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
-                    + 추가
-                </button>
-                {% if form.seat_grades.errors %}
-                    <p class="mt-2 text-sm text-red-600">{{ form.seat_grades.errors|first }}</p>
-                {% endif %}
-                {% if form.ticket_prices.errors %}
-                    <p class="mt-2 text-sm text-red-600">{{ form.ticket_prices.errors|first }}</p>
-                {% endif %}
-                {% if form.seat_counts.errors %}
-                    <p class="mt-2 text-sm text-red-600">{{ form.seat_counts.errors|first }}</p>
+                {% if seat_grade_formset.non_form_errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ seat_grade_formset.non_form_errors|first }}</p>
                 {% endif %}
             </div>
             
             <!-- 할인 정보 -->
             <div class="mb-8 pb-8 border-b border-gray-100">
                 <h2 class="text-xl font-semibold text-black mb-6">할인 정보</h2>
-                <div>
-                    <label class="block text-sm font-medium text-black mb-2">
-                        {{ form.discount_types.label }}
-                    </label>
-                    {{ form.discount_types }}
-                    <div id="discount-types-list" class="space-y-2 mb-3">
-                        {% if object and object.discount_types %}
-                            {% for discount_type in object.discount_types %}
-                                <div class="flex gap-2 items-center w-full">
-                                    <input type="text" value="{{ discount_type.name }}" placeholder="할인권종명" class="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm">
-                                    <input type="date" value="{{ discount_type.start_date }}" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
-                                    <input type="date" value="{{ discount_type.end_date }}" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
-                                    {% with seat_grade_choices=object.seat_grades|to_choices %}
-                                        {% include 'components/genre_dropdown.html' with genre_filter=discount_type.grade genre_choices=seat_grade_choices prefix="discount-type-grade-"|add:forloop.counter0 auto_submit=False width_class="w-40" default_text="좌석 등급 선택" show_default=False %}
-                                    {% endwith %}
-                                    <input type="number" value="{{ discount_type.discount_rate }}" placeholder="할인율(%)" min="0" max="100" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 120px;">
-                                    <button type="button" onclick="removeDiscountTypeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="flex gap-2 items-center w-full">
-                                <input type="text" placeholder="할인권종명" class="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm">
-                                <input type="date" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
-                                <input type="date" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 150px;">
-                                <div class="w-40 relative seat-grade-dropdown-container"></div>
-                                <input type="number" placeholder="할인율(%)" min="0" max="100" class="px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors text-sm" style="width: 120px;">
-                                <button type="button" onclick="removeDiscountTypeItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
+                {{ discount_type_formset.management_form }}
+                <div id="discount-type-formset" class="space-y-4">
+                    {% for form in discount_type_formset %}
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end discount-type-form" data-form-index="{{ forloop.counter0 }}">
+                            {{ form.id }}
+                            <div>
+                                <label class="block text-sm font-medium text-black mb-2">할인권종명</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors|first }}</p>
+                                {% endif %}
                             </div>
-                        {% endif %}
-                    </div>
-                    <button type="button" onclick="addDiscountTypeItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
-                        + 추가
-                    </button>
-                    {% if form.discount_types.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.discount_types.errors|first }}</p>
-                    {% endif %}
+                            <div>
+                                <label class="block text-sm font-medium text-black mb-2">시작일</label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors|first }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-black mb-2">종료일</label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.end_date.errors|first }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-black mb-2">할인율 (%)</label>
+                                {{ form.discount_rate }}
+                                {% if form.discount_rate.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.discount_rate.errors|first }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-black mb-2">적용 가능한 등급</label>
+                                {{ form.applicable_grades }}
+                                {% if form.applicable_grades.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.applicable_grades.errors|first }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-end">
+                                {% if form.DELETE %}
+                                    <label class="flex items-center">
+                                        {{ form.DELETE }} 삭제
+                                    </label>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
+                {% if discount_type_formset.non_form_errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ discount_type_formset.non_form_errors|first }}</p>
+                {% endif %}
             </div>
             
             <!-- 예매 및 기타 -->
@@ -564,44 +572,38 @@
                 <h2 class="text-xl font-semibold text-black mb-6">예매 및 기타</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-black mb-2">
-                            {{ form.booking_sites.label }}
-                        </label>
-                        {{ form.booking_sites }}
-                        <div id="booking-sites-list" class="space-y-2 mb-3">
-                            {% if object and object.booking_sites %}
-                                {% for site_dict in object.booking_sites %}
-                                    {% for site_name, site_url in site_dict.items %}
-                                        <div class="flex gap-2 items-center">
-                                            <input type="text" value="{{ site_name }}" placeholder="예매처명" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                            <span class="text-gray-400">:</span>
-                                            <input type="url" value="{{ site_url }}" placeholder="예매 링크" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                            <button type="button" onclick="removeBookingSiteItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    {% endfor %}
-                                {% endfor %}
-                            {% else %}
-                                <div class="flex gap-2 items-center">
-                                    <input type="text" placeholder="예매처명" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                    <span class="text-gray-400">:</span>
-                                    <input type="url" placeholder="예매 링크" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-                                    <button type="button" onclick="removeBookingSiteItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
+                        <label class="block text-sm font-medium text-black mb-2">예매처</label>
+                        {{ booking_site_formset.management_form }}
+                        <div id="booking-site-formset" class="space-y-4">
+                            {% for form in booking_site_formset %}
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end booking-site-form" data-form-index="{{ forloop.counter0 }}">
+                                    {{ form.id }}
+                                    <div>
+                                        <label class="block text-sm font-medium text-black mb-2">예매처명</label>
+                                        {{ form.name }}
+                                        {% if form.name.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.name.errors|first }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-black mb-2">예매 URL</label>
+                                        {{ form.url }}
+                                        {% if form.url.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.url.errors|first }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex items-end">
+                                        {% if form.DELETE %}
+                                            <label class="flex items-center">
+                                                {{ form.DELETE }} 삭제
+                                            </label>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            {% endif %}
+                            {% endfor %}
                         </div>
-                        <button type="button" onclick="addBookingSiteItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-900 transition-colors text-sm font-medium">
-                            + 추가
-                        </button>
-                        {% if form.booking_sites.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.booking_sites.errors|first }}</p>
+                        {% if booking_site_formset.non_form_errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ booking_site_formset.non_form_errors|first }}</p>
                         {% endif %}
                     </div>
                     
@@ -635,50 +637,6 @@
 
 {% block extra_js %}
 <script>
-    // 제작진 관련 함수
-    function addCrewItem() {
-        const container = document.getElementById('crew-list');
-        const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center';
-        div.innerHTML = `
-            <input type="text" placeholder="직무" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-            <span class="text-gray-400">:</span>
-            <input type="text" placeholder="이름" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-            <button type="button" onclick="removeCrewItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-            </button>
-        `;
-        container.appendChild(div);
-    }
-    
-    function removeCrewItem(button) {
-        button.closest('div').remove();
-    }
-    
-    // 캐스팅 관련 함수
-    function addCastingItem() {
-        const container = document.getElementById('casting-list');
-        const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center';
-        div.innerHTML = `
-            <input type="text" placeholder="역할명" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-            <span class="text-gray-400">:</span>
-            <input type="text" placeholder="배우명" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors">
-            <button type="button" onclick="removeCastingItem(this)" class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-            </button>
-        `;
-        container.appendChild(div);
-    }
-    
-    function removeCastingItem(button) {
-        button.closest('div').remove();
-    }
-    
     // 좌석 등급 목록 가져오기
     function getSeatGrades() {
         // 티켓 가격 및 좌석 수 리스트에서 입력된 좌석 등급들을 가져옴
@@ -1133,7 +1091,7 @@
         }
     });
     
-    // 폼 제출 전 JSON 변환
+    // 폼 제출 전 숫자 필드 콤마 제거
     document.querySelector('form').addEventListener('submit', function(e) {
         // 수익 목표 필드들에서 콤마 제거
         const targetRevenueInput = document.getElementById('{{ form.target_revenue.id_for_label }}');
@@ -1149,92 +1107,6 @@
             totalProductionCostInput.value = removeCommas(totalProductionCostInput.value);
         }
         
-        // 제작진: 딕셔너리로 변환
-        const crewDict = {};
-        document.querySelectorAll('#crew-list > div').forEach(div => {
-            const inputs = div.querySelectorAll('input[type="text"]');
-            if (inputs.length === 2 && inputs[0].value.trim() && inputs[1].value.trim()) {
-                crewDict[inputs[0].value.trim()] = inputs[1].value.trim();
-            }
-        });
-        document.getElementById('{{ form.crew.id_for_label }}').value = JSON.stringify(crewDict);
-        
-        // 캐스팅: 딕셔너리로 변환
-        const castingDict = {};
-        document.querySelectorAll('#casting-list > div').forEach(div => {
-            const inputs = div.querySelectorAll('input[type="text"]');
-            if (inputs.length === 2 && inputs[0].value.trim() && inputs[1].value.trim()) {
-                castingDict[inputs[0].value.trim()] = inputs[1].value.trim();
-            }
-        });
-        document.getElementById('{{ form.casting.id_for_label }}').value = JSON.stringify(castingDict);
-        
-        // 티켓 가격 및 좌석 수: 딕셔너리로 변환 및 좌석 등급 추출
-        const ticketPrices = {};
-        const seatCounts = {};
-        const seatGrades = [];
-        document.querySelectorAll('#ticket-prices-seat-counts-list > .seat-price-count-item').forEach(div => {
-            const gradeInput = div.querySelector('input[data-field="grade"]');
-            const priceInput = div.querySelector('input[data-field="price"]');
-            const countInput = div.querySelector('input[data-field="count"]');
-            
-            if (gradeInput && gradeInput.value.trim()) {
-                const grade = gradeInput.value.trim();
-                seatGrades.push(grade);
-                if (priceInput && priceInput.value.trim()) {
-                    ticketPrices[grade] = parseInt(removeCommas(priceInput.value)) || 0;
-                }
-                if (countInput && countInput.value.trim()) {
-                    seatCounts[grade] = parseInt(removeCommas(countInput.value)) || 0;
-                }
-            }
-        });
-        document.getElementById('{{ form.seat_grades.id_for_label }}').value = JSON.stringify(seatGrades);
-        document.getElementById('{{ form.ticket_prices.id_for_label }}').value = JSON.stringify(ticketPrices);
-        document.getElementById('{{ form.seat_counts.id_for_label }}').value = JSON.stringify(seatCounts);
-        
-        // 할인권종: 리스트로 변환
-        const discountTypes = [];
-        document.querySelectorAll('#discount-types-list > div.flex').forEach(itemDiv => {
-            const inputs = itemDiv.querySelectorAll('input:not([type="hidden"])');
-            const nameInput = inputs[0]; // 첫 번째: 이름
-            const startDateInput = inputs[1]; // 두 번째: 시작날짜
-            const endDateInput = inputs[2]; // 세 번째: 종료날짜
-            const discountRateInput = inputs[3]; // 네 번째: 할인율
-            const gradeInput = itemDiv.querySelector('input[id^="discount-type-grade-"][id$="-input"]');
-            
-            if (nameInput && startDateInput && endDateInput && gradeInput && discountRateInput) {
-                const name = nameInput.value.trim();
-                const startDate = startDateInput.value.trim();
-                const endDate = endDateInput.value.trim();
-                const grade = gradeInput.value.trim();
-                const discountRate = parseFloat(discountRateInput.value) || 0;
-                
-                if (name && startDate && endDate && grade && discountRate > 0) {
-                    discountTypes.push({
-                        name: name,
-                        start_date: startDate,
-                        end_date: endDate,
-                        grade: grade,
-                        discount_rate: Math.round(discountRate)
-                    });
-                }
-            }
-        });
-        const discountTypesField = document.getElementById('{{ form.discount_types.id_for_label }}');
-        if (discountTypesField) {
-            discountTypesField.value = JSON.stringify(discountTypes);
-        }
-        
-        // 예매처: 리스트 안에 딕셔너리로 변환
-        const bookingSites = [];
-        document.querySelectorAll('#booking-sites-list > div').forEach(div => {
-            const inputs = div.querySelectorAll('input');
-            if (inputs.length >= 2 && inputs[0].value.trim() && inputs[1].value.trim()) {
-                bookingSites.push({[inputs[0].value.trim()]: inputs[1].value.trim()});
-            }
-        });
-        document.getElementById('{{ form.booking_sites.id_for_label }}').value = JSON.stringify(bookingSites);
     });
 </script>
 

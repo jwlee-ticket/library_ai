@@ -98,18 +98,28 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">제작진</label>
-                    {% if performance.crew %}
-                        {% display_json_dict performance.crew as crew_display %}
-                        {{ crew_display }}
+                    {% if performance.crew_roles.all %}
+                        <div class="space-y-1">
+                            {% for crew_role in performance.crew_roles.all %}
+                                <div class="text-base text-black">
+                                    <span class="font-medium">{{ crew_role.role }}</span>: {{ crew_role.person.name }}
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
                         <span class="text-gray-400">없음</span>
                     {% endif %}
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">캐스팅</label>
-                    {% if performance.casting %}
-                        {% display_json_dict performance.casting as casting_display %}
-                        {{ casting_display }}
+                    {% if performance.casting_roles.all %}
+                        <div class="space-y-1">
+                            {% for casting_role in performance.casting_roles.all %}
+                                <div class="text-base text-black">
+                                    <span class="font-medium">{{ casting_role.role }}</span>: {{ casting_role.person.name }}
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
                         <span class="text-gray-400">없음</span>
                     {% endif %}
@@ -139,49 +149,61 @@
         <!-- 좌석 및 가격 -->
         <div class="mb-8 pb-8 border-b border-gray-100">
             <h2 class="text-xl font-semibold text-black mb-4">좌석 및 가격</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-2">좌석 등급</label>
-                    {% if performance.seat_grades %}
-                        {% display_json_list performance.seat_grades as seat_grades_display %}
-                        {{ seat_grades_display }}
-                    {% else %}
-                        <span class="text-gray-400">없음</span>
-                    {% endif %}
+            {% if performance.seat_grades.all %}
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">등급명</th>
+                                <th class="text-right py-3 px-4 text-sm font-medium text-gray-700">티켓 가격</th>
+                                <th class="text-right py-3 px-4 text-sm font-medium text-gray-700">좌석 수</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for seat_grade in performance.seat_grades.all %}
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-3 px-4 text-base text-black">{{ seat_grade.name }}</td>
+                                    <td class="py-3 px-4 text-base text-black text-right">{{ seat_grade.price|intcomma }}원</td>
+                                    <td class="py-3 px-4 text-base text-black text-right">{{ seat_grade.seat_count|intcomma }}석</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-2">티켓 가격</label>
-                    {% if performance.ticket_prices %}
-                        {% display_json_dict performance.ticket_prices as ticket_prices_display %}
-                        {{ ticket_prices_display }}
-                    {% else %}
-                        <span class="text-gray-400">없음</span>
-                    {% endif %}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-2">좌석 수</label>
-                    {% if performance.seat_counts %}
-                        {% display_json_dict performance.seat_counts as seat_counts_display %}
-                        {{ seat_counts_display }}
-                    {% else %}
-                        <span class="text-gray-400">없음</span>
-                    {% endif %}
-                </div>
-            </div>
+            {% else %}
+                <span class="text-gray-400">없음</span>
+            {% endif %}
         </div>
         
         <!-- 할인 정보 -->
         <div class="mb-8 pb-8 border-b border-gray-100">
             <h2 class="text-xl font-semibold text-black mb-4">할인 정보</h2>
-            <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">할인권종</label>
-                {% if performance.discount_types %}
-                    {% display_discount_types performance.discount_types as discount_types_display %}
-                    {{ discount_types_display }}
-                {% else %}
-                    <span class="text-gray-400">없음</span>
-                {% endif %}
-            </div>
+            {% if performance.discount_types.all %}
+                <div class="space-y-3">
+                    {% for discount_type in performance.discount_types.all %}
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-base font-medium text-black mb-2">{{ discount_type.name }}</h3>
+                                    <div class="space-y-1 text-sm text-gray-600">
+                                        <p>기간: {{ discount_type.start_date|date:"Y-m-d" }} ~ {{ discount_type.end_date|date:"Y-m-d" }}</p>
+                                        <p>할인율: {{ discount_type.discount_rate }}%</p>
+                                        {% if discount_type.applicable_grades.all %}
+                                            <p>적용 가능한 등급: 
+                                                {% for grade in discount_type.applicable_grades.all %}
+                                                    <span class="px-2 py-1 bg-gray-200 rounded text-xs">{{ grade.name }}</span>
+                                                {% endfor %}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <span class="text-gray-400">없음</span>
+            {% endif %}
         </div>
         
         <!-- 예매 및 기타 -->
@@ -190,9 +212,16 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">예매처</label>
-                    {% if performance.booking_sites %}
-                        {% display_booking_sites performance.booking_sites as booking_sites_display %}
-                        {{ booking_sites_display }}
+                    {% if performance.booking_sites.all %}
+                        <div class="flex flex-wrap gap-3">
+                            {% for booking_site in performance.booking_sites.all %}
+                                {% if booking_site.url %}
+                                    <a href="{{ booking_site.url }}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-medium">{{ booking_site.name }}</a>
+                                {% else %}
+                                    <span class="text-gray-600">{{ booking_site.name }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
                     {% else %}
                         <span class="text-gray-400">없음</span>
                     {% endif %}

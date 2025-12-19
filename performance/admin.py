@@ -1,5 +1,55 @@
 from django.contrib import admin
-from .models import Performance
+from .models import Performance, SeatGrade, BookingSite, DiscountType, Person, CrewRole, CastingRole
+
+
+class SeatGradeInline(admin.TabularInline):
+    """좌석 등급 인라인"""
+    model = SeatGrade
+    extra = 1
+    fields = ['name', 'price', 'seat_count', 'order']
+    ordering = ['order', 'name']
+
+
+class BookingSiteInline(admin.TabularInline):
+    """예매처 인라인"""
+    model = BookingSite
+    extra = 1
+    fields = ['name', 'url']
+    ordering = ['name']
+
+
+class DiscountTypeInline(admin.TabularInline):
+    """할인권종 인라인"""
+    model = DiscountType
+    extra = 1
+    fields = ['name', 'start_date', 'end_date', 'discount_rate', 'applicable_grades']
+    ordering = ['start_date', 'name']
+    filter_horizontal = ['applicable_grades']
+
+
+class CrewRoleInline(admin.TabularInline):
+    """제작진 역할 인라인"""
+    model = CrewRole
+    extra = 1
+    fields = ['person', 'role', 'order']
+    ordering = ['order', 'role']
+
+
+class CastingRoleInline(admin.TabularInline):
+    """캐스팅 역할 인라인"""
+    model = CastingRole
+    extra = 1
+    fields = ['person', 'role', 'order']
+    ordering = ['order', 'role']
+
+
+@admin.register(Person)
+class PersonAdmin(admin.ModelAdmin):
+    """인물 Admin 설정"""
+    
+    list_display = ['name', 'name_en', 'created_at']
+    search_fields = ['name', 'name_en']
+    ordering = ['name']
 
 
 @admin.register(Performance)
@@ -50,16 +100,13 @@ class PerformanceAdmin(admin.ModelAdmin):
             'fields': ('age_rating', 'running_time', 'description')
         }),
         ('제작 정보', {
-            'fields': ('producer', 'organizer', 'crew', 'casting')
+            'fields': ('producer', 'organizer')
         }),
         ('수익 목표', {
             'fields': ('target_revenue', 'break_even_point', 'total_production_cost')
         }),
-        ('좌석 및 가격', {
-            'fields': ('seat_grades', 'ticket_prices', 'seat_counts', 'discount_types')
-        }),
-        ('예매 및 기타', {
-            'fields': ('booking_sites', 'seat_map')
+        ('기타', {
+            'fields': ('seat_map',)
         }),
         ('메타 정보', {
             'fields': ('created_at', 'updated_at'),
@@ -72,3 +119,6 @@ class PerformanceAdmin(admin.ModelAdmin):
     
     # 정렬
     ordering = ['-created_at']
+    
+    # 인라인
+    inlines = [SeatGradeInline, BookingSiteInline, DiscountTypeInline, CrewRoleInline, CastingRoleInline]

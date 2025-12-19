@@ -13,7 +13,14 @@ class ConcertDailySales(models.Model):
         related_name='daily_sales'
     )
     date = models.DateField(verbose_name='공연 날짜')
-    booking_site = models.CharField(max_length=100, verbose_name='예매처')
+    booking_site = models.ForeignKey(
+        'performance.BookingSite',
+        on_delete=models.CASCADE,
+        verbose_name='예매처',
+        null=True,
+        blank=True,
+        help_text='예매처'
+    )
     
     # 유료 - 입금
     paid_revenue = models.DecimalField(
@@ -27,12 +34,6 @@ class ConcertDailySales(models.Model):
         validators=[MinValueValidator(0)],
         verbose_name='입금 판매 매수',
         help_text='예매처별(입금) 판매 매수'
-    )
-    paid_by_grade = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name='입금 등급별 판매 매수',
-        help_text='예매처별(입금) 등급별 판매 매수 (예: {"VIP": 5, "R석": 10})'
     )
     
     # 유료 - 미입금
@@ -49,20 +50,6 @@ class ConcertDailySales(models.Model):
         default=0,
         verbose_name='미입금 판매 매수',
         help_text='예매처별(미입금) 판매 매수'
-    )
-    unpaid_by_grade = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name='미입금 등급별 판매 매수',
-        help_text='예매처별(미입금) 등급별 판매 매수 (예: {"VIP": 2, "R석": 3})'
-    )
-    
-    # 무료
-    free_by_grade = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name='등급별 초대 매수',
-        help_text='예매처별 등급별 초대 매수 (예: {"VIP": 1, "R석": 2})'
     )
     
     notes = models.TextField(blank=True, verbose_name='비고')
@@ -84,7 +71,8 @@ class ConcertDailySales(models.Model):
         unique_together = [['performance', 'date', 'booking_site']]
     
     def __str__(self):
-        return f'{self.performance.title} - {self.date} - {self.booking_site}'
+        booking_site_name = self.booking_site.name if self.booking_site else '미지정'
+        return f'{self.performance.title} - {self.date} - {booking_site_name}'
     
     def get_total_revenue(self):
         """총 매출액 계산 (입금 + 미입금)"""
@@ -93,6 +81,56 @@ class ConcertDailySales(models.Model):
     def get_total_ticket_count(self):
         """총 판매 매수 계산 (입금 + 미입금)"""
         return self.paid_ticket_count + self.unpaid_ticket_count
+
+
+class ConcertDailySalesGrade(models.Model):
+    """콘서트 데일리 등급별 판매 모델"""
+    
+    daily_sales = models.ForeignKey(
+        'ConcertDailySales',
+        on_delete=models.CASCADE,
+        related_name='grade_sales',
+        verbose_name='일별 매출'
+    )
+    seat_grade = models.ForeignKey(
+        'performance.SeatGrade',
+        on_delete=models.CASCADE,
+        verbose_name='좌석 등급'
+    )
+    paid_count = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        default=0,
+        verbose_name='입금 판매 매수',
+        help_text='해당 등급의 입금 판매 매수'
+    )
+    unpaid_count = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        default=0,
+        verbose_name='미입금 판매 매수',
+        help_text='해당 등급의 미입금 판매 매수'
+    )
+    free_count = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        default=0,
+        verbose_name='무료 매수',
+        help_text='해당 등급의 무료(초대) 매수'
+    )
+    
+    class Meta:
+        verbose_name = '콘서트 데일리 등급별 판매'
+        verbose_name_plural = '콘서트 데일리 등급별 판매들'
+        ordering = ['daily_sales', 'seat_grade__order']
+        indexes = [
+            models.Index(fields=['daily_sales', 'seat_grade']),
+        ]
+        unique_together = [['daily_sales', 'seat_grade']]
+    
+    def __str__(self):
+        return f'{self.daily_sales} - {self.seat_grade.name}'
+    
+    def get_total_count(self):
+        """총 판매 매수 계산 (입금 + 미입금 + 무료)"""
+        return self.paid_count + self.unpaid_count + self.free_count
 
 
 class ConcertFinalSales(models.Model):
@@ -105,7 +143,14 @@ class ConcertFinalSales(models.Model):
         verbose_name='공연',
         related_name='final_sales'
     )
-    booking_site = models.CharField(max_length=100, verbose_name='예매처')
+    booking_site = models.ForeignKey(
+        'performance.BookingSite',
+        on_delete=models.CASCADE,
+        verbose_name='예매처',
+        null=True,
+        blank=True,
+        help_text='예매처'
+    )
     
     # 유료 - 입금
     paid_revenue = models.DecimalField(
@@ -119,12 +164,6 @@ class ConcertFinalSales(models.Model):
         validators=[MinValueValidator(0)],
         verbose_name='입금 판매 매수',
         help_text='예매처별(입금) 판매 매수'
-    )
-    paid_by_grade = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name='입금 등급별 판매 매수',
-        help_text='예매처별(입금) 등급별 판매 매수 (예: {"VIP": 5, "R석": 10})'
     )
     
     # 유료 - 미입금
@@ -142,22 +181,8 @@ class ConcertFinalSales(models.Model):
         verbose_name='미입금 판매 매수',
         help_text='예매처별(미입금) 판매 매수'
     )
-    unpaid_by_grade = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name='미입금 등급별 판매 매수',
-        help_text='예매처별(미입금) 등급별 판매 매수 (예: {"VIP": 2, "R석": 3})'
-    )
     
-    # 무료
-    free_by_grade = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name='등급별 초대 매수',
-        help_text='예매처별 등급별 초대 매수 (예: {"VIP": 1, "R석": 2})'
-    )
-    
-    # 최종 매출 상세 정보
+    # 최종 매출 상세 정보 (분석/보관용 JSON 필드)
     grade_sales_summary = models.JSONField(
         default=dict,
         blank=True,
@@ -231,7 +256,8 @@ class ConcertFinalSales(models.Model):
         unique_together = [['performance', 'booking_site']]
     
     def __str__(self):
-        return f'{self.performance.title} - 최종 - {self.booking_site}'
+        booking_site_name = self.booking_site.name if self.booking_site else '미지정'
+        return f'{self.performance.title} - 최종 - {booking_site_name}'
     
     def get_total_revenue(self):
         """총 매출액 계산 (입금 + 미입금)"""
@@ -240,3 +266,85 @@ class ConcertFinalSales(models.Model):
     def get_total_ticket_count(self):
         """총 판매 매수 계산 (입금 + 미입금)"""
         return self.paid_ticket_count + self.unpaid_ticket_count
+
+
+class ConcertFinalSalesGrade(models.Model):
+    """콘서트 최종 등급별 판매 모델"""
+    
+    final_sales = models.ForeignKey(
+        'ConcertFinalSales',
+        on_delete=models.CASCADE,
+        related_name='grade_sales',
+        verbose_name='최종 매출'
+    )
+    seat_grade = models.ForeignKey(
+        'performance.SeatGrade',
+        on_delete=models.CASCADE,
+        verbose_name='좌석 등급'
+    )
+    paid_count = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        default=0,
+        verbose_name='입금 판매 매수',
+        help_text='해당 등급의 입금 판매 매수'
+    )
+    unpaid_count = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        default=0,
+        verbose_name='미입금 판매 매수',
+        help_text='해당 등급의 미입금 판매 매수'
+    )
+    free_count = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        default=0,
+        verbose_name='무료 매수',
+        help_text='해당 등급의 무료(초대) 매수'
+    )
+    paid_revenue = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        validators=[MinValueValidator(0)],
+        default=0,
+        verbose_name='입금 매출액 (원)',
+        help_text='해당 등급의 입금 매출액'
+    )
+    total_revenue = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        validators=[MinValueValidator(0)],
+        default=0,
+        verbose_name='총 매출액 (원)',
+        help_text='해당 등급의 총 매출액 (입금 + 미입금)'
+    )
+    paid_occupancy_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name='입금 점유율',
+        help_text='입금 판매 매수 / 총 좌석 수'
+    )
+    total_occupancy_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name='총 점유율',
+        help_text='(입금 + 미입금 + 무료) 매수 / 총 좌석 수'
+    )
+    
+    class Meta:
+        verbose_name = '콘서트 최종 등급별 판매'
+        verbose_name_plural = '콘서트 최종 등급별 판매들'
+        ordering = ['final_sales', 'seat_grade__order']
+        indexes = [
+            models.Index(fields=['final_sales', 'seat_grade']),
+        ]
+        unique_together = [['final_sales', 'seat_grade']]
+    
+    def __str__(self):
+        return f'{self.final_sales} - {self.seat_grade.name}'
+    
+    def get_total_count(self):
+        """총 판매 매수 계산 (입금 + 미입금 + 무료)"""
+        return self.paid_count + self.unpaid_count + self.free_count
