@@ -7,6 +7,13 @@ class Person(models.Model):
     
     name = models.CharField(max_length=200, verbose_name='이름', help_text='인물 이름')
     name_en = models.CharField(max_length=200, blank=True, verbose_name='이름(영문)', help_text='인물 이름 영문')
+    company = models.ForeignKey(
+        'core.Company',
+        on_delete=models.CASCADE,
+        related_name='persons',
+        verbose_name='회사',
+        help_text='인물이 소속된 회사'
+    )
     
     # 메타 필드
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일시')
@@ -18,6 +25,7 @@ class Person(models.Model):
         ordering = ['name']
         indexes = [
             models.Index(fields=['name']),
+            models.Index(fields=['company']),
         ]
     
     def __str__(self):
@@ -275,6 +283,15 @@ class Performance(models.Model):
         verbose_name='좌석배치도'
     )
     
+    # 회사 필드
+    company = models.ForeignKey(
+        'core.Company',
+        on_delete=models.CASCADE,
+        related_name='performances',
+        verbose_name='회사',
+        help_text='공연을 소유한 회사'
+    )
+    
     # 메타 필드
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일시')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='수정일시')
@@ -286,6 +303,7 @@ class Performance(models.Model):
         indexes = [
             models.Index(fields=['genre']),
             models.Index(fields=['performance_start', 'performance_end']),
+            models.Index(fields=['company']),
         ]
     
     def __str__(self):

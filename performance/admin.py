@@ -47,9 +47,11 @@ class CastingRoleInline(admin.TabularInline):
 class PersonAdmin(admin.ModelAdmin):
     """인물 Admin 설정"""
     
-    list_display = ['name', 'name_en', 'created_at']
+    list_display = ['name', 'name_en', 'company', 'created_at']
+    list_filter = ['company', 'created_at']
     search_fields = ['name', 'name_en']
     ordering = ['name']
+    autocomplete_fields = ['company']
 
 
 @admin.register(Performance)
@@ -59,6 +61,7 @@ class PerformanceAdmin(admin.ModelAdmin):
     # 목록 표시 필드
     list_display = [
         'title',
+        'company',
         'genre',
         'venue',
         'performance_start',
@@ -79,11 +82,15 @@ class PerformanceAdmin(admin.ModelAdmin):
     
     # 필터
     list_filter = [
+        'company',
         'genre',
         'performance_start',
         'performance_end',
         'created_at',
     ]
+    
+    # 자동완성 필드
+    autocomplete_fields = ['company']
     
     # 날짜 계층
     date_hierarchy = 'performance_start'
@@ -104,6 +111,9 @@ class PerformanceAdmin(admin.ModelAdmin):
         }),
         ('수익 목표', {
             'fields': ('target_revenue', 'break_even_point', 'total_production_cost')
+        }),
+        ('회사 정보', {
+            'fields': ('company',)
         }),
         ('기타', {
             'fields': ('seat_map',)

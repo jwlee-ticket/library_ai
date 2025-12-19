@@ -4,11 +4,12 @@ from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.db.models import Q
+from core.mixins import CompanyFilterMixin
 from .models import Performance, Person
 from .forms import PerformanceForm, SeatGradeFormSet, BookingSiteFormSet, DiscountTypeFormSet, CastingRoleFormSet
 
 
-class PerformanceListView(ListView):
+class PerformanceListView(CompanyFilterMixin, ListView):
     """공연 목록 뷰"""
     model = Performance
     template_name = 'performance/list.html'
@@ -16,7 +17,7 @@ class PerformanceListView(ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = Performance.objects.all()
+        queryset = super().get_queryset()
         
         # 장르 필터
         genre = self.request.GET.get('genre')
@@ -43,14 +44,14 @@ class PerformanceListView(ListView):
         return context
 
 
-class PerformanceDetailView(DetailView):
+class PerformanceDetailView(CompanyFilterMixin, DetailView):
     """공연 상세 뷰"""
     model = Performance
     template_name = 'performance/detail.html'
     context_object_name = 'performance'
 
 
-class PerformanceCreateView(CreateView):
+class PerformanceCreateView(CompanyFilterMixin, CreateView):
     """공연 생성 뷰"""
     model = Performance
     form_class = PerformanceForm
@@ -60,7 +61,18 @@ class PerformanceCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['genre_choices'] = Performance.GENRE_CHOICES
-        context['person_choices'] = Person.objects.all().order_by('name')
+        
+        # Person 쿼리셋 필터링
+        if self.request.user.is_superuser:
+            person_queryset = Person.objects.all()
+        else:
+            user_profile = getattr(self.request.user, 'profile', None)
+            if user_profile and user_profile.company:
+                person_queryset = Person.objects.filter(company=user_profile.company)
+            else:
+                person_queryset = Person.objects.none()
+        
+        context['person_choices'] = person_queryset.order_by('name')
         if self.object:
             context['genre_filter'] = self.object.genre
             # 인라인 폼셋 초기화
@@ -115,7 +127,7 @@ class PerformanceCreateView(CreateView):
         return self.render_to_response(context)
 
 
-class PerformanceUpdateView(UpdateView):
+class PerformanceUpdateView(CompanyFilterMixin, UpdateView):
     """공연 수정 뷰"""
     model = Performance
     form_class = PerformanceForm
@@ -132,7 +144,18 @@ class PerformanceUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['genre_choices'] = Performance.GENRE_CHOICES
-        context['person_choices'] = Person.objects.all().order_by('name')
+        
+        # Person 쿼리셋 필터링
+        if self.request.user.is_superuser:
+            person_queryset = Person.objects.all()
+        else:
+            user_profile = getattr(self.request.user, 'profile', None)
+            if user_profile and user_profile.company:
+                person_queryset = Person.objects.filter(company=user_profile.company)
+            else:
+                person_queryset = Person.objects.none()
+        
+        context['person_choices'] = person_queryset.order_by('name')
         if self.object:
             context['genre_filter'] = self.object.genre
             # 인라인 폼셋 초기화 (기존 데이터 로드)
@@ -172,12 +195,11 @@ class PerformanceUpdateView(UpdateView):
         context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST, instance=self.object)
         context['booking_site_formset'] = BookingSiteFormSet(self.request.POST, instance=self.object)
         context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST, instance=self.object)
-        context['crew_role_formset'] = CrewRoleFormSet(self.request.POST, instance=self.object)
         context['casting_role_formset'] = CastingRoleFormSet(self.request.POST, instance=self.object)
         return self.render_to_response(context)
 
 
-class PerformanceDeleteView(DeleteView):
+class PerformanceDeleteView(CompanyFilterMixin, DeleteView):
     """공연 삭제 뷰"""
     model = Performance
     template_name = 'performance/confirm_delete.html'
