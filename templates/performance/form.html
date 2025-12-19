@@ -289,93 +289,66 @@
                         {% endif %}
                     </div>
                     
-                    <!-- 제작진 -->
-                    <div>
-                        <label class="block text-sm font-medium text-black mb-2">
-                            제작진
-                        </label>
-                        {{ crew_role_formset.management_form }}
-                        <div id="crew-role-formset" class="space-y-4">
-                            {% for form in crew_role_formset %}
-                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center crew-role-form" data-form-index="{{ forloop.counter0 }}">
-                                    {{ form.id }}
-                                    <div>
-                                        <label class="block text-sm font-medium text-black mb-2">인물</label>
-                                        {{ form.person }}
-                                        {% if form.person.errors %}
-                                            <p class="mt-1 text-sm text-red-600">{{ form.person.errors|first }}</p>
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-black mb-2">역할</label>
-                                        {{ form.role }}
-                                        {% if form.role.errors %}
-                                            <p class="mt-1 text-sm text-red-600">{{ form.role.errors|first }}</p>
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-black mb-2">정렬 순서</label>
-                                        {{ form.order }}
-                                        {% if form.order.errors %}
-                                            <p class="mt-1 text-sm text-red-600">{{ form.order.errors|first }}</p>
-                                        {% endif %}
-                                    </div>
-                                    <div class="flex items-end">
-                                        {% if form.DELETE %}
-                                            <label class="flex items-center">
-                                                {{ form.DELETE }} 삭제
-                                            </label>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                        {% if crew_role_formset.non_form_errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ crew_role_formset.non_form_errors|first }}</p>
-                        {% endif %}
-                    </div>
-                    
                     <!-- 캐스팅 -->
-                    <div>
+                    <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-black mb-2">
                             캐스팅
                         </label>
-                        {{ casting_role_formset.management_form }}
+                        <div id="casting-role-management-form">
+                            {{ casting_role_formset.management_form }}
+                        </div>
                         <div id="casting-role-formset" class="space-y-4">
                             {% for form in casting_role_formset %}
-                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center casting-role-form" data-form-index="{{ forloop.counter0 }}">
+                                <div class="flex items-center gap-4 casting-role-form" data-form-index="{{ forloop.counter0 }}">
                                     {{ form.id }}
-                                    <div>
-                                        <label class="block text-sm font-medium text-black mb-2">인물</label>
-                                        {{ form.person }}
+                                    <div style="display: none;">{{ form.order }}</div>
+                                    <div class="flex-1">
+                                        <button 
+                                            type="button"
+                                            onclick="openCastingPersonModal({{ forloop.counter0 }})"
+                                            id="casting-person-btn-{{ forloop.counter0 }}"
+                                            class="w-full px-4 py-3 bg-white border-2 border-gray-200 text-black rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors text-left"
+                                        >
+                                            <span id="casting-person-text-{{ forloop.counter0 }}">{% if form.person.value %}{% for person in form.person.field.queryset %}{% if person.id == form.person.value %}{{ person.name }}{% endif %}{% endfor %}{% else %}아티스트 선택{% endif %}</span>
+                                        </button>
+                                        <div style="display: none;">{{ form.person }}</div>
                                         {% if form.person.errors %}
                                             <p class="mt-1 text-sm text-red-600">{{ form.person.errors|first }}</p>
                                         {% endif %}
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-black mb-2">배역명</label>
-                                        {{ form.role }}
-                                        {% if form.role.errors %}
-                                            <p class="mt-1 text-sm text-red-600">{{ form.role.errors|first }}</p>
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-black mb-2">정렬 순서</label>
-                                        {{ form.order }}
-                                        {% if form.order.errors %}
-                                            <p class="mt-1 text-sm text-red-600">{{ form.order.errors|first }}</p>
-                                        {% endif %}
-                                    </div>
-                                    <div class="flex items-end">
+                                    <div class="flex-1 flex items-center gap-2">
+                                        <div class="flex-1">
+                                            {{ form.role }}
+                                            {% if form.role.errors %}
+                                                <p class="mt-1 text-sm text-red-600">{{ form.role.errors|first }}</p>
+                                            {% endif %}
+                                        </div>
                                         {% if form.DELETE %}
-                                            <label class="flex items-center">
-                                                {{ form.DELETE }} 삭제
-                                            </label>
+                                            <button 
+                                                type="button" 
+                                                onclick="removeCastingRoleItem(this)"
+                                                class="mt-6 p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                                            >
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                            <div style="display: none;">{{ form.DELETE }}</div>
                                         {% endif %}
                                     </div>
                                 </div>
                             {% endfor %}
                         </div>
+                        <button 
+                            type="button" 
+                            onclick="addCastingRoleItem()"
+                            class="mt-4 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm whitespace-nowrap flex items-center gap-2"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            추가하기
+                        </button>
                         {% if casting_role_formset.non_form_errors %}
                             <p class="mt-2 text-sm text-red-600">{{ casting_role_formset.non_form_errors|first }}</p>
                         {% endif %}
@@ -1020,6 +993,145 @@
     
     function removeBookingSiteItem(button) {
         button.closest('div').remove();
+    }
+    
+    // 캐스팅 아티스트 모달 열기 (플레이스홀더)
+    function openCastingPersonModal(formIndex) {
+        // TODO: 아티스트 선택 모달 구현
+        console.log('아티스트 선택 모달 열기:', formIndex);
+    }
+    
+    // 캐스팅 항목 삭제
+    function removeCastingRoleItem(button) {
+        const formElement = button.closest('.casting-role-form');
+        if (!formElement) return;
+        
+        const deleteInput = formElement.querySelector('input[name*="-DELETE"]');
+        if (deleteInput) {
+            deleteInput.checked = true;
+        }
+        
+        // 항목 숨기기
+        formElement.style.display = 'none';
+    }
+    
+    // 캐스팅 역할 추가 함수
+    function addCastingRoleItem() {
+        const container = document.getElementById('casting-role-formset');
+        if (!container) {
+            console.error('캐스팅 폼셋 컨테이너를 찾을 수 없습니다.');
+            return;
+        }
+        
+        // TOTAL_FORMS input 찾기
+        // management form 컨테이너에서 찾기
+        const managementFormContainer = document.getElementById('casting-role-management-form');
+        let totalFormsInput = null;
+        
+        if (managementFormContainer) {
+            // management form 컨테이너 내에서 TOTAL_FORMS 찾기
+            totalFormsInput = managementFormContainer.querySelector('input[name*="TOTAL_FORMS"]');
+        }
+        
+        // 다른 방법으로도 시도
+        if (!totalFormsInput) {
+            totalFormsInput = document.querySelector('input[name="casting_role_formset-TOTAL_FORMS"]');
+        }
+        if (!totalFormsInput) {
+            totalFormsInput = document.querySelector('input[id="id_casting_role_formset-TOTAL_FORMS"]');
+        }
+        if (!totalFormsInput) {
+            // container 바로 앞의 요소에서 찾기
+            const prevElement = container.previousElementSibling;
+            if (prevElement) {
+                totalFormsInput = prevElement.querySelector('input[name*="TOTAL_FORMS"]');
+            }
+        }
+        
+        if (!totalFormsInput) {
+            console.error('TOTAL_FORMS 입력 필드를 찾을 수 없습니다.');
+            console.log('management form 컨테이너:', managementFormContainer);
+            console.log('container:', container);
+            return;
+        }
+        
+        const totalForms = parseInt(totalFormsInput.value) || 0;
+        
+        // 첫 번째 폼을 템플릿으로 사용
+        const firstForm = container.querySelector('.casting-role-form');
+        if (!firstForm) {
+            alert('템플릿 폼을 찾을 수 없습니다.');
+            return;
+        }
+        
+        // 새 폼 생성
+        const newForm = firstForm.cloneNode(true);
+        newForm.setAttribute('data-form-index', totalForms);
+        
+        // 모든 입력 필드의 name과 id 업데이트
+        const inputs = newForm.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.name) {
+                // casting_role_formset-0-person -> casting_role_formset-{totalForms}-person
+                input.name = input.name.replace(/casting_role_formset-\d+-/, `casting_role_formset-${totalForms}-`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_casting_role_formset-\d+-/, `id_casting_role_formset-${totalForms}-`);
+            }
+            // 값 초기화
+            if (input.type !== 'hidden' && input.type !== 'checkbox') {
+                input.value = '';
+            }
+            if (input.type === 'checkbox') {
+                input.checked = false;
+            }
+        });
+        
+        // 배우명 버튼 ID 업데이트
+        const personButton = newForm.querySelector('[id^="casting-person-btn-"]');
+        if (personButton) {
+            personButton.id = 'casting-person-btn-' + totalForms;
+            personButton.setAttribute('onclick', `openCastingPersonModal(${totalForms})`);
+        }
+        
+        const personText = newForm.querySelector('[id^="casting-person-text-"]');
+        if (personText) {
+            personText.id = 'casting-person-text-' + totalForms;
+            personText.textContent = '아티스트 선택';
+        }
+        
+        // 라벨의 for 속성도 업데이트
+        const labels = newForm.querySelectorAll('label');
+        labels.forEach(label => {
+            const forAttr = label.getAttribute('for');
+            if (forAttr) {
+                label.setAttribute('for', forAttr.replace(/id_casting_role_formset-\d+-/, `id_casting_role_formset-${totalForms}-`));
+            }
+        });
+        
+        // DELETE 체크박스는 숨겨진 상태로 유지
+        const deleteCheckbox = newForm.querySelector('input[name*="-DELETE"]');
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = false;
+        }
+        
+        // 삭제 버튼 이벤트 리스너 추가
+        const deleteButton = newForm.querySelector('button[onclick*="removeCastingRoleItem"]');
+        if (deleteButton) {
+            deleteButton.onclick = function() {
+                removeCastingRoleItem(this);
+            };
+        }
+        
+        // 에러 메시지 제거
+        const errorMessages = newForm.querySelectorAll('.text-red-600');
+        errorMessages.forEach(msg => msg.remove());
+        
+        // 새 폼을 컨테이너에 추가
+        container.appendChild(newForm);
+        
+        // TOTAL_FORMS 값 증가
+        totalFormsInput.value = totalForms + 1;
     }
     
     // 페이지 로드 시 좌석 등급 입력 필드 초기화

@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Performance, SeatGrade, BookingSite, DiscountType, Person, CrewRole, CastingRole
+from .models import Performance, SeatGrade, BookingSite, DiscountType, Person, CastingRole
 
 
 class PerformanceForm(forms.ModelForm):
@@ -199,30 +199,6 @@ DiscountTypeFormSet = inlineformset_factory(
 )
 
 
-CrewRoleFormSet = inlineformset_factory(
-    Performance,
-    CrewRole,
-    fields=['person', 'role', 'order'],
-    extra=1,
-    can_delete=True,
-    widgets={
-        'person': forms.Select(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-        }),
-        'role': forms.TextInput(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '역할 (예: 감독, 음악, 작사)',
-        }),
-        'order': forms.NumberInput(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '0',
-            'min': '0',
-            'step': '1',
-        }),
-    }
-)
-
-
 CastingRoleFormSet = inlineformset_factory(
     Performance,
     CastingRole,
@@ -231,14 +207,14 @@ CastingRoleFormSet = inlineformset_factory(
     can_delete=True,
     widgets={
         'person': forms.Select(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
         }),
         'role': forms.TextInput(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '배역명 (예: 홍길동, 김철수)',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'placeholder': '역할명',
         }),
         'order': forms.NumberInput(attrs={
-            'class': 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
             'placeholder': '0',
             'min': '0',
             'step': '1',
