@@ -344,3 +344,4 @@ class CoreConfig(AppConfig):
 - **데이터 백업**: 마이그레이션 전 데이터 백업 필수
 - **권한 관리**: 더 세밀한 권한 관리가 필요하다면 django-guardian 등 라이브러리 고려
 
+

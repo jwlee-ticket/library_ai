@@ -50,3 +50,4 @@ class Migration(migrations.Migration):
         migrations.RunPython(assign_default_company_and_profiles, reverse_assign_default_company),
     ]
 
+
