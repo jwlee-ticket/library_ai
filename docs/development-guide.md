@@ -169,10 +169,12 @@ library_ai/
 │   └── asgi.py               # ASGI 설정
 │
 ├── core/                      # 공통 기능
-│   ├── models.py             # User 모델 (Django 기본)
+│   ├── models.py             # Company, UserProfile 모델
 │   ├── views.py              # 로그인/로그아웃 뷰
 │   ├── forms.py              # 인증 폼
 │   ├── admin.py              # User Admin 커스터마이징
+│   ├── mixins.py             # CompanyFilterMixin (멀티 테넌트)
+│   ├── signals.py            # UserProfile 자동 생성 시그널
 │   ├── urls.py               # 인증 URL
 │   └── templatetags/         # 커스텀 템플릿 태그
 │       ├── custom_filters.py
@@ -260,6 +262,9 @@ library_ai/
 
 #### core
 - 사용자 인증 (로그인/로그아웃)
+- 멀티 테넌트 지원 (Company, UserProfile 모델)
+- 회사별 데이터 필터링 (CompanyFilterMixin)
+- UserProfile 자동 생성 시그널
 - 커스텀 템플릿 태그 및 필터
 - 공통 유틸리티
 
@@ -268,6 +273,7 @@ library_ai/
 - 공연별 동적 설정값 관리 (좌석 등급, 예매처, 할인권종 등)
 - 인물 관리 (Person, CrewRole, CastingRole)
 - 공연 목록, 상세, 등록, 수정, 삭제
+- 회사별 데이터 격리 (멀티 테넌트)
 
 #### data_management
 - 매출 데이터 관리 (현재: 콘서트)
@@ -331,7 +337,10 @@ graph TB
     
     subgraph "Data Layer"
         UserModel[User Model]
+        CompanyModel[Company Model]
+        UserProfileModel[UserProfile Model]
         PerfModel[Performance Model]
+        PersonModel[Person Model]
         SalesModel[ConcertSales Model]
         MarketingModel[Marketing Model]
         ReviewModel[Review Model]
@@ -353,13 +362,19 @@ graph TB
     
     Forms --> Services
     Services --> UserModel
+    Services --> CompanyModel
+    Services --> UserProfileModel
     Services --> PerfModel
+    Services --> PersonModel
     Services --> SalesModel
     Services --> MarketingModel
     Services --> ReviewModel
     
     UserModel --> PostgreSQL
+    CompanyModel --> PostgreSQL
+    UserProfileModel --> PostgreSQL
     PerfModel --> PostgreSQL
+    PersonModel --> PostgreSQL
     SalesModel --> PostgreSQL
     MarketingModel --> PostgreSQL
     ReviewModel --> PostgreSQL
@@ -436,6 +451,10 @@ sequenceDiagram
 
 ```mermaid
 erDiagram
+    USER ||--|| USER_PROFILE : has
+    COMPANY ||--o{ USER_PROFILE : has
+    COMPANY ||--o{ PERFORMANCE : owns
+    COMPANY ||--o{ PERSON : owns
     USER ||--o{ PERFORMANCE : creates
     PERFORMANCE ||--o{ SEAT_GRADE : has
     PERFORMANCE ||--o{ BOOKING_SITE : has
@@ -467,10 +486,27 @@ erDiagram
         datetime date_joined
     }
     
+    COMPANY {
+        int id PK
+        string name "회사명"
+        string name_en "회사명(영문)"
+        datetime created_at
+        datetime updated_at
+    }
+    
+    USER_PROFILE {
+        int id PK
+        int user_id FK "OneToOne"
+        int company_id FK "Nullable"
+        datetime created_at
+        datetime updated_at
+    }
+    
     PERSON {
         int id PK
         string name "인물 이름"
         string name_en "인물 이름 영문"
+        int company_id FK
         datetime created_at
         datetime updated_at
     }
@@ -489,6 +525,7 @@ erDiagram
         decimal break_even_point "손익분기점"
         decimal total_production_cost "총 제작비"
         image seat_map
+        int company_id FK
         datetime created_at
         datetime updated_at
     }
@@ -611,6 +648,16 @@ erDiagram
 
 ### 데이터 관계 설명
 
+#### 0. 멀티 테넌트 구조
+- **Company**: 회사 정보를 저장하는 모델
+- **UserProfile**: User와 Company를 연결하는 모델 (OneToOne)
+- **Performance**: 각 공연은 하나의 회사에 소속
+- **Person**: 각 인물은 하나의 회사에 소속
+- **CompanyFilterMixin**: View에서 회사별 데이터 필터링
+  - Admin 사용자: 모든 데이터 접근 가능
+  - 일반 사용자: 자신의 회사 데이터만 접근 가능
+- **시그널**: User 생성 시 자동으로 UserProfile 생성
+
 #### 1. Performance (공연) - 중심 엔티티
 - 모든 데이터의 중심이 되는 엔티티
 - 정규화된 모델을 통한 동적 설정값 관리:
@@ -623,6 +670,7 @@ erDiagram
 #### 2. Person (인물) - 통합 인물 관리
 - 제작진과 캐스팅 인물을 통합 관리하는 모델
 - **CrewRole**과 **CastingRole**을 통해 Performance와 연결
+- **Company**에 소속되어 회사별로 관리됨
 - 온톨로지 구축을 위한 핵심 엔티티
 - 인물별 공연 이력 추적 및 네트워크 분석 가능
 
@@ -645,3 +693,10 @@ erDiagram
 - 폼 검증을 통한 추가 데이터 무결성 보장
 - `limit_choices_to`로 장르별 필터링
 - `unique_together`를 통한 중복 방지
+
+#### 5. 멀티 테넌트 데이터 격리
+- 모든 데이터는 회사별로 격리됨
+- `CompanyFilterMixin`을 통해 자동 필터링
+- 새 데이터 생성 시 사용자의 회사가 자동 할당
+- Admin 사용자는 모든 회사 데이터 접근 가능
+- 일반 사용자는 자신의 회사 데이터만 접근 가능
