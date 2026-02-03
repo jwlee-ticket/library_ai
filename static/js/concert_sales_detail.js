@@ -12,6 +12,7 @@ let seoulRegions = [];
 let gyeonggiRegions = [];
 let saveDailySalesUrl = '';
 let getDailySalesUrl = '';
+let uploadExcelUrl = '';
 let csrfToken = '';
 
 // 오늘 날짜 정보
@@ -55,6 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
         gyeonggiRegions = Array.isArray(data.gyeonggiRegions) ? data.gyeonggiRegions : [];
         saveDailySalesUrl = data.saveDailySalesUrl || '';
         getDailySalesUrl = data.getDailySalesUrl || '';
+        uploadExcelUrl = data.uploadExcelUrl || '';
         csrfToken = data.csrfToken || '';
         
         console.log('데이터 로드 완료:', {
@@ -65,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
             seatGradesLength: seatGrades.length,
             savedDateList,
             saveDailySalesUrl,
+            uploadExcelUrl,
             csrfToken: csrfToken ? '있음' : '없음'
         });
         
@@ -943,36 +946,45 @@ document.addEventListener('DOMContentLoaded', function() {
             // 업로드 진행 중 상태 표시
             showExcelUploadStatus('loading', '파일을 업로드하는 중입니다...', '');
             
-            // TODO: 실제 업로드 URL로 변경 필요
-            // fetch('업로드_URL', {
-            //     method: 'POST',
-            //     body: formData,
-            //     headers: {
-            //         'X-CSRFToken': csrfToken
-            //     }
-            // })
-            // .then(response => response.json())
-            // .then(data => {
-            //     if (data.success) {
-            //         showExcelUploadStatus('success', '업로드가 완료되었습니다.', `총 ${data.count || 0}건의 데이터가 등록되었습니다.`);
-            //         fileInput.value = '';
-            //         // 캘린더 새로고침
-            //         if (typeof renderCalendar === 'function') {
-            //             renderCalendar();
-            //         }
-            //     } else {
-            //         showExcelUploadStatus('error', '업로드 실패', data.error || '알 수 없는 오류가 발생했습니다.');
-            //     }
-            // })
-            // .catch(error => {
-            //     showExcelUploadStatus('error', '업로드 중 오류 발생', error.message);
-            // })
-            // .finally(() => {
-            //     if (excelUploadBtn) {
-            //         excelUploadBtn.disabled = false;
-            //         excelUploadBtn.textContent = '업로드';
-            //     }
-            // });
+            if (!uploadExcelUrl) {
+                showExcelUploadStatus('error', '업로드 URL이 없습니다.', '페이지를 새로고침 해주세요.');
+                if (excelUploadBtn) {
+                    excelUploadBtn.disabled = false;
+                    excelUploadBtn.textContent = '업로드';
+                }
+                return;
+            }
+            
+            fetch(uploadExcelUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json().then(data => ({
+                ok: response.ok,
+                status: response.status,
+                data
+            })))
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
+                    const details = `날짜 ${data.date_count || 0}건, 일별 ${data.daily_sales_count || 0}건, 등급 ${data.grade_sales_count || 0}건 저장`;
+                    showExcelUploadStatus('success', '업로드가 완료되었습니다.', details);
+                    fileInput.value = '';
+                } else {
+                    showExcelUploadStatus('error', '업로드 실패', data.error || '알 수 없는 오류가 발생했습니다.');
+                }
+            })
+            .catch(error => {
+                showExcelUploadStatus('error', '업로드 중 오류 발생', error.message);
+            })
+            .finally(() => {
+                if (excelUploadBtn) {
+                    excelUploadBtn.disabled = false;
+                    excelUploadBtn.textContent = '업로드';
+                }
+            });
         });
     }
     

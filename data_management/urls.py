@@ -14,6 +14,7 @@ urlpatterns = [
     # 공연 매출 관리 (특정 공연의 매출)
     path('sales/<int:performance_id>/', views.PerformanceSalesDetailView.as_view(), name='performance_sales_detail'),
     path('sales/<int:performance_id>/create/', views.PerformanceSalesCreateView.as_view(), name='performance_sales_create'),
+    path('sales/<int:performance_id>/upload-excel/', views.upload_sales_excel, name='performance_sales_upload_excel'),
     path('sales/<int:performance_id>/save-daily/', views.save_daily_sales, name='save_daily_sales'),
     path('sales/<int:performance_id>/get-daily/', views.get_daily_sales, name='get_daily_sales'),
     path('sales/<int:pk>/edit/', views.PerformanceSalesUpdateView.as_view(), name='performance_sales_update'),

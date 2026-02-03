@@ -8,10 +8,14 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
 import json
+import re
+from decimal import Decimal
+import pandas as pd
+from django.db import transaction
 from .models import PerformanceDailySales, PerformanceFinalSales, PerformanceDailySalesGrade
-from .forms import PerformanceDailySalesForm, PerformanceFinalSalesForm, PerformanceSalesDailyFormSet
+from .forms import PerformanceDailySalesForm, PerformanceFinalSalesForm, PerformanceSalesDailyFormSet, PerformanceSalesExcelUploadForm
 from .constants import AGE_GROUPS, REGIONS, SEOUL_REGIONS, GYEONGGI_REGIONS
-from performance.models import Performance
+from performance.models import Performance, BookingSite, SeatGrade
 
 
 class PerformanceListView(ListView):
@@ -243,6 +247,367 @@ class PerformanceSalesDeleteView(DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, '매출이 성공적으로 삭제되었어요')
         return super().delete(request, *args, **kwargs)
+
+
+def _normalize_text(value):
+    if value is None:
+        return ''
+    text = str(value).strip()
+    if text.lower() == 'nan':
+        return ''
+    return text
+
+
+def _safe_int(value):
+    if value is None:
+        return 0
+    if isinstance(value, (int, float)) and not pd.isna(value):
+        return int(value)
+    text = _normalize_text(value)
+    if not text:
+        return 0
+    text = text.replace(',', '')
+    try:
+        return int(float(text))
+    except ValueError:
+        return 0
+
+
+def _parse_date(value):
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    try:
+        return pd.to_datetime(value).date()
+    except ValueError:
+        return None
+
+
+def _find_header_row(df):
+    for idx in range(len(df)):
+        row = df.iloc[idx].astype(str).tolist()
+        row_text = ' '.join(row)
+        if ('No.' in row_text or 'No' in row_text or '회차' in row_text) and ('Date' in row_text or '공연일' in row_text):
+            return idx
+    return None
+
+
+def _classify_group(label):
+    text = _normalize_text(label)
+    if not text:
+        return None
+    
+    ignore_keywords = [
+        '유료 계', '전체', '점유율', '잔여', '객단가', '할인율',
+        'BEP', '목표매출', '추가 필요', '미입금 내역'
+    ]
+    if any(keyword in text for keyword in ignore_keywords):
+        return None
+    
+    status = None
+    if '입금+미입금' in text or '미입금포함' in text:
+        status = 'total'
+    elif '입금' in text:
+        status = 'paid'
+    elif '초대' in text or '무료' in text:
+        status = 'free'
+    
+    if not status:
+        return None
+    
+    if status == 'free':
+        return (None, status)
+    
+    booking_site = re.sub(r'\(.*?\)', '', text)
+    booking_site = booking_site.replace('입금+미입금', '').replace('입금', '').replace('미입금포함', '')
+    booking_site = booking_site.strip()
+    return (booking_site or None, status)
+
+
+def _is_summary_row(no_value):
+    text = _normalize_text(no_value)
+    if not text:
+        return True
+    summary_keywords = ['TOTAL', '계', '합계', '공연 계']
+    return any(keyword in text for keyword in summary_keywords)
+
+
+def _parse_sales_excel(excel_file, performance):
+    excel_file.seek(0)
+    xls = pd.ExcelFile(excel_file)
+    if '회차별판매' not in xls.sheet_names:
+        raise ValueError('회차별판매 시트를 찾을 수 없어요')
+    
+    df = pd.read_excel(xls, sheet_name='회차별판매', header=None)
+    if df.empty:
+        raise ValueError('회차별판매 시트가 비어 있어요')
+    
+    header_row_idx = _find_header_row(df)
+    if header_row_idx is None:
+        raise ValueError('헤더 행을 찾을 수 없어요 (No./Date/Time)')
+    
+    header_row = df.iloc[header_row_idx].tolist()
+    group_row = df.iloc[header_row_idx - 1] if header_row_idx > 0 else pd.Series([None] * len(header_row))
+    group_row = group_row.ffill()
+    
+    header_texts = [_normalize_text(value) for value in header_row]
+    group_texts = [_normalize_text(value) for value in group_row.tolist()]
+    
+    def _find_col_index(candidates):
+        for idx, name in enumerate(header_texts):
+            if name in candidates:
+                return idx
+        return None
+    
+    no_idx = _find_col_index(['No.', 'No', '회차'])
+    date_idx = _find_col_index(['Date', '공연일'])
+    time_idx = _find_col_index(['Time', '시간'])
+    
+    if date_idx is None:
+        raise ValueError('공연일(Date) 컬럼을 찾을 수 없어요')
+    
+    first_group_idx = None
+    for idx, label in enumerate(group_texts):
+        if _classify_group(label):
+            first_group_idx = idx
+            break
+    
+    cast_cols = []
+    if time_idx is not None and first_group_idx is not None and first_group_idx > time_idx:
+        cast_cols = list(range(time_idx + 1, first_group_idx))
+    
+    column_map = []
+    seat_grade_names = set()
+    for idx, (group_label, header_label) in enumerate(zip(group_texts, header_texts)):
+        group_info = _classify_group(group_label)
+        if not group_info:
+            continue
+        booking_site_name, status = group_info
+        grade_label = _normalize_text(header_label)
+        if not grade_label:
+            continue
+        
+        if grade_label in ['TOT', '금액']:
+            column_map.append({
+                'index': idx,
+                'booking_site': booking_site_name,
+                'status': status,
+                'grade': grade_label
+            })
+            continue
+        
+        seat_grade_names.add(grade_label)
+        column_map.append({
+            'index': idx,
+            'booking_site': booking_site_name,
+            'status': status,
+            'grade': grade_label
+        })
+    
+    aggregates = {}
+    rounds_by_date = {}
+    dates_in_file = set()
+    
+    for row_idx in range(header_row_idx + 1, len(df)):
+        row = df.iloc[row_idx]
+        no_value = row[no_idx] if no_idx is not None else None
+        if _is_summary_row(no_value):
+            continue
+        
+        date_value = row[date_idx]
+        parsed_date = _parse_date(date_value)
+        if not parsed_date:
+            continue
+        
+        dates_in_file.add(parsed_date)
+        
+        cast_info = {}
+        for cast_col in cast_cols:
+            role = _normalize_text(header_texts[cast_col])
+            person = _normalize_text(row[cast_col])
+            if role and person:
+                cast_info[role] = person
+        
+        if parsed_date not in rounds_by_date:
+            rounds_by_date[parsed_date] = []
+        
+        time_value = _normalize_text(row[time_idx]) if time_idx is not None else ''
+        rounds_by_date[parsed_date].append({
+            'no': _normalize_text(no_value),
+            'time': time_value,
+            'cast': cast_info
+        })
+        
+        for col in column_map:
+            value = _safe_int(row[col['index']])
+            booking_site_name = col['booking_site']
+            status = col['status']
+            grade_label = col['grade']
+            
+            key = (parsed_date, booking_site_name)
+            if key not in aggregates:
+                aggregates[key] = {
+                    'paid_revenue': 0,
+                    'paid_ticket_count': 0,
+                    'total_revenue': 0,
+                    'total_ticket_count': 0,
+                    'grades_paid': {},
+                    'grades_total': {},
+                    'grades_free': {}
+                }
+            
+            if status in ['paid', 'total']:
+                if grade_label == 'TOT':
+                    if status == 'paid':
+                        aggregates[key]['paid_ticket_count'] += value
+                    else:
+                        aggregates[key]['total_ticket_count'] += value
+                elif grade_label == '금액':
+                    if status == 'paid':
+                        aggregates[key]['paid_revenue'] += value
+                    else:
+                        aggregates[key]['total_revenue'] += value
+                else:
+                    target = 'grades_paid' if status == 'paid' else 'grades_total'
+                    aggregates[key][target][grade_label] = aggregates[key][target].get(grade_label, 0) + value
+            elif status == 'free':
+                if grade_label not in ['TOT', '금액']:
+                    aggregates[key]['grades_free'][grade_label] = aggregates[key]['grades_free'].get(grade_label, 0) + value
+    
+    return {
+        'aggregates': aggregates,
+        'rounds_by_date': rounds_by_date,
+        'seat_grade_names': seat_grade_names,
+        'dates_in_file': dates_in_file
+    }
+
+
+@login_required
+@require_http_methods(["POST"])
+def upload_sales_excel(request, performance_id):
+    """공연 매출 엑셀 업로드 처리"""
+    performance = get_object_or_404(Performance, id=performance_id)
+    form = PerformanceSalesExcelUploadForm(request.POST, request.FILES)
+    if not form.is_valid():
+        return JsonResponse({'success': False, 'error': '입력값을 확인해주세요', 'errors': form.errors}, status=400)
+    
+    excel_file = form.cleaned_data['excel_file']
+    
+    try:
+        parsed = _parse_sales_excel(excel_file, performance)
+    except ValueError as exc:
+        return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+    
+    aggregates = parsed['aggregates']
+    if not aggregates:
+        return JsonResponse({'success': False, 'error': '저장할 매출 데이터가 없어요'}, status=400)
+    
+    seat_grade_names = parsed['seat_grade_names']
+    dates_in_file = parsed['dates_in_file']
+    rounds_by_date = parsed['rounds_by_date']
+    
+    with transaction.atomic():
+        PerformanceDailySales.objects.filter(
+            performance=performance,
+            date__in=list(dates_in_file)
+        ).delete()
+        
+        daily_sales_count = 0
+        grade_sales_count = 0
+        
+        seat_grade_map = {}
+        seat_grade_order = SeatGrade.objects.filter(performance=performance).count()
+        for grade_name in seat_grade_names:
+            seat_grade, created = SeatGrade.objects.get_or_create(
+                performance=performance,
+                name=grade_name,
+                defaults={
+                    'price': 0,
+                    'seat_count': 0,
+                    'order': seat_grade_order
+                }
+            )
+            if created:
+                seat_grade_order += 1
+            seat_grade_map[grade_name] = seat_grade
+        
+        booking_site_map = {}
+        for _, booking_site_name in aggregates.keys():
+            if not booking_site_name:
+                continue
+            if booking_site_name in booking_site_map:
+                continue
+            booking_site, _ = BookingSite.objects.get_or_create(
+                performance=performance,
+                name=booking_site_name
+            )
+            booking_site_map[booking_site_name] = booking_site
+        
+        for (sale_date, booking_site_name), data in aggregates.items():
+            booking_site = booking_site_map.get(booking_site_name) if booking_site_name else None
+            
+            total_revenue = data['total_revenue']
+            total_ticket_count = data['total_ticket_count']
+            unpaid_revenue = max(total_revenue - data['paid_revenue'], 0) if total_revenue else 0
+            unpaid_ticket_count = max(total_ticket_count - data['paid_ticket_count'], 0) if total_ticket_count else 0
+
+            has_grade_data = any(
+                value > 0 for value in (
+                    list(data['grades_paid'].values()) +
+                    list(data['grades_total'].values()) +
+                    list(data['grades_free'].values())
+                )
+            )
+            has_base_data = any([
+                data['paid_revenue'],
+                data['paid_ticket_count'],
+                unpaid_revenue,
+                unpaid_ticket_count
+            ])
+            if not has_base_data and not has_grade_data:
+                continue
+            
+            notes = {
+                'source': 'excel',
+                'rounds': rounds_by_date.get(sale_date, [])
+            }
+            
+            daily_sales = PerformanceDailySales.objects.create(
+                performance=performance,
+                date=sale_date,
+                booking_site=booking_site,
+                paid_revenue=Decimal(data['paid_revenue']),
+                paid_ticket_count=data['paid_ticket_count'],
+                unpaid_revenue=Decimal(unpaid_revenue),
+                unpaid_ticket_count=unpaid_ticket_count,
+                notes=json.dumps(notes, ensure_ascii=False)
+            )
+            daily_sales_count += 1
+            
+            for grade_name in seat_grade_names:
+                paid_count = data['grades_paid'].get(grade_name, 0)
+                total_count = data['grades_total'].get(grade_name, paid_count)
+                unpaid_count = max(total_count - paid_count, 0) if total_count else 0
+                free_count = data['grades_free'].get(grade_name, 0)
+                
+                if paid_count == 0 and unpaid_count == 0 and free_count == 0:
+                    continue
+                
+                PerformanceDailySalesGrade.objects.create(
+                    daily_sales=daily_sales,
+                    seat_grade=seat_grade_map[grade_name],
+                    paid_count=paid_count,
+                    unpaid_count=unpaid_count,
+                    free_count=free_count
+                )
+                grade_sales_count += 1
+    
+    return JsonResponse({
+        'success': True,
+        'message': '엑셀 업로드가 완료되었습니다.',
+        'daily_sales_count': daily_sales_count,
+        'grade_sales_count': grade_sales_count,
+        'date_count': len(dates_in_file)
+    })
 
 
 @login_required
