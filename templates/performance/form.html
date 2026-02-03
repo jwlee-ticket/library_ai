@@ -550,6 +550,7 @@
                                         </div>
                                     </div>
                                     <div style="display: none;">{{ form.applicable_grades }}</div>
+                                    <div style="display: none;">{{ form.applicable_grade_names }}</div>
                                     {% if form.applicable_grades.errors %}
                                         <p class="mt-1 text-sm text-red-600">{{ form.applicable_grades.errors|first }}</p>
                                     {% endif %}
@@ -766,6 +767,13 @@
     }
     
     // 적용 가능한 등급 선택
+    function setApplicableGradeNames(formIndex, selectedGrades) {
+        const hiddenNamesInput = document.querySelector(`input[name="discount_type_formset-${formIndex}-applicable_grade_names"]`);
+        if (hiddenNamesInput) {
+            hiddenNamesInput.value = JSON.stringify(selectedGrades);
+        }
+    }
+    
     function selectApplicableGrade(selectId, gradeName, formIndex) {
         // ManyToManyField는 여러 값을 선택할 수 있으므로, 선택된 값들을 배열로 관리
         const buttonText = document.getElementById('applicable-grades-text-' + formIndex);
@@ -791,6 +799,7 @@
             buttonText.textContent = selectedGrades.join(', ');
         }
         buttonText.dataset.selectedGrades = JSON.stringify(selectedGrades);
+        setApplicableGradeNames(formIndex, selectedGrades);
         
         // Django ManyToManyField SelectMultiple 업데이트
         // 등급명을 기반으로 좌석 정보에서 해당 등급의 formset 인덱스를 찾아서 ID로 변환
@@ -875,6 +884,8 @@
                     }
                 });
             });
+            
+            setApplicableGradeNames(discountIndex, selectedGrades);
         });
     }
     
@@ -1384,6 +1395,11 @@
             }
         });
         
+        const hiddenGradeNamesInput = newForm.querySelector(`input[name="discount_type_formset-${totalForms}-applicable_grade_names"]`);
+        if (hiddenGradeNamesInput) {
+            hiddenGradeNamesInput.value = '[]';
+        }
+        
         // 라벨의 for 속성도 업데이트
         const labels = newForm.querySelectorAll('label');
         labels.forEach(label => {
@@ -1747,6 +1763,25 @@
                     }
                 });
             }
+        });
+        
+        // 할인권종 선택값 초기화 (서버 값 기준)
+        document.querySelectorAll('#discount-type-formset .discount-type-form').forEach((discountForm, discountIndex) => {
+            const hiddenSelect = discountForm.querySelector('select[name="discount_type_formset-' + discountIndex + '-applicable_grades"]');
+            const buttonText = document.getElementById('applicable-grades-text-' + discountIndex);
+            if (!hiddenSelect || !buttonText) return;
+            const selectedNames = Array.from(hiddenSelect.options)
+                .filter(option => option.selected)
+                .map(option => option.text.trim())
+                .filter(Boolean);
+            if (selectedNames.length > 0) {
+                buttonText.textContent = selectedNames.join(', ');
+                buttonText.dataset.selectedGrades = JSON.stringify(selectedNames);
+            } else {
+                buttonText.textContent = '등급 선택';
+                buttonText.dataset.selectedGrades = '[]';
+            }
+            setApplicableGradeNames(discountIndex, selectedNames);
         });
         
         // 초기 드롭다운 업데이트 (할인권종용)

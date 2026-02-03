@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
+import json
 from .models import Performance, SeatGrade, BookingSite, DiscountType, Person, CastingRole
 
 
@@ -166,36 +167,60 @@ BookingSiteFormSet = inlineformset_factory(
 )
 
 
+class DiscountTypeForm(forms.ModelForm):
+    """할인권종 폼 (좌석 등급 이름 매핑용 숨은 필드 포함)"""
+
+    applicable_grade_names = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+        help_text='선택된 좌석 등급 이름 목록 (JSON)'
+    )
+
+    class Meta:
+        model = DiscountType
+        fields = ['name', 'start_date', 'end_date', 'discount_rate', 'applicable_grades']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '할인권종명',
+            }),
+            'start_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            }),
+            'end_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            }),
+            'discount_rate': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+                'placeholder': '할인율',
+                'min': '0',
+                'max': '100',
+                'step': '1',
+            }),
+            'applicable_grades': forms.SelectMultiple(attrs={
+                'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
+            }),
+        }
+
+    def clean_applicable_grade_names(self):
+        raw_value = self.cleaned_data.get('applicable_grade_names') or '[]'
+        try:
+            parsed = json.loads(raw_value)
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(parsed, list):
+            return []
+        return [str(name).strip() for name in parsed if str(name).strip()]
+
+
 DiscountTypeFormSet = inlineformset_factory(
     Performance,
     DiscountType,
-    fields=['name', 'start_date', 'end_date', 'discount_rate', 'applicable_grades'],
+    form=DiscountTypeForm,
     extra=1,
     can_delete=True,
-    widgets={
-        'name': forms.TextInput(attrs={
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '할인권종명',
-        }),
-        'start_date': forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-        }),
-        'end_date': forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-        }),
-        'discount_rate': forms.NumberInput(attrs={
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '할인율',
-            'min': '0',
-            'max': '100',
-            'step': '1',
-        }),
-        'applicable_grades': forms.SelectMultiple(attrs={
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-        }),
-    }
 )
 
 

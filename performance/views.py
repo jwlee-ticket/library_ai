@@ -4,9 +4,24 @@ from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
+from django.db import transaction
 from django.db.models import Q
-from .models import Performance, Person
+from .models import Performance, Person, SeatGrade
 from .forms import PerformanceForm, SeatGradeFormSet, BookingSiteFormSet, DiscountTypeFormSet, CastingRoleFormSet
+
+
+def sync_discount_type_grades(performance, discount_type_formset):
+    """할인권종의 적용 가능한 등급을 이름 기준으로 동기화"""
+    seat_grades = SeatGrade.objects.filter(performance=performance)
+    for form in discount_type_formset.forms:
+        if not form.cleaned_data or form.cleaned_data.get('DELETE'):
+            continue
+        grade_names = form.cleaned_data.get('applicable_grade_names', [])
+        if grade_names is None:
+            continue
+        matched_grades = seat_grades.filter(name__in=grade_names)
+        if form.instance.pk:
+            form.instance.applicable_grades.set(matched_grades)
 
 
 class PerformanceListView(LoginRequiredMixin, ListView):
@@ -80,26 +95,29 @@ class PerformanceCreateView(LoginRequiredMixin, CreateView):
         return context
     
     def form_valid(self, form):
-        performance = form.save()
-        
-        # 인라인 폼셋 처리
-        seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
-        booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
-        discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
-        casting_role_formset = CastingRoleFormSet(self.request.POST, instance=performance)
-        
-        if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
-            discount_type_formset.is_valid() and casting_role_formset.is_valid()):
-            seat_grade_formset.save()
-            booking_site_formset.save()
-            discount_type_formset.save()
-            casting_role_formset.save()
-            messages.success(self.request, '공연이 성공적으로 등록되었어요')
-            return super().form_valid(form)
-        else:
-            # 폼셋 검증 실패 시 에러 표시
-            messages.error(self.request, '입력한 정보를 확인해주세요')
-            return self.form_invalid(form)
+        with transaction.atomic():
+            performance = form.save()
+            
+            # 인라인 폼셋 처리
+            seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
+            booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
+            discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
+            casting_role_formset = CastingRoleFormSet(self.request.POST, instance=performance)
+            
+            if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
+                discount_type_formset.is_valid() and casting_role_formset.is_valid()):
+                seat_grade_formset.save()
+                booking_site_formset.save()
+                casting_role_formset.save()
+                discount_type_formset.save()
+                sync_discount_type_grades(performance, discount_type_formset)
+                messages.success(self.request, '공연이 성공적으로 등록되었어요')
+                return super().form_valid(form)
+            else:
+                # 폼셋 검증 실패 시 에러 표시
+                messages.error(self.request, '입력한 정보를 확인해주세요')
+                transaction.set_rollback(True)
+                return self.form_invalid(form)
     
     def form_invalid(self, form):
         # 폼셋 검증 실패 시 폼셋을 다시 컨텍스트에 포함
@@ -148,26 +166,30 @@ class PerformanceUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def form_valid(self, form):
-        performance = form.save()
-        
-        # 인라인 폼셋 처리
-        seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
-        booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
-        discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
-        casting_role_formset = CastingRoleFormSet(self.request.POST, instance=performance)
-        
-        if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
-            discount_type_formset.is_valid() and casting_role_formset.is_valid()):
-            seat_grade_formset.save()
-            booking_site_formset.save()
-            discount_type_formset.save()
-            casting_role_formset.save()
-            messages.success(self.request, '공연 정보가 성공적으로 수정되었어요')
-            return super().form_valid(form)
-        else:
-            # 폼셋 검증 실패 시 에러 표시
-            messages.error(self.request, '입력한 정보를 확인해주세요')
-            return self.form_invalid(form)
+        with transaction.atomic():
+            performance = form.save()
+            
+            # 인라인 폼셋 처리
+            seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
+            booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
+            discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
+            casting_role_formset = CastingRoleFormSet(self.request.POST, instance=performance)
+            
+            if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
+                discount_type_formset.is_valid() and casting_role_formset.is_valid()):
+                seat_grade_formset.save()
+                booking_site_formset.save()
+                casting_role_formset.save()
+                discount_type_formset.save()
+                sync_discount_type_grades(performance, discount_type_formset)
+                messages.success(self.request, '공연 정보가 성공적으로 수정되었어요')
+                return super().form_valid(form)
+            else:
+                # 폼셋 검증 실패 시 에러 표시
+                messages.error(self.request, '입력한 정보를 확인해주세요')
+                transaction.set_rollback(True)
+                return self.form_invalid(form)
+
     
     def form_invalid(self, form):
         # 폼셋 검증 실패 시 폼셋을 다시 컨텍스트에 포함
