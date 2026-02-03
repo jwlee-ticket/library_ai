@@ -6,12 +6,12 @@
     <span class="text-gray-400 mx-2">/</span>
     <span class="text-gray-700 font-medium">매출</span>
     <span class="text-gray-400 mx-2">/</span>
-    <span class="text-black font-medium">{% if performance %}{{ performance.title }}{% else %}콘서트 매출{% endif %}</span>
+    <span class="text-black font-medium">{% if performance %}{{ performance.title }}{% else %}공연 매출{% endif %}</span>
 {% endblock %}
 
 {% block content %}
     <!-- JavaScript에서 사용할 데이터 (script 태그로 전달) -->
-    <script type="application/json" id="concert-sales-data">
+    <script type="application/json" id="performance-sales-data">
     {
         "performanceId": {% if performance %}{{ performance.id }}{% else %}null{% endif %},
         "bookingSites": {{ booking_sites|safe }},
@@ -30,7 +30,7 @@
     
     <!-- 페이지 제목 -->
     <div class="mb-6">
-        <h1 class="text-3xl font-semibold text-black">{% if performance %}{{ performance.title }}{% else %}콘서트 매출{% endif %}</h1>
+        <h1 class="text-3xl font-semibold text-black">{% if performance %}{{ performance.title }}{% else %}공연 매출{% endif %}</h1>
     </div>
     
     <!-- 데일리 매출 입력 섹션 -->

@@ -2,13 +2,12 @@ from django.db import models
 from django.core.validators import MinValueValidator
 
 
-class ConcertDailySales(models.Model):
-    """콘서트 데일리 매출 모델"""
+class PerformanceDailySales(models.Model):
+    """공연 데일리 매출 모델"""
     
     performance = models.ForeignKey(
         'performance.Performance',
         on_delete=models.CASCADE,
-        limit_choices_to={'genre': 'concert'},
         verbose_name='공연',
         related_name='daily_sales'
     )
@@ -59,8 +58,8 @@ class ConcertDailySales(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='수정일시')
     
     class Meta:
-        verbose_name = '콘서트 데일리 매출'
-        verbose_name_plural = '콘서트 데일리 매출'
+        verbose_name = '공연 데일리 매출'
+        verbose_name_plural = '공연 데일리 매출'
         ordering = ['-date', 'performance', 'booking_site']
         indexes = [
             models.Index(fields=['performance', 'date']),
@@ -83,11 +82,11 @@ class ConcertDailySales(models.Model):
         return self.paid_ticket_count + self.unpaid_ticket_count
 
 
-class ConcertDailySalesGrade(models.Model):
-    """콘서트 데일리 등급별 판매 모델"""
+class PerformanceDailySalesGrade(models.Model):
+    """공연 데일리 등급별 판매 모델"""
     
     daily_sales = models.ForeignKey(
-        'ConcertDailySales',
+        'PerformanceDailySales',
         on_delete=models.CASCADE,
         related_name='grade_sales',
         verbose_name='일별 매출'
@@ -117,8 +116,8 @@ class ConcertDailySalesGrade(models.Model):
     )
     
     class Meta:
-        verbose_name = '콘서트 데일리 등급별 판매'
-        verbose_name_plural = '콘서트 데일리 등급별 판매들'
+        verbose_name = '공연 데일리 등급별 판매'
+        verbose_name_plural = '공연 데일리 등급별 판매들'
         ordering = ['daily_sales', 'seat_grade__order']
         indexes = [
             models.Index(fields=['daily_sales', 'seat_grade']),
@@ -133,13 +132,12 @@ class ConcertDailySalesGrade(models.Model):
         return self.paid_count + self.unpaid_count + self.free_count
 
 
-class ConcertFinalSales(models.Model):
-    """콘서트 최종 매출 모델"""
+class PerformanceFinalSales(models.Model):
+    """공연 최종 매출 모델"""
     
     performance = models.ForeignKey(
         'performance.Performance',
         on_delete=models.CASCADE,
-        limit_choices_to={'genre': 'concert'},
         verbose_name='공연',
         related_name='final_sales'
     )
@@ -245,8 +243,8 @@ class ConcertFinalSales(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='수정일시')
     
     class Meta:
-        verbose_name = '콘서트 최종 매출'
-        verbose_name_plural = '콘서트 최종 매출'
+        verbose_name = '공연 최종 매출'
+        verbose_name_plural = '공연 최종 매출'
         ordering = ['performance', 'booking_site']
         indexes = [
             models.Index(fields=['performance']),
@@ -268,11 +266,11 @@ class ConcertFinalSales(models.Model):
         return self.paid_ticket_count + self.unpaid_ticket_count
 
 
-class ConcertFinalSalesGrade(models.Model):
-    """콘서트 최종 등급별 판매 모델"""
+class PerformanceFinalSalesGrade(models.Model):
+    """공연 최종 등급별 판매 모델"""
     
     final_sales = models.ForeignKey(
-        'ConcertFinalSales',
+        'PerformanceFinalSales',
         on_delete=models.CASCADE,
         related_name='grade_sales',
         verbose_name='최종 매출'
@@ -334,8 +332,8 @@ class ConcertFinalSalesGrade(models.Model):
     )
     
     class Meta:
-        verbose_name = '콘서트 최종 등급별 판매'
-        verbose_name_plural = '콘서트 최종 등급별 판매들'
+        verbose_name = '공연 최종 등급별 판매'
+        verbose_name_plural = '공연 최종 등급별 판매들'
         ordering = ['final_sales', 'seat_grade__order']
         indexes = [
             models.Index(fields=['final_sales', 'seat_grade']),

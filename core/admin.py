@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth import get_user_model
-from .models import Company, UserProfile
 
 User = get_user_model()
 
@@ -37,40 +36,3 @@ class CustomUserAdmin(BaseUserAdmin):
         return form
 
 
-@admin.register(Company)
-class CompanyAdmin(admin.ModelAdmin):
-    """회사 어드민"""
-    list_display = ['name', 'name_en', 'created_at']
-    list_filter = ['created_at']
-    search_fields = ['name', 'name_en']
-    readonly_fields = ['created_at', 'updated_at']
-    
-    fieldsets = (
-        ('기본 정보', {
-            'fields': ('name', 'name_en')
-        }),
-        ('메타 정보', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
-
-
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    """사용자 프로필 어드민"""
-    list_display = ['user', 'company', 'created_at']
-    list_filter = ['company', 'created_at']
-    search_fields = ['user__username', 'user__email', 'company__name']
-    readonly_fields = ['created_at', 'updated_at']
-    autocomplete_fields = ['user', 'company']
-    
-    fieldsets = (
-        ('사용자 정보', {
-            'fields': ('user', 'company')
-        }),
-        ('메타 정보', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )

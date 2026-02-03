@@ -1,19 +1,19 @@
 from django.contrib import admin
-from .models import ConcertDailySales, ConcertFinalSales, ConcertDailySalesGrade, ConcertFinalSalesGrade
+from .models import PerformanceDailySales, PerformanceFinalSales, PerformanceDailySalesGrade, PerformanceFinalSalesGrade
 
 
-class ConcertDailySalesGradeInline(admin.TabularInline):
-    """콘서트 데일리 등급별 판매 인라인"""
-    model = ConcertDailySalesGrade
+class PerformanceDailySalesGradeInline(admin.TabularInline):
+    """공연 데일리 등급별 판매 인라인"""
+    model = PerformanceDailySalesGrade
     extra = 0
     fields = ['seat_grade', 'paid_count', 'unpaid_count', 'free_count']
     verbose_name = '등급별 판매'
     verbose_name_plural = '등급별 판매'
 
 
-@admin.register(ConcertDailySales)
-class ConcertDailySalesAdmin(admin.ModelAdmin):
-    """콘서트 데일리 매출 Admin 설정"""
+@admin.register(PerformanceDailySales)
+class PerformanceDailySalesAdmin(admin.ModelAdmin):
+    """공연 데일리 매출 Admin 설정"""
     
     # 목록 표시 필드
     list_display = [
@@ -66,7 +66,7 @@ class ConcertDailySalesAdmin(admin.ModelAdmin):
     )
     
     # 인라인
-    inlines = [ConcertDailySalesGradeInline]
+    inlines = [PerformanceDailySalesGradeInline]
     
     # 읽기 전용 필드
     readonly_fields = ['created_at', 'updated_at']
@@ -75,18 +75,18 @@ class ConcertDailySalesAdmin(admin.ModelAdmin):
     ordering = ['-date', 'performance', 'booking_site']
 
 
-class ConcertFinalSalesGradeInline(admin.TabularInline):
-    """콘서트 최종 등급별 판매 인라인"""
-    model = ConcertFinalSalesGrade
+class PerformanceFinalSalesGradeInline(admin.TabularInline):
+    """공연 최종 등급별 판매 인라인"""
+    model = PerformanceFinalSalesGrade
     extra = 0
     fields = ['seat_grade', 'paid_count', 'unpaid_count', 'free_count', 'paid_revenue', 'total_revenue', 'paid_occupancy_rate', 'total_occupancy_rate']
     verbose_name = '등급별 판매'
     verbose_name_plural = '등급별 판매'
 
 
-@admin.register(ConcertFinalSales)
-class ConcertFinalSalesAdmin(admin.ModelAdmin):
-    """콘서트 최종 매출 Admin 설정"""
+@admin.register(PerformanceFinalSales)
+class PerformanceFinalSalesAdmin(admin.ModelAdmin):
+    """공연 최종 매출 Admin 설정"""
     
     # 목록 표시 필드
     list_display = [
@@ -134,7 +134,7 @@ class ConcertFinalSalesAdmin(admin.ModelAdmin):
     )
     
     # 인라인
-    inlines = [ConcertFinalSalesGradeInline]
+    inlines = [PerformanceFinalSalesGradeInline]
     
     # 읽기 전용 필드
     readonly_fields = ['created_at', 'updated_at']

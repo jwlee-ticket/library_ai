@@ -13,7 +13,6 @@ Library AI는 공연의 기획 → 제작 → 판매 전 단계의 데이터를 
 - **Data Processing**: pandas, openpyxl
 - **WSGI Server**: Gunicorn 21.2.0
 - **Deployment**: GCP Compute Engine (VM) + Nginx + Gunicorn
-- **Multi-tenancy**: 회사별 데이터 격리 지원
 
 ## 빠른 시작
 
@@ -36,7 +35,7 @@ Library AI는 공연의 기획 → 제작 → 판매 전 단계의 데이터를 
 
 ```
 config/                   # Django 프로젝트 설정
-├── core/                 # 공통 기능 (인증, 멀티 테넌트)
+├── core/                 # 공통 기능 (인증)
 ├── performance/          # 공연 관리
 ├── data_management/      # 데이터 관리 (매출, 마케팅, 리뷰)
 ├── dashboard/            # 대시보드

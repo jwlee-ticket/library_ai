@@ -169,12 +169,12 @@ library_ai/
 │   └── asgi.py               # ASGI 설정
 │
 ├── core/                      # 공통 기능
-│   ├── models.py             # Company, UserProfile 모델
+│   ├── models.py             # 공통 모델 (현재 없음)
 │   ├── views.py              # 로그인/로그아웃 뷰
 │   ├── forms.py              # 인증 폼
 │   ├── admin.py              # User Admin 커스터마이징
-│   ├── mixins.py             # CompanyFilterMixin (멀티 테넌트)
-│   ├── signals.py            # UserProfile 자동 생성 시그널
+│   ├── mixins.py             # 공용 Mixin (현재 없음)
+│   ├── signals.py            # 시그널 (현재 없음)
 │   ├── urls.py               # 인증 URL
 │   └── templatetags/         # 커스텀 템플릿 태그
 │       ├── custom_filters.py
@@ -188,7 +188,7 @@ library_ai/
 │   └── urls.py               # 공연 URL
 │
 ├── data_management/          # 데이터 관리 앱
-│   ├── models.py             # ConcertSales 모델
+│   ├── models.py             # PerformanceSales 모델
 │   ├── views.py              # 매출 관리 뷰
 │   ├── forms.py              # 매출 폼
 │   ├── admin.py              # 매출 Admin
@@ -229,9 +229,7 @@ library_ai/
 │   ├── data_management/      # 데이터 관리 템플릿
 │   │   ├── performance_list.html
 │   │   └── concert_sales/
-│   │       ├── list.html
-│   │       ├── form.html
-│   │       └── confirm_delete.html
+│   │       └── detail.html
 │   └── dashboard/            # 대시보드 템플릿
 │       ├── main.html         # 통합 대시보드
 │       ├── list.html         # 공연 목록 대시보드
@@ -247,7 +245,7 @@ library_ai/
 ├── static/                    # 정적 파일
 │   ├── js/                    # JavaScript 파일
 │   │   ├── base.js            # 공통 JavaScript
-│   │   ├── concert_sales_detail.js      # 콘서트 매출 상세 페이지
+│   │   ├── concert_sales_detail.js      # 공연 매출 상세 페이지
 │   │   ├── concert_dashboard_detail.js  # 콘서트 대시보드 상세
 │   │   └── concert_aggregated_dashboard.js  # 콘서트 통합 대시보드
 │   └── css/                   # CSS 파일 (빌드된 파일)
@@ -262,9 +260,6 @@ library_ai/
 
 #### core
 - 사용자 인증 (로그인/로그아웃)
-- 멀티 테넌트 지원 (Company, UserProfile 모델)
-- 회사별 데이터 필터링 (CompanyFilterMixin)
-- UserProfile 자동 생성 시그널
 - 커스텀 템플릿 태그 및 필터
 - 공통 유틸리티
 
@@ -273,10 +268,9 @@ library_ai/
 - 공연별 동적 설정값 관리 (좌석 등급, 예매처, 할인권종 등)
 - 인물 관리 (Person, CrewRole, CastingRole)
 - 공연 목록, 상세, 등록, 수정, 삭제
-- 회사별 데이터 격리 (멀티 테넌트)
 
 #### data_management
-- 매출 데이터 관리 (현재: 콘서트)
+- 매출 데이터 관리 (공연 공통)
 - 마케팅 데이터 관리 (개발 예정)
 - 리뷰 데이터 관리 (개발 예정)
 - 공연 기반 데이터 입력 및 관리
@@ -337,11 +331,9 @@ graph TB
     
     subgraph "Data Layer"
         UserModel[User Model]
-        CompanyModel[Company Model]
-        UserProfileModel[UserProfile Model]
         PerfModel[Performance Model]
         PersonModel[Person Model]
-        SalesModel[ConcertSales Model]
+        SalesModel[PerformanceSales Model]
         MarketingModel[Marketing Model]
         ReviewModel[Review Model]
     end
@@ -362,8 +354,6 @@ graph TB
     
     Forms --> Services
     Services --> UserModel
-    Services --> CompanyModel
-    Services --> UserProfileModel
     Services --> PerfModel
     Services --> PersonModel
     Services --> SalesModel
@@ -371,8 +361,6 @@ graph TB
     Services --> ReviewModel
     
     UserModel --> PostgreSQL
-    CompanyModel --> PostgreSQL
-    UserProfileModel --> PostgreSQL
     PerfModel --> PostgreSQL
     PersonModel --> PostgreSQL
     SalesModel --> PostgreSQL
@@ -451,32 +439,26 @@ sequenceDiagram
 
 ```mermaid
 erDiagram
-    USER ||--|| USER_PROFILE : has
-    COMPANY ||--o{ USER_PROFILE : has
-    COMPANY ||--o{ PERFORMANCE : owns
-    COMPANY ||--o{ PERSON : owns
     USER ||--o{ PERFORMANCE : creates
     PERFORMANCE ||--o{ SEAT_GRADE : has
     PERFORMANCE ||--o{ BOOKING_SITE : has
     PERFORMANCE ||--o{ DISCOUNT_TYPE : has
     PERFORMANCE ||--o{ CREW_ROLE : has
     PERFORMANCE ||--o{ CASTING_ROLE : has
-    PERFORMANCE ||--o{ CONCERT_DAILY_SALES : has
-    PERFORMANCE ||--o{ CONCERT_FINAL_SALES : has
-    PERFORMANCE ||--o{ MUSICAL_SALES : has
-    PERFORMANCE ||--o{ THEATER_SALES : has
+    PERFORMANCE ||--o{ PERFORMANCE_DAILY_SALES : has
+    PERFORMANCE ||--o{ PERFORMANCE_FINAL_SALES : has
     PERFORMANCE ||--o{ MARKETING : has
     PERFORMANCE ||--o{ REVIEW : has
     
     PERSON ||--o{ CREW_ROLE : participates
     PERSON ||--o{ CASTING_ROLE : participates
-    SEAT_GRADE ||--o{ CONCERT_DAILY_SALES_GRADE : used_in
-    SEAT_GRADE ||--o{ CONCERT_FINAL_SALES_GRADE : used_in
+    SEAT_GRADE ||--o{ PERFORMANCE_DAILY_SALES_GRADE : used_in
+    SEAT_GRADE ||--o{ PERFORMANCE_FINAL_SALES_GRADE : used_in
     SEAT_GRADE }o--o{ DISCOUNT_TYPE : applicable_to
-    BOOKING_SITE ||--o{ CONCERT_DAILY_SALES : used_in
-    BOOKING_SITE ||--o{ CONCERT_FINAL_SALES : used_in
-    CONCERT_DAILY_SALES ||--o{ CONCERT_DAILY_SALES_GRADE : has
-    CONCERT_FINAL_SALES ||--o{ CONCERT_FINAL_SALES_GRADE : has
+    BOOKING_SITE ||--o{ PERFORMANCE_DAILY_SALES : used_in
+    BOOKING_SITE ||--o{ PERFORMANCE_FINAL_SALES : used_in
+    PERFORMANCE_DAILY_SALES ||--o{ PERFORMANCE_DAILY_SALES_GRADE : has
+    PERFORMANCE_FINAL_SALES ||--o{ PERFORMANCE_FINAL_SALES_GRADE : has
     
     USER {
         int id PK
@@ -486,27 +468,10 @@ erDiagram
         datetime date_joined
     }
     
-    COMPANY {
-        int id PK
-        string name "회사명"
-        string name_en "회사명(영문)"
-        datetime created_at
-        datetime updated_at
-    }
-    
-    USER_PROFILE {
-        int id PK
-        int user_id FK "OneToOne"
-        int company_id FK "Nullable"
-        datetime created_at
-        datetime updated_at
-    }
-    
     PERSON {
         int id PK
         string name "인물 이름"
         string name_en "인물 이름 영문"
-        int company_id FK
         datetime created_at
         datetime updated_at
     }
@@ -525,7 +490,6 @@ erDiagram
         decimal break_even_point "손익분기점"
         decimal total_production_cost "총 제작비"
         image seat_map
-        int company_id FK
         datetime created_at
         datetime updated_at
     }
@@ -571,7 +535,7 @@ erDiagram
         int order "정렬 순서"
     }
     
-    CONCERT_DAILY_SALES {
+    PERFORMANCE_DAILY_SALES {
         int id PK
         int performance_id FK
         int booking_site_id FK
@@ -584,7 +548,7 @@ erDiagram
         datetime updated_at
     }
     
-    CONCERT_DAILY_SALES_GRADE {
+    PERFORMANCE_DAILY_SALES_GRADE {
         int id PK
         int daily_sales_id FK
         int seat_grade_id FK
@@ -593,7 +557,7 @@ erDiagram
         int free_count "무료 매수"
     }
     
-    CONCERT_FINAL_SALES {
+    PERFORMANCE_FINAL_SALES {
         int id PK
         int performance_id FK
         int booking_site_id FK
@@ -608,7 +572,7 @@ erDiagram
         datetime updated_at
     }
     
-    CONCERT_FINAL_SALES_GRADE {
+    PERFORMANCE_FINAL_SALES_GRADE {
         int id PK
         int final_sales_id FK
         int seat_grade_id FK
@@ -619,18 +583,6 @@ erDiagram
         decimal total_revenue "총 매출액"
         decimal paid_occupancy_rate "입금 점유율"
         decimal total_occupancy_rate "총 점유율"
-    }
-    
-    MUSICAL_SALES {
-        int id PK
-        int performance_id FK
-        "개발 예정"
-    }
-    
-    THEATER_SALES {
-        int id PK
-        int performance_id FK
-        "개발 예정"
     }
     
     MARKETING {
@@ -648,16 +600,6 @@ erDiagram
 
 ### 데이터 관계 설명
 
-#### 0. 멀티 테넌트 구조
-- **Company**: 회사 정보를 저장하는 모델
-- **UserProfile**: User와 Company를 연결하는 모델 (OneToOne)
-- **Performance**: 각 공연은 하나의 회사에 소속
-- **Person**: 각 인물은 하나의 회사에 소속
-- **CompanyFilterMixin**: View에서 회사별 데이터 필터링
-  - Admin 사용자: 모든 데이터 접근 가능
-  - 일반 사용자: 자신의 회사 데이터만 접근 가능
-- **시그널**: User 생성 시 자동으로 UserProfile 생성
-
 #### 1. Performance (공연) - 중심 엔티티
 - 모든 데이터의 중심이 되는 엔티티
 - 정규화된 모델을 통한 동적 설정값 관리:
@@ -670,16 +612,14 @@ erDiagram
 #### 2. Person (인물) - 통합 인물 관리
 - 제작진과 캐스팅 인물을 통합 관리하는 모델
 - **CrewRole**과 **CastingRole**을 통해 Performance와 연결
-- **Company**에 소속되어 회사별로 관리됨
 - 온톨로지 구축을 위한 핵심 엔티티
 - 인물별 공연 이력 추적 및 네트워크 분석 가능
 
 #### 3. Sales (매출) - Performance 기반
-- **ConcertDailySales**: 일별 매출 데이터 (예매처별, 입금/미입금 구분)
-- **ConcertDailySalesGrade**: 일별 등급별 판매 데이터 (입금/미입금/무료 매수)
-- **ConcertFinalSales**: 최종 집계 데이터 (등급별, 성별/연령대별, 결제수단별 등)
-- **ConcertFinalSalesGrade**: 최종 등급별 판매 데이터 (매출액, 점유율 포함)
-- `MusicalSales`, `TheaterSales` 등 장르별 모델 (개발 예정)
+- **PerformanceDailySales**: 일별 매출 데이터 (예매처별, 입금/미입금 구분)
+- **PerformanceDailySalesGrade**: 일별 등급별 판매 데이터 (입금/미입금/무료 매수)
+- **PerformanceFinalSales**: 최종 집계 데이터 (등급별, 성별/연령대별, 결제수단별 등)
+- **PerformanceFinalSalesGrade**: 최종 등급별 판매 데이터 (매출액, 점유율 포함)
 - `performance` ForeignKey로 Performance 참조
 - `booking_site` ForeignKey로 BookingSite 참조
 - `seat_grade` ForeignKey로 SeatGrade 참조
@@ -691,12 +631,4 @@ erDiagram
 - Performance에서 정의하지 않은 값은 Sales에서 사용 불가
 - ForeignKey 관계를 통한 데이터 일관성 보장
 - 폼 검증을 통한 추가 데이터 무결성 보장
-- `limit_choices_to`로 장르별 필터링
 - `unique_together`를 통한 중복 방지
-
-#### 5. 멀티 테넌트 데이터 격리
-- 모든 데이터는 회사별로 격리됨
-- `CompanyFilterMixin`을 통해 자동 필터링
-- 새 데이터 생성 시 사용자의 회사가 자동 할당
-- Admin 사용자는 모든 회사 데이터 접근 가능
-- 일반 사용자는 자신의 회사 데이터만 접근 가능

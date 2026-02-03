@@ -1,4 +1,4 @@
-// 콘서트 매출 상세 페이지 JavaScript
+// 공연 매출 상세 페이지 JavaScript
 
 // 전역 변수 (script 태그의 JSON 데이터에서 초기화)
 let performanceId = null;
@@ -33,9 +33,9 @@ let selectedDate = null;
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
     // script 태그에서 JSON 데이터 읽기
-    const dataScript = document.getElementById('concert-sales-data');
+    const dataScript = document.getElementById('performance-sales-data');
     if (!dataScript) {
-        console.error('concert-sales-data script 태그를 찾을 수 없습니다.');
+        console.error('performance-sales-data script 태그를 찾을 수 없습니다.');
         return;
     }
     

@@ -8,8 +8,8 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
 import json
-from .models import ConcertDailySales, ConcertFinalSales, ConcertDailySalesGrade
-from .forms import ConcertDailySalesForm, ConcertFinalSalesForm, ConcertSalesDailyFormSet
+from .models import PerformanceDailySales, PerformanceFinalSales, PerformanceDailySalesGrade
+from .forms import PerformanceDailySalesForm, PerformanceFinalSalesForm, PerformanceSalesDailyFormSet
 from .constants import AGE_GROUPS, REGIONS, SEOUL_REGIONS, GYEONGGI_REGIONS
 from performance.models import Performance
 
@@ -49,15 +49,15 @@ class PerformanceListView(ListView):
         return context
 
 
-class ConcertSalesListView(ListView):
-    """콘서트 데일리 매출 상세 뷰 (특정 공연의 매출)"""
-    model = ConcertDailySales
+class PerformanceSalesDetailView(ListView):
+    """공연 데일리 매출 상세 뷰 (특정 공연의 매출)"""
+    model = PerformanceDailySales
     template_name = 'data_management/concert_sales/detail.html'
     context_object_name = 'sales_list'
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = ConcertDailySales.objects.select_related('performance').all()
+        queryset = PerformanceDailySales.objects.select_related('performance').all()
         
         # 공연 필터 (필수)
         performance_id = self.request.GET.get('performance') or self.kwargs.get('performance_id')
@@ -115,7 +115,7 @@ class ConcertSalesListView(ListView):
                 context['sales_date_list'] = json.dumps(date_list, ensure_ascii=False)
                 
                 # 실제 저장된 매출 데이터가 있는 날짜 리스트
-                saved_dates = ConcertDailySales.objects.filter(
+                saved_dates = PerformanceDailySales.objects.filter(
                     performance=performance
                 ).values_list('date', flat=True).distinct()
                 saved_date_list = [date.strftime('%Y-%m-%d') for date in saved_dates]
@@ -173,23 +173,23 @@ class ConcertSalesListView(ListView):
         return context
 
 
-class ConcertSalesCreateView(CreateView):
-    """콘서트 데일리 매출 생성 뷰"""
-    model = ConcertDailySales
-    form_class = ConcertDailySalesForm
+class PerformanceSalesCreateView(CreateView):
+    """공연 데일리 매출 생성 뷰"""
+    model = PerformanceDailySales
+    form_class = PerformanceDailySalesForm
     template_name = 'data_management/concert_sales/form.html'
     
     def get_success_url(self):
         performance_id = self.object.performance.id
-        return reverse_lazy('data_management:concert_sales_detail', kwargs={'performance_id': performance_id})
+        return reverse_lazy('data_management:performance_sales_detail', kwargs={'performance_id': performance_id})
     
     def get_initial(self):
         initial = super().get_initial()
-        # URL에서 공연 ID 가져오기 (콘서트만)
+        # URL에서 공연 ID 가져오기
         performance_id = self.kwargs.get('performance_id') or self.request.GET.get('performance')
         if performance_id:
             try:
-                performance = Performance.objects.get(id=performance_id, genre='concert')
+                performance = Performance.objects.get(id=performance_id)
                 initial['performance'] = performance.id
             except Performance.DoesNotExist:
                 pass
@@ -197,8 +197,7 @@ class ConcertSalesCreateView(CreateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # 콘서트 공연 목록만
-        context['concerts'] = Performance.objects.filter(genre='concert').order_by('-created_at')
+        context['performances'] = Performance.objects.all().order_by('-created_at')
         return context
     
     def form_valid(self, form):
@@ -206,15 +205,15 @@ class ConcertSalesCreateView(CreateView):
         return super().form_valid(form)
 
 
-class ConcertSalesUpdateView(UpdateView):
-    """콘서트 데일리 매출 수정 뷰"""
-    model = ConcertDailySales
-    form_class = ConcertDailySalesForm
+class PerformanceSalesUpdateView(UpdateView):
+    """공연 데일리 매출 수정 뷰"""
+    model = PerformanceDailySales
+    form_class = PerformanceDailySalesForm
     template_name = 'data_management/concert_sales/form.html'
     
     def get_success_url(self):
         performance_id = self.object.performance.id
-        return reverse_lazy('data_management:concert_sales_detail', kwargs={'performance_id': performance_id})
+        return reverse_lazy('data_management:performance_sales_detail', kwargs={'performance_id': performance_id})
     
     def get(self, request, *args, **kwargs):
         # GET 요청 시 이전 메시지 제거
@@ -224,8 +223,7 @@ class ConcertSalesUpdateView(UpdateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # 콘서트 공연 목록만
-        context['concerts'] = Performance.objects.filter(genre='concert').order_by('-created_at')
+        context['performances'] = Performance.objects.all().order_by('-created_at')
         return context
     
     def form_valid(self, form):
@@ -233,50 +231,18 @@ class ConcertSalesUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-class ConcertSalesDeleteView(DeleteView):
-    """콘서트 데일리 매출 삭제 뷰"""
-    model = ConcertDailySales
+class PerformanceSalesDeleteView(DeleteView):
+    """공연 데일리 매출 삭제 뷰"""
+    model = PerformanceDailySales
     template_name = 'data_management/concert_sales/confirm_delete.html'
     
     def get_success_url(self):
         performance_id = self.object.performance.id
-        return reverse_lazy('data_management:concert_sales_detail', kwargs={'performance_id': performance_id})
+        return reverse_lazy('data_management:performance_sales_detail', kwargs={'performance_id': performance_id})
     
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, '매출이 성공적으로 삭제되었어요')
         return super().delete(request, *args, **kwargs)
-
-
-class MusicalSalesListView(ListView):
-    """뮤지컬 매출 목록 뷰 (준비 중)"""
-    template_name = 'data_management/sales_coming_soon.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        performance_id = self.kwargs.get('performance_id')
-        if performance_id:
-            try:
-                context['performance'] = Performance.objects.get(id=performance_id, genre='musical')
-                context['genre'] = '뮤지컬'
-            except Performance.DoesNotExist:
-                context['performance'] = None
-        return context
-
-
-class TheaterSalesListView(ListView):
-    """연극 매출 목록 뷰 (준비 중)"""
-    template_name = 'data_management/sales_coming_soon.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        performance_id = self.kwargs.get('performance_id')
-        if performance_id:
-            try:
-                context['performance'] = Performance.objects.get(id=performance_id, genre='theater')
-                context['genre'] = '연극'
-            except Performance.DoesNotExist:
-                context['performance'] = None
-        return context
 
 
 @login_required
@@ -284,7 +250,7 @@ class TheaterSalesListView(ListView):
 def save_daily_sales(request, performance_id):
     """날짜별 데일리 매출 저장 (AJAX)"""
     try:
-        performance = Performance.objects.get(id=performance_id, genre='concert')
+        performance = Performance.objects.get(id=performance_id)
     except Performance.DoesNotExist:
         return JsonResponse({'success': False, 'error': '공연을 찾을 수 없어요'}, status=404)
     
@@ -310,7 +276,7 @@ def save_daily_sales(request, performance_id):
     seat_grade_names = [grade.name for grade in seat_grades]
     
     # 기존 데이터 삭제 (해당 날짜의 데일리 매출만)
-    ConcertDailySales.objects.filter(
+    PerformanceDailySales.objects.filter(
         performance=performance,
         date=date
     ).delete()
@@ -333,7 +299,7 @@ def save_daily_sales(request, performance_id):
         formset_data[f'{prefix}-unpaid_revenue'] = request.POST.get(f'{booking_site_name}_unpaid_revenue', '0') or '0'
         formset_data[f'{prefix}-unpaid_ticket_count'] = request.POST.get(f'{booking_site_name}_unpaid_ticket_count', '0') or '0'
         
-        # 등급별 매수 데이터 수집 (나중에 ConcertDailySalesGrade로 저장)
+        # 등급별 매수 데이터 수집 (나중에 PerformanceDailySalesGrade로 저장)
         grade_data[booking_site_name] = {}
         for seat_grade in seat_grades:
             seat_grade_name = seat_grade.name
@@ -354,23 +320,23 @@ def save_daily_sales(request, performance_id):
     formset_data['form-MAX_NUM_FORMS'] = '1000'
     
     # Formset 생성 및 검증
-    formset = ConcertSalesDailyFormSet(formset_data, formset_files, queryset=ConcertDailySales.objects.none())
+    formset = PerformanceSalesDailyFormSet(formset_data, formset_files, queryset=PerformanceDailySales.objects.none())
     
     # 각 폼에 좌석 등급 전달
     for form in formset.forms:
         form.seat_grades = seat_grade_names
     
     if formset.is_valid():
-        # ConcertDailySales 저장
+        # PerformanceDailySales 저장
         daily_sales_instances = formset.save()
         
-        # ConcertDailySalesGrade 저장
+        # PerformanceDailySalesGrade 저장
         for daily_sales in daily_sales_instances:
             booking_site_name = daily_sales.booking_site.name if daily_sales.booking_site else None
             if booking_site_name and booking_site_name in grade_data:
                 for seat_grade_name, grade_info in grade_data[booking_site_name].items():
                     if grade_info['paid'] > 0 or grade_info['unpaid'] > 0 or grade_info['free'] > 0:
-                        ConcertDailySalesGrade.objects.update_or_create(
+                        PerformanceDailySalesGrade.objects.update_or_create(
                             daily_sales=daily_sales,
                             seat_grade=grade_info['seat_grade'],
                             defaults={
@@ -394,7 +360,7 @@ def save_daily_sales(request, performance_id):
 def get_daily_sales(request, performance_id):
     """특정 날짜의 데일리 매출 조회 (AJAX)"""
     try:
-        performance = Performance.objects.get(id=performance_id, genre='concert')
+        performance = Performance.objects.get(id=performance_id)
     except Performance.DoesNotExist:
         return JsonResponse({'success': False, 'error': '공연을 찾을 수 없어요'}, status=404)
     
@@ -409,7 +375,7 @@ def get_daily_sales(request, performance_id):
         return JsonResponse({'success': False, 'error': '올바른 날짜 형식이 아니에요'}, status=400)
     
     # 해당 날짜의 모든 매출 데이터 조회
-    sales_data = ConcertDailySales.objects.filter(
+    sales_data = PerformanceDailySales.objects.filter(
         performance=performance,
         date=date
     ).select_related('booking_site').prefetch_related('grade_sales__seat_grade')
@@ -434,7 +400,7 @@ def get_daily_sales(request, performance_id):
         result[site]['unpaid_revenue'] = float(sales.unpaid_revenue) if sales.unpaid_revenue else 0
         result[site]['unpaid_ticket_count'] = sales.unpaid_ticket_count or 0
         
-        # 등급별 매수 (ConcertDailySalesGrade 모델에서 가져오기)
+        # 등급별 매수 (PerformanceDailySalesGrade 모델에서 가져오기)
         for grade_sales in sales.grade_sales.all():
             seat_grade_name = grade_sales.seat_grade.name
             if grade_sales.paid_count > 0:

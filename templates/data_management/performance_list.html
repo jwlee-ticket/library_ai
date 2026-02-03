@@ -27,20 +27,12 @@
                             <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연명</th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연장</th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연 기간</th>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">상태</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         {% for performance in performances %}
-                            {% if performance.genre == 'concert' %}
-                                {% url 'data_management:concert_sales_detail' performance.id as sales_url %}
-                            {% elif performance.genre == 'musical' %}
-                                {% url 'data_management:musical_sales_list' performance.id as sales_url %}
-                            {% elif performance.genre == 'theater' %}
-                                {% url 'data_management:theater_sales_list' performance.id as sales_url %}
-                            {% endif %}
-                            <tr class="hover:bg-gray-50 transition-colors {% if sales_url %}cursor-pointer{% else %}cursor-not-allowed{% endif %}" 
-                                {% if sales_url %}data-href="{{ sales_url }}"{% endif %}>
+                            {% url 'data_management:performance_sales_detail' performance.id as sales_url %}
+                            <tr class="hover:bg-gray-50 transition-colors cursor-pointer" data-href="{{ sales_url }}">
                                 <td class="px-6 py-4">
                                     {{ performance.genre|genre_badge }}
                                 </td>
@@ -54,11 +46,6 @@
                                     <span class="text-sm text-gray-700">
                                         {{ performance.performance_start|date:"Y.m.d" }} ~ {{ performance.performance_end|date:"Y.m.d" }}
                                     </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    {% if not sales_url %}
-                                        <span class="text-sm text-gray-500">준비 중</span>
-                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

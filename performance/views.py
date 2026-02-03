@@ -2,14 +2,14 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db.models import Q
-from core.mixins import CompanyFilterMixin
 from .models import Performance, Person
 from .forms import PerformanceForm, SeatGradeFormSet, BookingSiteFormSet, DiscountTypeFormSet, CastingRoleFormSet
 
 
-class PerformanceListView(CompanyFilterMixin, ListView):
+class PerformanceListView(LoginRequiredMixin, ListView):
     """공연 목록 뷰"""
     model = Performance
     template_name = 'performance/list.html'
@@ -44,14 +44,14 @@ class PerformanceListView(CompanyFilterMixin, ListView):
         return context
 
 
-class PerformanceDetailView(CompanyFilterMixin, DetailView):
+class PerformanceDetailView(LoginRequiredMixin, DetailView):
     """공연 상세 뷰"""
     model = Performance
     template_name = 'performance/detail.html'
     context_object_name = 'performance'
 
 
-class PerformanceCreateView(CompanyFilterMixin, CreateView):
+class PerformanceCreateView(LoginRequiredMixin, CreateView):
     """공연 생성 뷰"""
     model = Performance
     form_class = PerformanceForm
@@ -62,17 +62,7 @@ class PerformanceCreateView(CompanyFilterMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['genre_choices'] = Performance.GENRE_CHOICES
         
-        # Person 쿼리셋 필터링
-        if self.request.user.is_superuser:
-            person_queryset = Person.objects.all()
-        else:
-            user_profile = getattr(self.request.user, 'profile', None)
-            if user_profile and user_profile.company:
-                person_queryset = Person.objects.filter(company=user_profile.company)
-            else:
-                person_queryset = Person.objects.none()
-        
-        context['person_choices'] = person_queryset.order_by('name')
+        context['person_choices'] = Person.objects.all().order_by('name')
         if self.object:
             context['genre_filter'] = self.object.genre
             # 인라인 폼셋 초기화
@@ -127,7 +117,7 @@ class PerformanceCreateView(CompanyFilterMixin, CreateView):
         return self.render_to_response(context)
 
 
-class PerformanceUpdateView(CompanyFilterMixin, UpdateView):
+class PerformanceUpdateView(LoginRequiredMixin, UpdateView):
     """공연 수정 뷰"""
     model = Performance
     form_class = PerformanceForm
@@ -145,17 +135,7 @@ class PerformanceUpdateView(CompanyFilterMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['genre_choices'] = Performance.GENRE_CHOICES
         
-        # Person 쿼리셋 필터링
-        if self.request.user.is_superuser:
-            person_queryset = Person.objects.all()
-        else:
-            user_profile = getattr(self.request.user, 'profile', None)
-            if user_profile and user_profile.company:
-                person_queryset = Person.objects.filter(company=user_profile.company)
-            else:
-                person_queryset = Person.objects.none()
-        
-        context['person_choices'] = person_queryset.order_by('name')
+        context['person_choices'] = Person.objects.all().order_by('name')
         if self.object:
             context['genre_filter'] = self.object.genre
             # 인라인 폼셋 초기화 (기존 데이터 로드)
@@ -199,7 +179,7 @@ class PerformanceUpdateView(CompanyFilterMixin, UpdateView):
         return self.render_to_response(context)
 
 
-class PerformanceDeleteView(CompanyFilterMixin, DeleteView):
+class PerformanceDeleteView(LoginRequiredMixin, DeleteView):
     """공연 삭제 뷰"""
     model = Performance
     template_name = 'performance/confirm_delete.html'

@@ -9,7 +9,7 @@ from decimal import Decimal
 import json
 from collections import defaultdict
 from performance.models import Performance
-from data_management.models import ConcertDailySales, ConcertFinalSales
+from data_management.models import PerformanceDailySales, PerformanceFinalSales
 
 
 @login_required
@@ -104,7 +104,7 @@ def get_concert_aggregated_summary_data(request):
         today = datetime.now().date()
         
         # 모든 콘서트의 일일 매출 데이터 조회
-        all_daily_sales = ConcertDailySales.objects.filter(
+        all_daily_sales = PerformanceDailySales.objects.filter(
             performance__genre='concert'
         )
         
@@ -159,7 +159,7 @@ def get_concert_aggregated_summary_data(request):
         concert_list = []
         for concert in concerts:
             # 각 콘서트의 총 매출 계산
-            concert_sales = ConcertDailySales.objects.filter(performance=concert)
+            concert_sales = PerformanceDailySales.objects.filter(performance=concert)
             concert_revenue_result = concert_sales.aggregate(
                 total_paid=Sum('paid_revenue'),
                 total_unpaid=Sum('unpaid_revenue')
@@ -240,7 +240,7 @@ def get_concert_period_revenue_data(request):
         concert_dict = {concert.id: concert.title for concert in concerts}
         
         # 일일 매출 데이터 조회
-        daily_sales = ConcertDailySales.objects.filter(
+        daily_sales = PerformanceDailySales.objects.filter(
             performance__genre='concert',
             date__gte=start_date,
             date__lte=end_date
@@ -323,7 +323,7 @@ def get_concert_dashboard_data(request, pk):
         current_date += timedelta(days=1)
     
     # 매출 데이터 조회
-    sales_data = ConcertDailySales.objects.filter(
+    sales_data = PerformanceDailySales.objects.filter(
         performance=performance,
         date__gte=start_date,
         date__lte=end_date
@@ -377,21 +377,21 @@ def get_concert_dashboard_data(request, pk):
     unpaid_total = sales_data.aggregate(total=Sum('unpaid_revenue'))['total'] or 0
     total_revenue = float(paid_total) + float(unpaid_total)
     
-    # 등급별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    # 등급별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     grade_sales_data = {}
-    # 할인권종별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    # 할인권종별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     discount_sales_data = {}
-    # 성별, 연령대별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    # 성별, 연령대별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     age_gender_sales_data = []
-    # 결제수단별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    # 결제수단별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     payment_method_sales_data = {}
-    # 카드별 매출집계 데이터 (ConcertFinalSales에서 가져오기)
+    # 카드별 매출집계 데이터 (PerformanceFinalSales에서 가져오기)
     card_sales_data = {}
-    # 판매경로별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    # 판매경로별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     sales_channel_sales_data = {}
-    # 지역별 판매현황 데이터 (ConcertFinalSales에서 가져오기)
+    # 지역별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     region_sales_data = {}
-    final_sales = ConcertFinalSales.objects.filter(performance=performance)
+    final_sales = PerformanceFinalSales.objects.filter(performance=performance)
     
     # 모든 예매처의 등급별 데이터를 합산
     for final_sale in final_sales:

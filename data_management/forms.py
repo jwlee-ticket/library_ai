@@ -1,16 +1,16 @@
 from django import forms
 from django.forms import modelformset_factory
 from django.core.exceptions import ValidationError
-from .models import ConcertDailySales, ConcertFinalSales
+from .models import PerformanceDailySales, PerformanceFinalSales
 from performance.models import Performance
 import json
 
 
-class ConcertDailySalesForm(forms.ModelForm):
-    """콘서트 데일리 매출 폼"""
+class PerformanceDailySalesForm(forms.ModelForm):
+    """공연 데일리 매출 폼"""
     
     class Meta:
-        model = ConcertDailySales
+        model = PerformanceDailySales
         fields = [
             'performance',
             'date',
@@ -61,8 +61,8 @@ class ConcertDailySalesForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # 콘서트 공연만 필터링
-        self.fields['performance'].queryset = Performance.objects.filter(genre='concert')
+        # 모든 공연 선택 가능
+        self.fields['performance'].queryset = Performance.objects.all()
         self.fields['performance'].label = '공연'
         self.fields['performance'].empty_label = '공연을 선택하세요'
         
@@ -110,11 +110,11 @@ class ConcertDailySalesForm(forms.ModelForm):
         return cleaned_data
 
 
-class ConcertFinalSalesForm(forms.ModelForm):
-    """콘서트 최종 매출 폼"""
+class PerformanceFinalSalesForm(forms.ModelForm):
+    """공연 최종 매출 폼"""
     
     class Meta:
-        model = ConcertFinalSales
+        model = PerformanceFinalSales
         fields = [
             'performance',
             'booking_site',
@@ -160,8 +160,8 @@ class ConcertFinalSalesForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # 콘서트 공연만 필터링
-        self.fields['performance'].queryset = Performance.objects.filter(genre='concert')
+        # 모든 공연 선택 가능
+        self.fields['performance'].queryset = Performance.objects.all()
         self.fields['performance'].label = '공연'
         self.fields['performance'].empty_label = '공연을 선택하세요'
         
@@ -201,11 +201,11 @@ class ConcertFinalSalesForm(forms.ModelForm):
         return cleaned_data
 
 
-class ConcertSalesDailyForm(forms.ModelForm):
+class PerformanceSalesDailyForm(forms.ModelForm):
     """데일리 매출 입력용 폼 (등급별 필드 동적 생성)"""
     
     class Meta:
-        model = ConcertDailySales
+        model = PerformanceDailySales
         fields = [
             'performance',
             'date',
@@ -288,15 +288,15 @@ class ConcertSalesDailyForm(forms.ModelForm):
     
     def clean(self):
         cleaned_data = super().clean()
-        # 등급별 매수는 나중에 ConcertDailySalesGrade 모델로 저장됨
+        # 등급별 매수는 나중에 PerformanceDailySalesGrade 모델로 저장됨
         # 여기서는 폼 데이터만 정리
         return cleaned_data
 
 
 # 날짜별 Formset 생성
-ConcertSalesDailyFormSet = modelformset_factory(
-    ConcertDailySales,
-    form=ConcertSalesDailyForm,
+PerformanceSalesDailyFormSet = modelformset_factory(
+    PerformanceDailySales,
+    form=PerformanceSalesDailyForm,
     extra=0,
     can_delete=False,
 )
