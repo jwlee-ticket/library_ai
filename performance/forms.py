@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 import json
-from .models import Performance, SeatGrade, BookingSite, DiscountType, Person, CastingRole
+from .models import Performance, SeatGrade, BookingSite, DiscountType
 
 
 class PerformanceForm(forms.ModelForm):
@@ -221,29 +221,5 @@ DiscountTypeFormSet = inlineformset_factory(
     form=DiscountTypeForm,
     extra=1,
     can_delete=True,
-)
-
-
-CastingRoleFormSet = inlineformset_factory(
-    Performance,
-    CastingRole,
-    fields=['person', 'role', 'order'],
-    extra=1,
-    can_delete=True,
-    widgets={
-        'person': forms.Select(attrs={
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-        }),
-        'role': forms.TextInput(attrs={
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '역할명',
-        }),
-        'order': forms.NumberInput(attrs={
-            'class': 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors',
-            'placeholder': '0',
-            'min': '0',
-            'step': '1',
-        }),
-    }
 )
 

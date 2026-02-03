@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Performance, SeatGrade, BookingSite, DiscountType, Person, CrewRole, CastingRole
+from .models import Performance, SeatGrade, BookingSite, DiscountType
 
 
 class SeatGradeInline(admin.TabularInline):
@@ -25,32 +25,6 @@ class DiscountTypeInline(admin.TabularInline):
     fields = ['name', 'start_date', 'end_date', 'discount_rate', 'applicable_grades']
     ordering = ['start_date', 'name']
     filter_horizontal = ['applicable_grades']
-
-
-class CrewRoleInline(admin.TabularInline):
-    """제작진 역할 인라인"""
-    model = CrewRole
-    extra = 1
-    fields = ['person', 'role', 'order']
-    ordering = ['order', 'role']
-
-
-class CastingRoleInline(admin.TabularInline):
-    """캐스팅 역할 인라인"""
-    model = CastingRole
-    extra = 1
-    fields = ['person', 'role', 'order']
-    ordering = ['order', 'role']
-
-
-@admin.register(Person)
-class PersonAdmin(admin.ModelAdmin):
-    """인물 Admin 설정"""
-    
-    list_display = ['name', 'name_en', 'created_at']
-    list_filter = ['created_at']
-    search_fields = ['name', 'name_en']
-    ordering = ['name']
 
 
 @admin.register(Performance)
@@ -122,4 +96,4 @@ class PerformanceAdmin(admin.ModelAdmin):
     ordering = ['-created_at']
     
     # 인라인
-    inlines = [SeatGradeInline, BookingSiteInline, DiscountTypeInline, CrewRoleInline, CastingRoleInline]
+    inlines = [SeatGradeInline, BookingSiteInline, DiscountTypeInline]

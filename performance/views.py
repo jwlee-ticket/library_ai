@@ -6,8 +6,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db import transaction
 from django.db.models import Q
-from .models import Performance, Person, SeatGrade
-from .forms import PerformanceForm, SeatGradeFormSet, BookingSiteFormSet, DiscountTypeFormSet, CastingRoleFormSet
+from .models import Performance, SeatGrade
+from .forms import PerformanceForm, SeatGradeFormSet, BookingSiteFormSet, DiscountTypeFormSet
 
 
 def sync_discount_type_grades(performance, discount_type_formset):
@@ -77,21 +77,18 @@ class PerformanceCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['genre_choices'] = Performance.GENRE_CHOICES
         
-        context['person_choices'] = Person.objects.all().order_by('name')
         if self.object:
             context['genre_filter'] = self.object.genre
             # 인라인 폼셋 초기화
             context['seat_grade_formset'] = SeatGradeFormSet(instance=self.object)
             context['booking_site_formset'] = BookingSiteFormSet(instance=self.object)
             context['discount_type_formset'] = DiscountTypeFormSet(instance=self.object)
-            context['casting_role_formset'] = CastingRoleFormSet(instance=self.object)
         else:
             context['genre_filter'] = ''
             # 새 객체 생성 시 빈 폼셋
             context['seat_grade_formset'] = SeatGradeFormSet()
             context['booking_site_formset'] = BookingSiteFormSet()
             context['discount_type_formset'] = DiscountTypeFormSet()
-            context['casting_role_formset'] = CastingRoleFormSet()
         return context
     
     def form_valid(self, form):
@@ -102,13 +99,10 @@ class PerformanceCreateView(LoginRequiredMixin, CreateView):
             seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
             booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
             discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
-            casting_role_formset = CastingRoleFormSet(self.request.POST, instance=performance)
-            
             if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
-                discount_type_formset.is_valid() and casting_role_formset.is_valid()):
+                discount_type_formset.is_valid()):
                 seat_grade_formset.save()
                 booking_site_formset.save()
-                casting_role_formset.save()
                 discount_type_formset.save()
                 sync_discount_type_grades(performance, discount_type_formset)
                 messages.success(self.request, '공연이 성공적으로 등록되었어요')
@@ -126,12 +120,10 @@ class PerformanceCreateView(LoginRequiredMixin, CreateView):
             context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST, instance=self.object)
             context['booking_site_formset'] = BookingSiteFormSet(self.request.POST, instance=self.object)
             context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST, instance=self.object)
-            context['casting_role_formset'] = CastingRoleFormSet(self.request.POST, instance=self.object)
         else:
             context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST)
             context['booking_site_formset'] = BookingSiteFormSet(self.request.POST)
             context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST)
-            context['casting_role_formset'] = CastingRoleFormSet(self.request.POST)
         return self.render_to_response(context)
 
 
@@ -153,14 +145,12 @@ class PerformanceUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['genre_choices'] = Performance.GENRE_CHOICES
         
-        context['person_choices'] = Person.objects.all().order_by('name')
         if self.object:
             context['genre_filter'] = self.object.genre
             # 인라인 폼셋 초기화 (기존 데이터 로드)
             context['seat_grade_formset'] = SeatGradeFormSet(instance=self.object)
             context['booking_site_formset'] = BookingSiteFormSet(instance=self.object)
             context['discount_type_formset'] = DiscountTypeFormSet(instance=self.object)
-            context['casting_role_formset'] = CastingRoleFormSet(instance=self.object)
         else:
             context['genre_filter'] = ''
         return context
@@ -173,13 +163,10 @@ class PerformanceUpdateView(LoginRequiredMixin, UpdateView):
             seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
             booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
             discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
-            casting_role_formset = CastingRoleFormSet(self.request.POST, instance=performance)
-            
             if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
-                discount_type_formset.is_valid() and casting_role_formset.is_valid()):
+                discount_type_formset.is_valid()):
                 seat_grade_formset.save()
                 booking_site_formset.save()
-                casting_role_formset.save()
                 discount_type_formset.save()
                 sync_discount_type_grades(performance, discount_type_formset)
                 messages.success(self.request, '공연 정보가 성공적으로 수정되었어요')
@@ -197,7 +184,6 @@ class PerformanceUpdateView(LoginRequiredMixin, UpdateView):
         context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST, instance=self.object)
         context['booking_site_formset'] = BookingSiteFormSet(self.request.POST, instance=self.object)
         context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST, instance=self.object)
-        context['casting_role_formset'] = CastingRoleFormSet(self.request.POST, instance=self.object)
         return self.render_to_response(context)
 
 

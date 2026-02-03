@@ -266,7 +266,6 @@ library_ai/
 #### performance
 - 공연 정보 관리 (CRUD)
 - 공연별 동적 설정값 관리 (좌석 등급, 예매처, 할인권종 등)
-- 인물 관리 (Person, CrewRole, CastingRole)
 - 공연 목록, 상세, 등록, 수정, 삭제
 
 #### data_management
@@ -332,7 +331,6 @@ graph TB
     subgraph "Data Layer"
         UserModel[User Model]
         PerfModel[Performance Model]
-        PersonModel[Person Model]
         SalesModel[PerformanceSales Model]
         MarketingModel[Marketing Model]
         ReviewModel[Review Model]
@@ -355,14 +353,12 @@ graph TB
     Forms --> Services
     Services --> UserModel
     Services --> PerfModel
-    Services --> PersonModel
     Services --> SalesModel
     Services --> MarketingModel
     Services --> ReviewModel
     
     UserModel --> PostgreSQL
     PerfModel --> PostgreSQL
-    PersonModel --> PostgreSQL
     SalesModel --> PostgreSQL
     MarketingModel --> PostgreSQL
     ReviewModel --> PostgreSQL
@@ -443,15 +439,11 @@ erDiagram
     PERFORMANCE ||--o{ SEAT_GRADE : has
     PERFORMANCE ||--o{ BOOKING_SITE : has
     PERFORMANCE ||--o{ DISCOUNT_TYPE : has
-    PERFORMANCE ||--o{ CREW_ROLE : has
-    PERFORMANCE ||--o{ CASTING_ROLE : has
     PERFORMANCE ||--o{ PERFORMANCE_DAILY_SALES : has
     PERFORMANCE ||--o{ PERFORMANCE_FINAL_SALES : has
     PERFORMANCE ||--o{ MARKETING : has
     PERFORMANCE ||--o{ REVIEW : has
     
-    PERSON ||--o{ CREW_ROLE : participates
-    PERSON ||--o{ CASTING_ROLE : participates
     SEAT_GRADE ||--o{ PERFORMANCE_DAILY_SALES_GRADE : used_in
     SEAT_GRADE ||--o{ PERFORMANCE_FINAL_SALES_GRADE : used_in
     SEAT_GRADE }o--o{ DISCOUNT_TYPE : applicable_to
@@ -466,14 +458,6 @@ erDiagram
         string email
         string first_name
         datetime date_joined
-    }
-    
-    PERSON {
-        int id PK
-        string name "인물 이름"
-        string name_en "인물 이름 영문"
-        datetime created_at
-        datetime updated_at
     }
     
     PERFORMANCE {
@@ -517,22 +501,6 @@ erDiagram
         date start_date "할인 시작일"
         date end_date "할인 종료일"
         int discount_rate "할인율"
-    }
-    
-    CREW_ROLE {
-        int id PK
-        int performance_id FK
-        int person_id FK
-        string role "역할"
-        int order "정렬 순서"
-    }
-    
-    CASTING_ROLE {
-        int id PK
-        int performance_id FK
-        int person_id FK
-        string role "배역명"
-        int order "정렬 순서"
     }
     
     PERFORMANCE_DAILY_SALES {
@@ -606,16 +574,8 @@ erDiagram
   - **SeatGrade**: 좌석 등급 (등급명, 티켓 가격, 좌석 수)
   - **BookingSite**: 예매처 (예매처명, 예매 URL)
   - **DiscountType**: 할인권종 (할인권종명, 할인 기간, 할인율, 적용 가능한 등급)
-  - **CrewRole**: 제작진 역할 (인물, 역할)
-  - **CastingRole**: 캐스팅 역할 (인물, 배역명)
 
-#### 2. Person (인물) - 통합 인물 관리
-- 제작진과 캐스팅 인물을 통합 관리하는 모델
-- **CrewRole**과 **CastingRole**을 통해 Performance와 연결
-- 온톨로지 구축을 위한 핵심 엔티티
-- 인물별 공연 이력 추적 및 네트워크 분석 가능
-
-#### 3. Sales (매출) - Performance 기반
+#### 2. Sales (매출) - Performance 기반
 - **PerformanceDailySales**: 일별 매출 데이터 (예매처별, 입금/미입금 구분)
 - **PerformanceDailySalesGrade**: 일별 등급별 판매 데이터 (입금/미입금/무료 매수)
 - **PerformanceFinalSales**: 최종 집계 데이터 (등급별, 성별/연령대별, 결제수단별 등)

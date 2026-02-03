@@ -96,34 +96,6 @@
                     <label class="block text-sm font-medium text-gray-600 mb-2">주관</label>
                     <p class="text-base text-black">{% if performance.organizer %}{{ performance.organizer }}{% else %}<span class="text-gray-400">없음</span>{% endif %}</p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-2">제작진</label>
-                    {% if performance.crew_roles.all %}
-                        <div class="space-y-1">
-                            {% for crew_role in performance.crew_roles.all %}
-                                <div class="text-base text-black">
-                                    <span class="font-medium">{{ crew_role.role }}</span>: {{ crew_role.person.name }}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <span class="text-gray-400">없음</span>
-                    {% endif %}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-2">캐스팅</label>
-                    {% if performance.casting_roles.all %}
-                        <div class="space-y-1">
-                            {% for casting_role in performance.casting_roles.all %}
-                                <div class="text-base text-black">
-                                    <span class="font-medium">{{ casting_role.role }}</span>: {{ casting_role.person.name }}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <span class="text-gray-400">없음</span>
-                    {% endif %}
-                </div>
             </div>
         </div>
         

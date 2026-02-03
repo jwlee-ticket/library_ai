@@ -2,27 +2,6 @@ from django.db import models
 from django.core.validators import MinValueValidator
 
 
-class Person(models.Model):
-    """인물 모델 (감독, 배우, 제작진 등 통합 관리)"""
-    
-    name = models.CharField(max_length=200, verbose_name='이름', help_text='인물 이름')
-    name_en = models.CharField(max_length=200, blank=True, verbose_name='이름(영문)', help_text='인물 이름 영문')
-    # 메타 필드
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일시')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='수정일시')
-    
-    class Meta:
-        verbose_name = '인물'
-        verbose_name_plural = '인물들'
-        ordering = ['name']
-        indexes = [
-            models.Index(fields=['name']),
-        ]
-    
-    def __str__(self):
-        return self.name
-
-
 class SeatGrade(models.Model):
     """좌석 등급 모델"""
     
@@ -131,78 +110,6 @@ class DiscountType(models.Model):
         return f'{self.performance.title} - {self.name}'
 
 
-class CrewRole(models.Model):
-    """제작진 역할 모델"""
-    
-    performance = models.ForeignKey(
-        'Performance',
-        on_delete=models.CASCADE,
-        related_name='crew_roles',
-        verbose_name='공연'
-    )
-    person = models.ForeignKey(
-        'Person',
-        on_delete=models.CASCADE,
-        verbose_name='인물',
-        help_text='제작진 인물'
-    )
-    role = models.CharField(max_length=100, verbose_name='역할', help_text='예: 감독, 음악, 작사, 작곡 등')
-    order = models.IntegerField(
-        default=0,
-        verbose_name='정렬 순서',
-        help_text='역할 표시 순서 (작을수록 먼저 표시)'
-    )
-    
-    class Meta:
-        verbose_name = '제작진 역할'
-        verbose_name_plural = '제작진 역할들'
-        ordering = ['performance', 'order', 'role']
-        indexes = [
-            models.Index(fields=['performance', 'order']),
-            models.Index(fields=['person']),
-        ]
-        unique_together = [['performance', 'person', 'role']]
-    
-    def __str__(self):
-        return f'{self.performance.title} - {self.role}: {self.person.name}'
-
-
-class CastingRole(models.Model):
-    """캐스팅 역할 모델"""
-    
-    performance = models.ForeignKey(
-        'Performance',
-        on_delete=models.CASCADE,
-        related_name='casting_roles',
-        verbose_name='공연'
-    )
-    person = models.ForeignKey(
-        'Person',
-        on_delete=models.CASCADE,
-        verbose_name='인물',
-        help_text='배우 인물'
-    )
-    role = models.CharField(max_length=100, verbose_name='역할', help_text='예: 홍길동, 김철수 등 배역명')
-    order = models.IntegerField(
-        default=0,
-        verbose_name='정렬 순서',
-        help_text='역할 표시 순서 (작을수록 먼저 표시)'
-    )
-    
-    class Meta:
-        verbose_name = '캐스팅 역할'
-        verbose_name_plural = '캐스팅 역할들'
-        ordering = ['performance', 'order', 'role']
-        indexes = [
-            models.Index(fields=['performance', 'order']),
-            models.Index(fields=['person']),
-        ]
-        unique_together = [['performance', 'person', 'role']]
-    
-    def __str__(self):
-        return f'{self.performance.title} - {self.role}: {self.person.name}'
-
-
 class Performance(models.Model):
     """공연 모델"""
     
@@ -217,11 +124,11 @@ class Performance(models.Model):
     # 필수 텍스트 필드
     title = models.CharField(max_length=200, verbose_name='공연명')
     genre = models.CharField(max_length=20, choices=GENRE_CHOICES, verbose_name='장르')
-    venue = models.CharField(max_length=200, verbose_name='공연장')
+    venue = models.CharField(max_length=200, blank=True, verbose_name='공연장')
     
     # 주소 필드 (카카오 우편번호 API 사용)
     postcode = models.CharField(max_length=10, blank=True, verbose_name='우편번호')
-    address = models.CharField(max_length=200, verbose_name='공연장 주소')
+    address = models.CharField(max_length=200, blank=True, verbose_name='공연장 주소')
     
     # 선택 텍스트 필드
     title_en = models.CharField(max_length=200, blank=True, verbose_name='공연명(영문)')
@@ -233,9 +140,9 @@ class Performance(models.Model):
     
     # 필수 날짜 필드
     performance_start = models.DateField(verbose_name='공연 시작일')
-    performance_end = models.DateField(verbose_name='공연 종료일')
-    sales_start = models.DateField(verbose_name='판매 시작일')
-    sales_end = models.DateField(verbose_name='판매 종료일')
+    performance_end = models.DateField(null=True, blank=True, verbose_name='공연 종료일')
+    sales_start = models.DateField(null=True, blank=True, verbose_name='판매 시작일')
+    sales_end = models.DateField(null=True, blank=True, verbose_name='판매 종료일')
     
     # 수익 목표 필드
     target_revenue = models.DecimalField(
