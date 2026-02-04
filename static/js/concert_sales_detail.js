@@ -972,6 +972,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const details = `날짜 ${data.date_count || 0}건, 일별 ${data.daily_sales_count || 0}건, 등급 ${data.grade_sales_count || 0}건 저장`;
                     showExcelUploadStatus('success', '업로드가 완료되었습니다.', details);
                     fileInput.value = '';
+                    prependUploadLogRow(data);
                 } else {
                     showExcelUploadStatus('error', '업로드 실패', data.error || '알 수 없는 오류가 발생했습니다.');
                 }
@@ -984,6 +985,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     excelUploadBtn.disabled = false;
                     excelUploadBtn.textContent = '업로드';
                 }
+            });
+        });
+    }
+
+    const uploadLogTbody = document.getElementById('upload-log-tbody');
+    if (uploadLogTbody) {
+        uploadLogTbody.addEventListener('click', function(event) {
+            const button = event.target.closest('[data-delete-upload-log]');
+            if (!button) return;
+
+            const deleteUrl = button.getAttribute('data-delete-url');
+            if (!deleteUrl) {
+                showExcelUploadStatus('error', '삭제 URL이 없습니다.', '페이지를 새로고침 해주세요.');
+                return;
+            }
+
+            if (!confirm('이 업로드 기록을 삭제할까요?')) {
+                return;
+            }
+
+            fetch(deleteUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json().then(data => ({
+                ok: response.ok,
+                data
+            })))
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
+                    const row = button.closest('tr');
+                    if (row) {
+                        row.remove();
+                    }
+                    ensureUploadLogEmptyState();
+                    showExcelUploadStatus('success', '업로드 기록이 삭제되었습니다.', '');
+                } else {
+                    showExcelUploadStatus('error', '삭제 실패', data.error || '알 수 없는 오류가 발생했습니다.');
+                }
+            })
+            .catch(error => {
+                showExcelUploadStatus('error', '삭제 중 오류 발생', error.message);
             });
         });
     }
@@ -1074,3 +1121,55 @@ document.addEventListener('DOMContentLoaded', function() {
     // 전역 함수로 등록 (템플릿 다운로드 등에서 사용 가능)
     window.showExcelUploadStatus = showExcelUploadStatus;
 });
+
+function prependUploadLogRow(data) {
+    const tbody = document.getElementById('upload-log-tbody');
+    if (!tbody) return;
+    
+    const now = new Date();
+    const uploadedAt = now.toISOString().slice(0, 16).replace('T', ' ');
+    const fileName = data.file_name || '-';
+    
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-gray-50 transition-colors';
+    const deleteUrl = data.delete_url || '';
+    const deleteButton = deleteUrl
+        ? `<button type="button" class="p-2 text-danger hover:text-white hover:bg-danger rounded-lg transition-colors" data-delete-upload-log data-delete-url="${deleteUrl}" aria-label="업로드 로그 삭제">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>`
+        : '-';
+    row.innerHTML = `
+        <td class="px-6 py-4 text-sm text-gray-700">${uploadedAt}</td>
+        <td class="px-6 py-4 text-sm text-gray-700">${fileName}</td>
+        <td class="px-6 py-4 text-right text-sm text-gray-700">${deleteButton}</td>
+    `;
+    
+    const emptyNotice = tbody.parentElement?.querySelector('.bg-gray-50');
+    if (emptyNotice) {
+        emptyNotice.remove();
+    }
+    
+    tbody.prepend(row);
+}
+
+function ensureUploadLogEmptyState() {
+    const tbody = document.getElementById('upload-log-tbody');
+    if (!tbody) return;
+
+    if (tbody.children.length > 0) {
+        return;
+    }
+
+    const container = tbody.closest('.bg-white');
+    if (!container) return;
+
+    const existingNotice = container.querySelector('.bg-gray-50');
+    if (existingNotice) return;
+
+    const notice = document.createElement('div');
+    notice.className = 'rounded-lg border border-gray-100 bg-gray-50 p-6 text-sm text-gray-600';
+    notice.textContent = '업로드된 파일이 없어요.';
+    container.appendChild(notice);
+}

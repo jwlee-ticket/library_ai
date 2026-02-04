@@ -20,6 +20,15 @@ class PerformanceDailySales(models.Model):
         blank=True,
         help_text='예매처'
     )
+    upload_log = models.ForeignKey(
+        'PerformanceSalesUploadLog',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='daily_sales',
+        verbose_name='업로드 기록',
+        help_text='엑셀 업로드 로그'
+    )
     
     # 유료 - 입금
     paid_revenue = models.DecimalField(
@@ -346,3 +355,39 @@ class PerformanceFinalSalesGrade(models.Model):
     def get_total_count(self):
         """총 판매 매수 계산 (입금 + 미입금 + 무료)"""
         return self.paid_count + self.unpaid_count + self.free_count
+
+
+class PerformanceSalesUploadLog(models.Model):
+    """공연 매출 엑셀 업로드 기록"""
+    
+    STATUS_CHOICES = [
+        ('success', '성공'),
+        ('failed', '실패'),
+    ]
+    
+    performance = models.ForeignKey(
+        'performance.Performance',
+        on_delete=models.CASCADE,
+        related_name='sales_upload_logs',
+        verbose_name='공연'
+    )
+    original_filename = models.CharField(max_length=255, verbose_name='파일명')
+    sheet_name = models.CharField(max_length=100, blank=True, verbose_name='시트명')
+    date_start = models.DateField(null=True, blank=True, verbose_name='데이터 시작일')
+    date_end = models.DateField(null=True, blank=True, verbose_name='데이터 종료일')
+    daily_sales_count = models.IntegerField(default=0, verbose_name='일별 매출 건수')
+    grade_sales_count = models.IntegerField(default=0, verbose_name='등급별 매출 건수')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='success', verbose_name='상태')
+    message = models.CharField(max_length=255, blank=True, verbose_name='메시지')
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='업로드일시')
+    
+    class Meta:
+        verbose_name = '공연 매출 업로드 기록'
+        verbose_name_plural = '공연 매출 업로드 기록'
+        ordering = ['-uploaded_at']
+        indexes = [
+            models.Index(fields=['performance', 'uploaded_at']),
+        ]
+    
+    def __str__(self):
+        return f'{self.performance.title} - {self.original_filename}'

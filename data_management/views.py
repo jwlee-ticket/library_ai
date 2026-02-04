@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -12,7 +12,8 @@ import re
 from decimal import Decimal
 import pandas as pd
 from django.db import transaction
-from .models import PerformanceDailySales, PerformanceFinalSales, PerformanceDailySalesGrade
+import os
+from .models import PerformanceDailySales, PerformanceFinalSales, PerformanceDailySalesGrade, PerformanceSalesUploadLog
 from .forms import PerformanceDailySalesForm, PerformanceFinalSalesForm, PerformanceSalesDailyFormSet, PerformanceSalesExcelUploadForm
 from .constants import AGE_GROUPS, REGIONS, SEOUL_REGIONS, GYEONGGI_REGIONS
 from performance.models import Performance, BookingSite, SeatGrade
@@ -135,6 +136,10 @@ class PerformanceSalesDetailView(ListView):
                 context['gyeonggi_regions'] = GYEONGGI_REGIONS
                 context['gyeonggi_regions_json'] = json.dumps(GYEONGGI_REGIONS, ensure_ascii=False)
                 
+                context['upload_logs'] = PerformanceSalesUploadLog.objects.filter(
+                    performance=performance
+                ).order_by('-uploaded_at')
+                
             except Performance.DoesNotExist:
                 context['performance'] = None
                 context['booking_sites'] = '[]'
@@ -144,6 +149,7 @@ class PerformanceSalesDetailView(ListView):
                 context['discount_types_json'] = '[]'
                 context['sales_date_list'] = '[]'
                 context['saved_date_list'] = '[]'
+                context['upload_logs'] = []
                 context['age_groups'] = AGE_GROUPS
                 context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)
                 context['regions'] = REGIONS
@@ -161,6 +167,7 @@ class PerformanceSalesDetailView(ListView):
             context['discount_types_json'] = '[]'
             context['sales_date_list'] = '[]'
             context['saved_date_list'] = '[]'
+            context['upload_logs'] = []
             context['age_groups'] = AGE_GROUPS
             context['age_groups_json'] = json.dumps(AGE_GROUPS, ensure_ascii=False)
             context['regions'] = REGIONS
@@ -258,6 +265,25 @@ def _normalize_text(value):
     return text
 
 
+def _is_valid_seat_grade_label(label):
+    if not label:
+        return False
+    normalized = _normalize_text(label)
+    if not normalized:
+        return False
+    if normalized in ['TOT', '금액']:
+        return True
+    if re.fullmatch(r'[0-9,.\s]+', normalized):
+        return False
+    ignore_keywords = [
+        '수량', '매수', '합계', '총계', '전체', '계', 'TOTAL', 'TOTALS', 'SUM',
+        '입금', '미입금', '무료', '유료', '비고', '단가'
+    ]
+    if any(keyword in normalized for keyword in ignore_keywords):
+        return False
+    return True
+
+
 def _safe_int(value):
     if value is None:
         return 0
@@ -298,9 +324,15 @@ def _classify_group(label):
     
     ignore_keywords = [
         '유료 계', '전체', '점유율', '잔여', '객단가', '할인율',
-        'BEP', '목표매출', '추가 필요', '미입금 내역'
+        'BEP', '목표매출', '추가 필요', '미입금 내역', '합계', '총계'
     ]
     if any(keyword in text for keyword in ignore_keywords):
+        return None
+    
+    if text in ['미', '미지정', '합계', 'TOTAL', '계', '전체', '총계']:
+        return None
+    
+    if '미입금' in text and '입금+미입금' not in text and '미입금포함' not in text:
         return None
     
     status = None
@@ -334,10 +366,12 @@ def _is_summary_row(no_value):
 def _parse_sales_excel(excel_file, performance):
     excel_file.seek(0)
     xls = pd.ExcelFile(excel_file)
-    if '회차별판매' not in xls.sheet_names:
+    sheet_candidates = ['회차별판매', '회차별 판매', 'Seat details']
+    sheet_name = next((name for name in sheet_candidates if name in xls.sheet_names), None)
+    if not sheet_name:
         raise ValueError('회차별판매 시트를 찾을 수 없어요')
     
-    df = pd.read_excel(xls, sheet_name='회차별판매', header=None)
+    df = pd.read_excel(xls, sheet_name=sheet_name, header=None)
     if df.empty:
         raise ValueError('회차별판매 시트가 비어 있어요')
     
@@ -394,6 +428,9 @@ def _parse_sales_excel(excel_file, performance):
                 'grade': grade_label
             })
             continue
+
+        if not _is_valid_seat_grade_label(grade_label):
+            continue
         
         seat_grade_names.add(grade_label)
         column_map.append({
@@ -407,14 +444,39 @@ def _parse_sales_excel(excel_file, performance):
     rounds_by_date = {}
     dates_in_file = set()
     
+    date_series = df.iloc[header_row_idx + 1:, date_idx].ffill()
+
+    file_date_override = None
+    filename = os.path.basename(getattr(excel_file, 'name', ''))
+    match = re.search(r'(\d{4})(?=\\.[^.]+$)', filename)
+    if match:
+        month = int(match.group(1)[:2])
+        day = int(match.group(1)[2:])
+        base_year = performance.performance_start.year if performance.performance_start else datetime.now().year
+        if performance.performance_start and month < performance.performance_start.month:
+            base_year += 1
+        try:
+            file_date_override = datetime(base_year, month, day).date()
+        except ValueError:
+            file_date_override = None
+
+    unique_dates = set()
+    for value in date_series:
+        parsed = _parse_date(value)
+        if parsed:
+            unique_dates.add(parsed)
+    force_date_override = bool(file_date_override and (not unique_dates or (len(unique_dates) == 1 and file_date_override not in unique_dates)))
+
     for row_idx in range(header_row_idx + 1, len(df)):
         row = df.iloc[row_idx]
         no_value = row[no_idx] if no_idx is not None else None
         if _is_summary_row(no_value):
             continue
         
-        date_value = row[date_idx]
+        date_value = date_series.iloc[row_idx - (header_row_idx + 1)]
         parsed_date = _parse_date(date_value)
+        if force_date_override and file_date_override:
+            parsed_date = file_date_override
         if not parsed_date:
             continue
         
@@ -477,7 +539,8 @@ def _parse_sales_excel(excel_file, performance):
         'aggregates': aggregates,
         'rounds_by_date': rounds_by_date,
         'seat_grade_names': seat_grade_names,
-        'dates_in_file': dates_in_file
+        'dates_in_file': dates_in_file,
+        'sheet_name': sheet_name,
     }
 
 
@@ -504,8 +567,23 @@ def upload_sales_excel(request, performance_id):
     seat_grade_names = parsed['seat_grade_names']
     dates_in_file = parsed['dates_in_file']
     rounds_by_date = parsed['rounds_by_date']
+    sheet_name = parsed.get('sheet_name', '')
+
+    date_start = min(dates_in_file) if dates_in_file else None
+    date_end = max(dates_in_file) if dates_in_file else None
     
     with transaction.atomic():
+        upload_log = PerformanceSalesUploadLog.objects.create(
+            performance=performance,
+            original_filename=excel_file.name,
+            sheet_name=sheet_name,
+            date_start=date_start,
+            date_end=date_end,
+            daily_sales_count=0,
+            grade_sales_count=0,
+            status='success',
+        )
+
         PerformanceDailySales.objects.filter(
             performance=performance,
             date__in=list(dates_in_file)
@@ -575,6 +653,7 @@ def upload_sales_excel(request, performance_id):
                 performance=performance,
                 date=sale_date,
                 booking_site=booking_site,
+                upload_log=upload_log,
                 paid_revenue=Decimal(data['paid_revenue']),
                 paid_ticket_count=data['paid_ticket_count'],
                 unpaid_revenue=Decimal(unpaid_revenue),
@@ -601,13 +680,34 @@ def upload_sales_excel(request, performance_id):
                 )
                 grade_sales_count += 1
     
+        upload_log.daily_sales_count = daily_sales_count
+        upload_log.grade_sales_count = grade_sales_count
+        upload_log.save(update_fields=['daily_sales_count', 'grade_sales_count'])
+    delete_url = reverse('data_management:performance_sales_upload_log_delete', args=[performance.id, upload_log.id])
+    
     return JsonResponse({
         'success': True,
         'message': '엑셀 업로드가 완료되었습니다.',
         'daily_sales_count': daily_sales_count,
         'grade_sales_count': grade_sales_count,
-        'date_count': len(dates_in_file)
+        'date_count': len(dates_in_file),
+        'file_name': excel_file.name,
+        'sheet_name': sheet_name,
+        'date_start': date_start.strftime('%Y-%m-%d') if date_start else '',
+        'date_end': date_end.strftime('%Y-%m-%d') if date_end else '',
+        'upload_log_id': upload_log.id,
+        'delete_url': delete_url,
     })
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_sales_upload_log(request, performance_id, log_id):
+    """업로드 파일 목록에서 로그 삭제"""
+    performance = get_object_or_404(Performance, id=performance_id)
+    upload_log = get_object_or_404(PerformanceSalesUploadLog, id=log_id, performance=performance)
+    upload_log.delete()
+    return JsonResponse({'success': True})
 
 
 @login_required

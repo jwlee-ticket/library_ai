@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import PerformanceDailySales, PerformanceFinalSales, PerformanceDailySalesGrade, PerformanceFinalSalesGrade
+from .models import (
+    PerformanceDailySales,
+    PerformanceFinalSales,
+    PerformanceDailySalesGrade,
+    PerformanceFinalSalesGrade,
+    PerformanceSalesUploadLog,
+)
 
 
 class PerformanceDailySalesGradeInline(admin.TabularInline):
@@ -141,3 +147,21 @@ class PerformanceFinalSalesAdmin(admin.ModelAdmin):
     
     # 정렬
     ordering = ['performance', 'booking_site']
+
+
+@admin.register(PerformanceSalesUploadLog)
+class PerformanceSalesUploadLogAdmin(admin.ModelAdmin):
+    """공연 매출 업로드 기록 Admin 설정"""
+    
+    list_display = [
+        'performance',
+        'original_filename',
+        'sheet_name',
+        'date_start',
+        'date_end',
+        'status',
+        'uploaded_at',
+    ]
+    list_filter = ['performance', 'status', 'uploaded_at']
+    search_fields = ['performance__title', 'original_filename']
+    readonly_fields = ['uploaded_at']

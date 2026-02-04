@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, DetailView, TemplateView
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Min, Max
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
@@ -299,23 +299,22 @@ def get_concert_dashboard_data(request, pk):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
     
-    # 기본값: 최근 7일
     if not start_date_str or not end_date_str:
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=6)
+        date_range = PerformanceDailySales.objects.filter(
+            performance=performance
+        ).aggregate(min_date=Min('date'), max_date=Max('date'))
+        if date_range['min_date'] and date_range['max_date']:
+            start_date = date_range['min_date']
+            end_date = date_range['max_date']
+        else:
+            end_date = datetime.now().date()
+            start_date = end_date - timedelta(days=6)
     else:
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
         except ValueError:
             return JsonResponse({'success': False, 'error': '올바른 날짜 형식이 아니에요'}, status=400)
-    
-    # 날짜 범위 내 모든 날짜 생성 (빈 데이터도 포함)
-    date_list = []
-    current_date = start_date
-    while current_date <= end_date:
-        date_list.append(current_date.strftime('%Y-%m-%d'))
-        current_date += timedelta(days=1)
     
     # 매출 데이터 조회
     sales_data = PerformanceDailySales.objects.filter(
@@ -324,21 +323,24 @@ def get_concert_dashboard_data(request, pk):
         date__lte=end_date
     ).order_by('date', 'booking_site')
     
+    date_list = []
+    current_date = start_date
+    while current_date <= end_date:
+        date_list.append(current_date.strftime('%Y-%m-%d'))
+        current_date += timedelta(days=1)
+    
     # 예매처 목록 (실제 데이터에서 추출)
-    booking_sites = []
+    booking_site_set = set()
     for sale in sales_data.select_related('booking_site'):
         if sale.booking_site:
-            booking_sites.append(sale.booking_site.name)
-        else:
-            booking_sites.append('미지정')
-    booking_sites = sorted(set(booking_sites))
-    if not booking_sites:
-        booking_sites = list(performance.booking_sites.values_list('name', flat=True))
+            booking_site_set.add(sale.booking_site.name)
+    booking_site_set.update(performance.booking_sites.values_list('name', flat=True))
+    booking_sites = sorted({name for name in booking_site_set if name not in ['미', '미지정', '합계', 'TOTAL', '계', '전체', '총계']})
     
     # 날짜별, 예매처별, 입금/미입금별로 데이터 정리
     daily_revenue_data = {}  # {date: {site: {paid: 0, unpaid: 0}}}
     daily_ticket_data = {}   # {date: {site: {paid: 0, unpaid: 0}}}
-    
+
     # 초기화: 모든 날짜와 예매처 조합을 0으로 초기화
     for date_str in date_list:
         daily_revenue_data[date_str] = {}
@@ -346,7 +348,7 @@ def get_concert_dashboard_data(request, pk):
         for site in booking_sites:
             daily_revenue_data[date_str][site] = {'paid': 0, 'unpaid': 0}
             daily_ticket_data[date_str][site] = {'paid': 0, 'unpaid': 0}
-    
+
     # 실제 데이터 채우기
     for sale in sales_data:
         date_str = sale.date.strftime('%Y-%m-%d')
@@ -361,10 +363,10 @@ def get_concert_dashboard_data(request, pk):
             daily_ticket_data[date_str][site] = {'paid': 0, 'unpaid': 0}
         
         # Decimal을 float으로 변환
-        daily_revenue_data[date_str][site]['paid'] = float(sale.paid_revenue) if sale.paid_revenue else 0
-        daily_revenue_data[date_str][site]['unpaid'] = float(sale.unpaid_revenue) if sale.unpaid_revenue else 0
-        daily_ticket_data[date_str][site]['paid'] = sale.paid_ticket_count or 0
-        daily_ticket_data[date_str][site]['unpaid'] = sale.unpaid_ticket_count or 0
+        daily_revenue_data[date_str][site]['paid'] += float(sale.paid_revenue) if sale.paid_revenue else 0
+        daily_revenue_data[date_str][site]['unpaid'] += float(sale.unpaid_revenue) if sale.unpaid_revenue else 0
+        daily_ticket_data[date_str][site]['paid'] += sale.paid_ticket_count or 0
+        daily_ticket_data[date_str][site]['unpaid'] += sale.unpaid_ticket_count or 0
     
     # 총 좌석수 계산 (seat_grades 모델에서 합산)
     total_seats = 0
@@ -437,6 +439,8 @@ def get_concert_dashboard_data(request, pk):
         'success': True,
         'data': {
             'dates': date_list,
+            'applied_start_date': start_date.strftime('%Y-%m-%d'),
+            'applied_end_date': end_date.strftime('%Y-%m-%d'),
             'booking_sites': booking_sites,
             'daily_revenue': daily_revenue_data,
             'daily_tickets': daily_ticket_data,

@@ -21,12 +21,17 @@ function getCSSVariable(variableName) {
         .trim();
 }
 
-// 예매처 색상 매핑 (CSS 변수에서 가져옴)
+// 예매처 색상 매핑 (브랜드 지정 + CSS 변수)
 const bookingSiteColors = {
-    '놀티켓': getCSSVariable('--color-chart-nolticket'),
-    '예스24': getCSSVariable('--color-chart-yes24'),
-    '멜론티켓': getCSSVariable('--color-chart-melonticket'),
-    '티켓링크': getCSSVariable('--color-chart-ticketlink'),
+    '라이브러리컴퍼니': '#F65938',
+    'Library Company': '#F65938',
+    'NOL 티켓': '#4154FF',
+    'NOL티켓': '#4154FF',
+    '놀티켓': '#4154FF',
+    '롯데콘서트홀': '#DB291C',
+    '예스24': getCSSVariable('--color-chart-yes24') || '#2A3038',
+    '멜론티켓': getCSSVariable('--color-chart-melonticket') || '#16A34A',
+    '티켓링크': getCSSVariable('--color-chart-ticketlink') || '#78716C',
 };
 
 // 동적 색상 팔레트 (CSS 변수에서 가져옴)
@@ -92,7 +97,8 @@ async function loadDashboardData(startDate, endDate) {
         return;
     }
     
-    const url = `${dataUrl}?start_date=${startDate}&end_date=${endDate}`;
+    const query = startDate && endDate ? `?start_date=${startDate}&end_date=${endDate}` : '';
+    const url = `${dataUrl}${query}`;
     console.log('데이터 로드 시작:', url);
     
     try {
@@ -104,6 +110,14 @@ async function loadDashboardData(startDate, endDate) {
         
         if (data.success) {
             currentData = data.data;
+            if (currentData?.applied_start_date && currentData?.applied_end_date) {
+                const startDateInput = document.getElementById('filter-start-date');
+                const endDateInput = document.getElementById('filter-end-date');
+                if (startDateInput && endDateInput) {
+                    startDateInput.value = currentData.applied_start_date;
+                    endDateInput.value = currentData.applied_end_date;
+                }
+            }
             updateSummaryCards();
             updateBookingSiteFilters();
             renderCharts();
@@ -183,37 +197,38 @@ function updateSummaryCards() {
         }
     }
     
-    // 오늘 날짜 계산
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    // 최근 데이터가 있는 날짜 사용 (없으면 오늘 날짜)
+    const availableDates = currentData.dates || [];
+    const latestDate = availableDates.length ? availableDates[availableDates.length - 1] : null;
     
-    // 오늘 매출 계산
+    // 최근 날짜 매출 계산
     if (todayRevenueEl && currentData.daily_revenue) {
-        let todayRevenue = 0;
+        let latestRevenue = 0;
         const bookingSites = currentData.booking_sites || [];
         
-        if (currentData.daily_revenue[todayStr]) {
+        if (latestDate && currentData.daily_revenue[latestDate]) {
             bookingSites.forEach(site => {
-                if (currentData.daily_revenue[todayStr][site]) {
-                    todayRevenue += (currentData.daily_revenue[todayStr][site].paid || 0);
-                    todayRevenue += (currentData.daily_revenue[todayStr][site].unpaid || 0);
+                if (currentData.daily_revenue[latestDate][site]) {
+                    latestRevenue += (currentData.daily_revenue[latestDate][site].paid || 0);
+                    latestRevenue += (currentData.daily_revenue[latestDate][site].unpaid || 0);
                 }
             });
         }
         
-        if (todayRevenue > 0) {
-            todayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(todayRevenue)) + '</span>원';
+        if (latestRevenue > 0) {
+            todayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(latestRevenue)) + '</span>원';
+        } else if (totalRevenue > 0) {
+            todayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(totalRevenue)) + '</span>원';
         } else {
             todayRevenueEl.innerHTML = '<span class="text-secondary">-</span>';
         }
     }
     
     // 총 판매 매수 계산
-    let totalTickets = 0;
-    if (currentData.daily_tickets) {
-        const dates = currentData.dates;
-        const bookingSites = currentData.booking_sites;
-        
+    let totalTickets = currentData.total_ticket_count || 0;
+    if (!totalTickets && currentData.daily_tickets) {
+        const dates = currentData.dates || [];
+        const bookingSites = currentData.booking_sites || [];
         dates.forEach(date => {
             bookingSites.forEach(site => {
                 if (currentData.daily_tickets[date] && currentData.daily_tickets[date][site]) {
@@ -253,22 +268,24 @@ function updateSummaryCards() {
         }
     }
     
-    // 오늘 판매 매수 계산
+    // 최근 날짜 판매 매수 계산
     if (todayTicketsEl && currentData.daily_tickets) {
-        let todayTickets = 0;
+        let latestTickets = 0;
         const bookingSites = currentData.booking_sites || [];
         
-        if (currentData.daily_tickets[todayStr]) {
+        if (latestDate && currentData.daily_tickets[latestDate]) {
             bookingSites.forEach(site => {
-                if (currentData.daily_tickets[todayStr][site]) {
-                    todayTickets += (currentData.daily_tickets[todayStr][site].paid || 0);
-                    todayTickets += (currentData.daily_tickets[todayStr][site].unpaid || 0);
+                if (currentData.daily_tickets[latestDate][site]) {
+                    latestTickets += (currentData.daily_tickets[latestDate][site].paid || 0);
+                    latestTickets += (currentData.daily_tickets[latestDate][site].unpaid || 0);
                 }
             });
         }
         
-        if (todayTickets > 0) {
-            todayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(todayTickets) + '</span>매';
+        if (latestTickets > 0) {
+            todayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(latestTickets) + '</span>매';
+        } else if (totalTickets > 0) {
+            todayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(totalTickets) + '</span>매';
         } else {
             todayTicketsEl.innerHTML = '<span class="text-secondary">-</span>';
         }
@@ -1339,28 +1356,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // 기본 날짜 설정 (최근 7일)
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 6);
-    const defaultStart = startDate.toISOString().split('T')[0];
-    const defaultEnd = endDate.toISOString().split('T')[0];
-    
     const startDateInput = document.getElementById('filter-start-date');
     const endDateInput = document.getElementById('filter-end-date');
     
-    if (startDateInput) {
-        startDateInput.value = defaultStart;
-    }
-    if (endDateInput) {
-        endDateInput.value = defaultEnd;
-    }
-    
-    // 초기 데이터 로드
     if (startDateInput && endDateInput) {
-        loadDashboardData(startDateInput.value, endDateInput.value);
+        loadDashboardData();
     } else {
-        loadDashboardData(defaultStart, defaultEnd);
+        loadDashboardData();
     }
     
     // 필터 적용 버튼
