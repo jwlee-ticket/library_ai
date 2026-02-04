@@ -5,11 +5,9 @@ from django.db.models import Q, Sum
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
-from decimal import Decimal
-import json
 from collections import defaultdict
 from performance.models import Performance
-from data_management.models import PerformanceDailySales, PerformanceFinalSales
+from data_management.models import PerformanceDailySales, PerformanceDailySalesGrade
 
 
 @login_required
@@ -294,11 +292,8 @@ def get_concert_period_revenue_data(request):
 @login_required
 @require_http_methods(["GET"])
 def get_concert_dashboard_data(request, pk):
-    """콘서트 대시보드 데이터 API"""
-    try:
-        performance = get_object_or_404(Performance, id=pk, genre='concert')
-    except:
-        return JsonResponse({'success': False, 'error': '공연을 찾을 수 없어요'}, status=404)
+    """공연별 대시보드 데이터 API"""
+    performance = get_object_or_404(Performance, id=pk)
     
     # 날짜 범위 파라미터
     start_date_str = request.GET.get('start_date')
@@ -330,7 +325,15 @@ def get_concert_dashboard_data(request, pk):
     ).order_by('date', 'booking_site')
     
     # 예매처 목록 (실제 데이터에서 추출)
-    booking_sites = list(sales_data.values_list('booking_site', flat=True).distinct())
+    booking_sites = []
+    for sale in sales_data.select_related('booking_site'):
+        if sale.booking_site:
+            booking_sites.append(sale.booking_site.name)
+        else:
+            booking_sites.append('미지정')
+    booking_sites = sorted(set(booking_sites))
+    if not booking_sites:
+        booking_sites = list(performance.booking_sites.values_list('name', flat=True))
     
     # 날짜별, 예매처별, 입금/미입금별로 데이터 정리
     daily_revenue_data = {}  # {date: {site: {paid: 0, unpaid: 0}}}
@@ -347,7 +350,7 @@ def get_concert_dashboard_data(request, pk):
     # 실제 데이터 채우기
     for sale in sales_data:
         date_str = sale.date.strftime('%Y-%m-%d')
-        site = sale.booking_site
+        site = sale.booking_site.name if sale.booking_site else '미지정'
         
         if date_str not in daily_revenue_data:
             daily_revenue_data[date_str] = {}
@@ -377,150 +380,58 @@ def get_concert_dashboard_data(request, pk):
     unpaid_total = sales_data.aggregate(total=Sum('unpaid_revenue'))['total'] or 0
     total_revenue = float(paid_total) + float(unpaid_total)
     
-    # 등급별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
+    total_ticket_paid = sales_data.aggregate(total=Sum('paid_ticket_count'))['total'] or 0
+    total_ticket_unpaid = sales_data.aggregate(total=Sum('unpaid_ticket_count'))['total'] or 0
+    total_ticket_count = total_ticket_paid + total_ticket_unpaid
+    
+    # 등급별 판매현황 데이터 (PerformanceDailySalesGrade에서 합산)
     grade_sales_data = {}
-    # 할인권종별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
+    grade_sales_qs = PerformanceDailySalesGrade.objects.filter(
+        daily_sales__performance=performance,
+        daily_sales__date__gte=start_date,
+        daily_sales__date__lte=end_date
+    ).values(
+        'seat_grade__name',
+        'seat_grade__seat_count',
+        'seat_grade__price'
+    ).annotate(
+        paid_count=Sum('paid_count'),
+        unpaid_count=Sum('unpaid_count'),
+        free_count=Sum('free_count')
+    )
+    
+    for row in grade_sales_qs:
+        grade_name = row['seat_grade__name']
+        seat_count = row['seat_grade__seat_count'] or 0
+        price = row['seat_grade__price'] or 0
+        paid_count = row['paid_count'] or 0
+        unpaid_count = row['unpaid_count'] or 0
+        free_count = row['free_count'] or 0
+        total_count = paid_count + unpaid_count + free_count
+        
+        paid_occupancy_rate = 0
+        total_occupancy_rate = 0
+        if seat_count > 0:
+            paid_occupancy_rate = paid_count / seat_count
+            total_occupancy_rate = total_count / seat_count
+        
+        grade_sales_data[grade_name] = {
+            'paid_count': paid_count,
+            'unpaid_count': unpaid_count,
+            'free_count': free_count,
+            'revenue': float(price) * float(paid_count),
+            'paid_occupancy_rate': paid_occupancy_rate,
+            'total_occupancy_rate': total_occupancy_rate,
+            'total_count': total_count,
+        }
+    
+    # 나머지 섹션은 빈 데이터로 반환 (추후 확장)
     discount_sales_data = {}
-    # 성별, 연령대별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     age_gender_sales_data = []
-    # 결제수단별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     payment_method_sales_data = {}
-    # 카드별 매출집계 데이터 (PerformanceFinalSales에서 가져오기)
     card_sales_data = {}
-    # 판매경로별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     sales_channel_sales_data = {}
-    # 지역별 판매현황 데이터 (PerformanceFinalSales에서 가져오기)
     region_sales_data = {}
-    final_sales = PerformanceFinalSales.objects.filter(performance=performance)
-    
-    # 모든 예매처의 등급별 데이터를 합산
-    for final_sale in final_sales:
-        if final_sale.grade_sales_summary:
-            for grade, grade_data in final_sale.grade_sales_summary.items():
-                if grade not in grade_sales_data:
-                    grade_sales_data[grade] = {
-                        'paid_count': 0,
-                        'free_count': 0,
-                        'revenue': 0,
-                        'paid_occupancy_rate': 0,
-                        'total_occupancy_rate': 0,
-                        'total_count': 0,
-                    }
-                
-                # 데이터 합산
-                grade_sales_data[grade]['paid_count'] += grade_data.get('paid_count', 0)
-                grade_sales_data[grade]['free_count'] += grade_data.get('free_count', 0)
-                grade_sales_data[grade]['revenue'] += float(grade_data.get('revenue', 0))
-                grade_sales_data[grade]['total_count'] += grade_data.get('total_count', 0)
-                
-                # 점유율은 가중 평균으로 계산 (또는 마지막 값 사용)
-                # 간단하게는 마지막 값 사용
-                if grade_data.get('paid_occupancy_rate'):
-                    grade_sales_data[grade]['paid_occupancy_rate'] = grade_data.get('paid_occupancy_rate', 0)
-                if grade_data.get('total_occupancy_rate'):
-                    grade_sales_data[grade]['total_occupancy_rate'] = grade_data.get('total_occupancy_rate', 0)
-        
-        # 할인권종별 판매현황 데이터
-        if final_sale.booking_site_discount_sales:
-            site = final_sale.booking_site
-            if site not in discount_sales_data:
-                discount_sales_data[site] = []
-            
-            # 할인권종별 데이터 추가
-            if isinstance(final_sale.booking_site_discount_sales, dict):
-                for discount_type, discount_data in final_sale.booking_site_discount_sales.items():
-                    if isinstance(discount_data, list):
-                        discount_sales_data[site].extend(discount_data)
-                    elif isinstance(discount_data, dict):
-                        discount_sales_data[site].append(discount_data)
-        
-        # 성별, 연령대별 판매현황 데이터
-        if final_sale.age_gender_sales:
-            if isinstance(final_sale.age_gender_sales, list):
-                # 모든 예매처의 데이터를 합산
-                for age_gender_item in final_sale.age_gender_sales:
-                    age_group = age_gender_item.get('age_group')
-                    if age_group:
-                        # 기존에 같은 연령대가 있는지 확인
-                        existing_item = next((item for item in age_gender_sales_data if item.get('age_group') == age_group), None)
-                        if existing_item:
-                            # 기존 항목에 합산
-                            existing_item['male_count'] = existing_item.get('male_count', 0) + age_gender_item.get('male_count', 0)
-                            existing_item['female_count'] = existing_item.get('female_count', 0) + age_gender_item.get('female_count', 0)
-                            existing_item['unknown_count'] = existing_item.get('unknown_count', 0) + age_gender_item.get('unknown_count', 0)
-                            existing_item['total_count'] = existing_item.get('total_count', 0) + age_gender_item.get('total_count', 0)
-                        else:
-                            # 새 항목 추가
-                            age_gender_sales_data.append({
-                                'age_group': age_group,
-                                'male_count': age_gender_item.get('male_count', 0),
-                                'female_count': age_gender_item.get('female_count', 0),
-                                'unknown_count': age_gender_item.get('unknown_count', 0),
-                                'total_count': age_gender_item.get('total_count', 0),
-                            })
-        
-        # 결제수단별 판매현황 데이터
-        if final_sale.payment_method_sales:
-            if isinstance(final_sale.payment_method_sales, list):
-                for payment_item in final_sale.payment_method_sales:
-                    payment_method = payment_item.get('payment_method', '')
-                    if payment_method:
-                        if payment_method not in payment_method_sales_data:
-                            payment_method_sales_data[payment_method] = {
-                                'count': 0,
-                                'amount': 0,
-                            }
-                        payment_method_sales_data[payment_method]['count'] += payment_item.get('count', 0)
-                        payment_method_sales_data[payment_method]['amount'] += float(payment_item.get('amount', 0))
-        
-        # 카드별 매출집계 데이터
-        if final_sale.card_sales_summary:
-            if isinstance(final_sale.card_sales_summary, list):
-                for card_item in final_sale.card_sales_summary:
-                    card_type = card_item.get('card_type', '')
-                    if card_type:
-                        if card_type not in card_sales_data:
-                            card_sales_data[card_type] = {
-                                'count': 0,
-                                'amount': 0,
-                            }
-                        card_sales_data[card_type]['count'] += card_item.get('count', 0)
-                        card_sales_data[card_type]['amount'] += float(card_item.get('amount', 0))
-        
-        # 판매경로별 판매현황 데이터
-        if final_sale.sales_channel_sales:
-            if isinstance(final_sale.sales_channel_sales, list):
-                for channel_item in final_sale.sales_channel_sales:
-                    sales_channel = channel_item.get('sales_channel', '')
-                    if sales_channel:
-                        if sales_channel not in sales_channel_sales_data:
-                            sales_channel_sales_data[sales_channel] = {
-                                'count': 0,
-                                'amount': 0,
-                            }
-                        sales_channel_sales_data[sales_channel]['count'] += channel_item.get('count', 0)
-                        sales_channel_sales_data[sales_channel]['amount'] += float(channel_item.get('amount', 0))
-        
-        # 지역별 판매현황 데이터
-        if final_sale.region_sales:
-            if isinstance(final_sale.region_sales, list):
-                for region_item in final_sale.region_sales:
-                    region = region_item.get('region', '')
-                    if region:
-                        if region not in region_sales_data:
-                            region_sales_data[region] = {
-                                'count': 0,
-                            }
-                        region_sales_data[region]['count'] += region_item.get('count', 0)
-    
-    # 연령대별로 정렬 (나이 순서대로)
-    def sort_age_group(item):
-        age_group = item.get('age_group', '')
-        # 숫자 추출하여 정렬
-        numbers = [int(x) for x in age_group.split() if x.isdigit()]
-        return numbers[0] if numbers else 999
-    
-    age_gender_sales_data.sort(key=sort_age_group)
     
     return JsonResponse({
         'success': True,
@@ -533,6 +444,7 @@ def get_concert_dashboard_data(request, pk):
             'break_even_point': break_even_point,
             'total_seats': total_seats,
             'total_revenue': total_revenue,
+            'total_ticket_count': total_ticket_count,
             'grade_sales': grade_sales_data,
             'discount_sales': discount_sales_data,
             'age_gender_sales': age_gender_sales_data,

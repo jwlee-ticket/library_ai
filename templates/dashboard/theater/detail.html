@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load performance_tags %}
+{% load static %}
 
 {% block breadcrumb %}
     <span class="text-gray-700 font-medium">공연별 대시보드</span>
@@ -18,12 +19,12 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
             <p class="text-sm text-gray-600">총 매출</p>
-            <p class="text-3xl font-bold text-black mt-2">-</p>
+            <p class="text-3xl font-bold text-black mt-2" id="summary-total-revenue">-</p>
             <p class="text-xs text-gray-600 mt-2">입금/미입금 합계</p>
         </div>
         <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
             <p class="text-sm text-gray-600">총 판매 매수</p>
-            <p class="text-3xl font-bold text-black mt-2">-</p>
+            <p class="text-3xl font-bold text-black mt-2" id="summary-total-tickets">-</p>
             <p class="text-xs text-gray-600 mt-2">입금/미입금 합계</p>
         </div>
         <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
@@ -42,8 +43,8 @@
                 <h2 class="text-xl font-semibold text-black">매출 추이</h2>
                 <span class="text-xs text-gray-600">일별</span>
             </div>
-            <div class="h-56 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center">
-                <p class="text-sm text-gray-600">차트가 곧 표시돼요</p>
+            <div class="relative h-56 rounded-lg bg-gray-50 border border-gray-100">
+                <canvas id="revenue-chart"></canvas>
             </div>
         </div>
         <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
@@ -51,8 +52,8 @@
                 <h2 class="text-xl font-semibold text-black">판매 매수 추이</h2>
                 <span class="text-xs text-gray-600">일별</span>
             </div>
-            <div class="h-56 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center">
-                <p class="text-sm text-gray-600">차트가 곧 표시돼요</p>
+            <div class="relative h-56 rounded-lg bg-gray-50 border border-gray-100">
+                <canvas id="ticket-chart"></canvas>
             </div>
         </div>
     </div>
@@ -61,16 +62,56 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
             <h2 class="text-xl font-semibold text-black mb-4">등급별 판매 현황</h2>
-            <div class="rounded-lg border border-gray-100 bg-gray-50 p-6">
-                <p class="text-sm text-gray-600">데이터 연결 준비 중이에요.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div class="lg:col-span-3 overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">등급</th>
+                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수(유료)</th>
+                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수(무료)</th>
+                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">금액</th>
+                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">유료 점유율</th>
+                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">객석 점유율</th>
+                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">총 판매 좌석</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grade-sales-tbody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+                <div class="lg:col-span-2">
+                    <div class="relative h-56 rounded-lg bg-gray-50 border border-gray-100">
+                        <canvas id="grade-chart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
             <h2 class="text-xl font-semibold text-black mb-4">예매처별 비중</h2>
-            <div class="rounded-lg border border-gray-100 bg-gray-50 p-6">
-                <p class="text-sm text-gray-600">데이터 연결 준비 중이에요.</p>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">예매처</th>
+                            <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매출</th>
+                            <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수</th>
+                        </tr>
+                    </thead>
+                    <tbody id="booking-site-tbody" class="divide-y divide-gray-100"></tbody>
+                </table>
             </div>
         </div>
     </div>
+    
+    <script type="application/json" id="concert-dashboard-data">
+    {
+        "performanceId": {{ performance.id }},
+        "dataUrl": "{% url 'dashboard:concert_dashboard_data' performance.id %}"
+    }
+    </script>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/concert_dashboard_detail.js' %}"></script>
 {% endblock %}
 

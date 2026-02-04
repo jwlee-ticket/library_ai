@@ -135,6 +135,8 @@ function updateSummaryCards() {
     
     const todayRevenueEl = document.getElementById('summary-today-revenue');
     const todayTicketsEl = document.getElementById('summary-today-tickets');
+    const totalRevenueEl = document.getElementById('summary-total-revenue');
+    const totalTicketsEl = document.getElementById('summary-total-tickets');
     
     // 매출 프로그래스바 계산
     const targetRevenue = currentData.target_revenue || 0;
@@ -162,6 +164,10 @@ function updateSummaryCards() {
             revenueBar.style.width = '0%';
             revenueText.textContent = '-';
         }
+    }
+    
+    if (totalRevenueEl) {
+        totalRevenueEl.textContent = formatNumber(Math.round(totalRevenue));
     }
     
     // 손익분기점 마커
@@ -235,6 +241,10 @@ function updateSummaryCards() {
         }
     }
     
+    if (totalTicketsEl) {
+        totalTicketsEl.textContent = formatNumber(totalTickets);
+    }
+    
     if (seatsText) {
         if (totalSeats > 0) {
             seatsText.textContent = formatNumber(totalSeats) + '매';
@@ -305,6 +315,7 @@ function renderCharts() {
     
     renderRevenueChart();
     renderTicketChart();
+    renderBookingSiteSummary();
 }
 
 /**
@@ -422,8 +433,10 @@ function renderRevenueChart() {
     
     // 선택된 예매처와 입금 상태 확인
     const selectedSites = getSelectedBookingSites();
-    const showPaid = document.getElementById('filter-paid')?.checked || false;
-    const showUnpaid = document.getElementById('filter-unpaid')?.checked || false;
+    const paidCheckbox = document.getElementById('filter-paid');
+    const unpaidCheckbox = document.getElementById('filter-unpaid');
+    const showPaid = paidCheckbox ? paidCheckbox.checked : true;
+    const showUnpaid = unpaidCheckbox ? unpaidCheckbox.checked : true;
     
     // 데이터셋 생성 (예매처별로 그룹화)
     const datasets = [];
@@ -522,8 +535,10 @@ function renderTicketChart() {
     
     // 선택된 예매처와 입금 상태 확인
     const selectedSites = getSelectedBookingSites();
-    const showPaid = document.getElementById('filter-paid')?.checked || false;
-    const showUnpaid = document.getElementById('filter-unpaid')?.checked || false;
+    const paidCheckbox = document.getElementById('filter-paid');
+    const unpaidCheckbox = document.getElementById('filter-unpaid');
+    const showPaid = paidCheckbox ? paidCheckbox.checked : true;
+    const showUnpaid = unpaidCheckbox ? unpaidCheckbox.checked : true;
     
     // 데이터셋 생성 (예매처별로 그룹화)
     const datasets = [];
@@ -609,6 +624,9 @@ function renderTicketChart() {
  */
 function getSelectedBookingSites() {
     const checkboxes = document.querySelectorAll('#filter-booking-sites input[type="checkbox"]:checked');
+    if (!checkboxes.length) {
+        return currentData?.booking_sites || [];
+    }
     return Array.from(checkboxes).map(cb => cb.dataset.site);
 }
 
@@ -667,6 +685,69 @@ function renderGradeSales() {
             </td>
         `;
         
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * 예매처별 요약 테이블 렌더링
+ */
+function renderBookingSiteSummary() {
+    const tbody = document.getElementById('booking-site-tbody');
+    if (!tbody || !currentData) return;
+    
+    const dates = currentData.dates || [];
+    const bookingSites = currentData.booking_sites || [];
+    const dailyRevenue = currentData.daily_revenue || {};
+    const dailyTickets = currentData.daily_tickets || {};
+    
+    const selectedSites = getSelectedBookingSites();
+    const paidCheckbox = document.getElementById('filter-paid');
+    const unpaidCheckbox = document.getElementById('filter-unpaid');
+    const showPaid = paidCheckbox ? paidCheckbox.checked : true;
+    const showUnpaid = unpaidCheckbox ? unpaidCheckbox.checked : true;
+    
+    const summary = {};
+    bookingSites.forEach(site => {
+        if (selectedSites.length && !selectedSites.includes(site)) {
+            return;
+        }
+        summary[site] = { revenue: 0, tickets: 0 };
+        dates.forEach(date => {
+            const revenueBySite = dailyRevenue[date]?.[site];
+            const ticketsBySite = dailyTickets[date]?.[site];
+            if (revenueBySite) {
+                if (showPaid) summary[site].revenue += revenueBySite.paid || 0;
+                if (showUnpaid) summary[site].revenue += revenueBySite.unpaid || 0;
+            }
+            if (ticketsBySite) {
+                if (showPaid) summary[site].tickets += ticketsBySite.paid || 0;
+                if (showUnpaid) summary[site].tickets += ticketsBySite.unpaid || 0;
+            }
+        });
+    });
+    
+    const sites = Object.keys(summary).sort();
+    if (!sites.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-gray-600">예매처별 데이터가 없습니다</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    sites.forEach(site => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-colors';
+        row.innerHTML = `
+            <td class="px-6 py-4">
+                <span class="text-base font-medium text-black">${site}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${formatNumber(Math.round(summary[site].revenue))}원</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${formatNumber(summary[site].tickets)}매</span>
+            </td>
+        `;
         tbody.appendChild(row);
     });
 }
@@ -1262,20 +1343,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 6);
+    const defaultStart = startDate.toISOString().split('T')[0];
+    const defaultEnd = endDate.toISOString().split('T')[0];
     
     const startDateInput = document.getElementById('filter-start-date');
     const endDateInput = document.getElementById('filter-end-date');
     
     if (startDateInput) {
-        startDateInput.value = startDate.toISOString().split('T')[0];
+        startDateInput.value = defaultStart;
     }
     if (endDateInput) {
-        endDateInput.value = endDate.toISOString().split('T')[0];
+        endDateInput.value = defaultEnd;
     }
     
     // 초기 데이터 로드
     if (startDateInput && endDateInput) {
         loadDashboardData(startDateInput.value, endDateInput.value);
+    } else {
+        loadDashboardData(defaultStart, defaultEnd);
     }
     
     // 필터 적용 버튼
