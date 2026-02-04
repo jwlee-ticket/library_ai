@@ -9,13 +9,68 @@
 
 {% block content %}
     <!-- 페이지 제목 -->
-    <div class="mb-6">
+    <div class="mb-8">
         <h1 class="text-3xl font-semibold text-black">{{ performance.title }}</h1>
+        <p class="text-sm text-gray-600 mt-2">연극 공연의 핵심 지표와 추이를 한눈에 확인할 수 있어요.</p>
     </div>
     
-    <!-- 연극 대시보드 내용 (추후 구현 예정) -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
-        <p class="text-base text-gray-600">연극 대시보드 상세 페이지는 추후 구현 예정입니다.</p>
+    <!-- KPI 카드 영역 -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <p class="text-sm text-gray-600">총 매출</p>
+            <p class="text-3xl font-bold text-black mt-2">-</p>
+            <p class="text-xs text-gray-600 mt-2">입금/미입금 합계</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <p class="text-sm text-gray-600">총 판매 매수</p>
+            <p class="text-3xl font-bold text-black mt-2">-</p>
+            <p class="text-xs text-gray-600 mt-2">입금/미입금 합계</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <p class="text-sm text-gray-600">기간</p>
+            <p class="text-lg font-semibold text-black mt-2">
+                {{ performance.performance_start|date:"Y.m.d" }} ~ {{ performance.performance_end|date:"Y.m.d" }}
+            </p>
+            <p class="text-xs text-gray-600 mt-2">공연 기간 기준</p>
+        </div>
+    </div>
+    
+    <!-- 차트 섹션 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-black">매출 추이</h2>
+                <span class="text-xs text-gray-600">일별</span>
+            </div>
+            <div class="h-56 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center">
+                <p class="text-sm text-gray-600">차트가 곧 표시돼요</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-black">판매 매수 추이</h2>
+                <span class="text-xs text-gray-600">일별</span>
+            </div>
+            <div class="h-56 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center">
+                <p class="text-sm text-gray-600">차트가 곧 표시돼요</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 세부 섹션 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h2 class="text-xl font-semibold text-black mb-4">등급별 판매 현황</h2>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-6">
+                <p class="text-sm text-gray-600">데이터 연결 준비 중이에요.</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h2 class="text-xl font-semibold text-black mb-4">예매처별 비중</h2>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-6">
+                <p class="text-sm text-gray-600">데이터 연결 준비 중이에요.</p>
+            </div>
+        </div>
     </div>
 {% endblock %}
 
