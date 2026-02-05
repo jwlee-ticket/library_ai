@@ -401,12 +401,38 @@ def get_concert_dashboard_data(request, pk):
     target_revenue = float(performance.target_revenue) if performance.target_revenue else None
     break_even_point = float(performance.break_even_point) if performance.break_even_point else None
     
-    # 총 매출 계산 (전체 기간)
+    def get_upload_file_date(filename):
+        match = re.search(r'(\d{4})(?=\.[^.]+$)', filename or '')
+        if not match:
+            return None
+        month = int(match.group(1)[:2])
+        day = int(match.group(1)[2:])
+        base_year = performance.performance_start.year if performance.performance_start else datetime.now().year
+        if performance.performance_start and month < performance.performance_start.month:
+            base_year += 1
+        try:
+            return datetime(base_year, month, day).date()
+        except ValueError:
+            return None
+
+    latest_file_date = None
+    upload_logs = PerformanceSalesUploadLog.objects.filter(
+        performance=performance
+    ).values_list('original_filename', flat=True)
+    for filename in upload_logs:
+        file_date = get_upload_file_date(filename)
+        if not file_date:
+            continue
+        if latest_file_date is None or file_date > latest_file_date:
+            latest_file_date = file_date
+
+    # 총 매출 계산 (일일 판매 유료 계 누적)
     paid_summary_qs = PerformanceDailySales.objects.filter(
         performance=performance,
-        date__lte=today,
         booking_site__name='유료 계'
     )
+    total_end_date = latest_file_date or today
+    paid_summary_qs = paid_summary_qs.filter(date__lte=total_end_date)
     has_paid_summary = paid_summary_qs.exists()
 
     paid_total = paid_summary_qs.aggregate(total=Sum('paid_revenue'))['total'] or 0
@@ -469,31 +495,6 @@ def get_concert_dashboard_data(request, pk):
                 'total_count': total_count,
             }
         return grade_sales
-
-    def get_upload_file_date(filename):
-        match = re.search(r'(\d{4})(?=\.[^.]+$)', filename or '')
-        if not match:
-            return None
-        month = int(match.group(1)[:2])
-        day = int(match.group(1)[2:])
-        base_year = performance.performance_start.year if performance.performance_start else datetime.now().year
-        if performance.performance_start and month < performance.performance_start.month:
-            base_year += 1
-        try:
-            return datetime(base_year, month, day).date()
-        except ValueError:
-            return None
-
-    latest_file_date = None
-    upload_logs = PerformanceSalesUploadLog.objects.filter(
-        performance=performance
-    ).values_list('original_filename', flat=True)
-    for filename in upload_logs:
-        file_date = get_upload_file_date(filename)
-        if not file_date:
-            continue
-        if latest_file_date is None or file_date > latest_file_date:
-            latest_file_date = file_date
 
     if latest_file_date:
         grade_sales_data = build_grade_sales_data(latest_file_date, latest_file_date)
