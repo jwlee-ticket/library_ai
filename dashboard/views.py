@@ -305,9 +305,9 @@ def get_concert_dashboard_data(request, pk):
     end_date_str = request.GET.get('end_date')
     
     ignore_booking_sites = ['미', '미지정', '합계', 'TOTAL', '계', '전체', '총계', '유료 계', '초대']
+    today = datetime.now().date()
 
     if not start_date_str or not end_date_str:
-        today = datetime.now().date()
         if performance.performance_end and performance.performance_end < today:
             end_date = performance.performance_end
         else:
@@ -402,13 +402,26 @@ def get_concert_dashboard_data(request, pk):
     break_even_point = float(performance.break_even_point) if performance.break_even_point else None
     
     # 총 매출 계산 (전체 기간)
-    paid_total = sales_data.aggregate(total=Sum('paid_revenue'))['total'] or 0
-    unpaid_total = sales_data.aggregate(total=Sum('unpaid_revenue'))['total'] or 0
-    total_revenue = float(paid_total) + float(unpaid_total)
-    
-    total_ticket_paid = sales_data.aggregate(total=Sum('paid_ticket_count'))['total'] or 0
-    total_ticket_unpaid = sales_data.aggregate(total=Sum('unpaid_ticket_count'))['total'] or 0
-    total_ticket_count = total_ticket_paid + total_ticket_unpaid
+    paid_summary_qs = PerformanceDailySales.objects.filter(
+        performance=performance,
+        date__lte=today,
+        booking_site__name='유료 계'
+    )
+    has_paid_summary = paid_summary_qs.exists()
+
+    paid_total = paid_summary_qs.aggregate(total=Sum('paid_revenue'))['total'] or 0
+    total_revenue = float(paid_total)
+
+    total_ticket_count = paid_summary_qs.aggregate(total=Sum('paid_ticket_count'))['total'] or 0
+
+    if not has_paid_summary:
+        paid_total = sales_data.aggregate(total=Sum('paid_revenue'))['total'] or 0
+        unpaid_total = sales_data.aggregate(total=Sum('unpaid_revenue'))['total'] or 0
+        total_revenue = float(paid_total) + float(unpaid_total)
+
+        total_ticket_paid = sales_data.aggregate(total=Sum('paid_ticket_count'))['total'] or 0
+        total_ticket_unpaid = sales_data.aggregate(total=Sum('unpaid_ticket_count'))['total'] or 0
+        total_ticket_count = total_ticket_paid + total_ticket_unpaid
     
     # 등급별 판매현황 데이터 (PerformanceDailySalesGrade에서 합산)
     def build_grade_sales_data(range_start, range_end):
