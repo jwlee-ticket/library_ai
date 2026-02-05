@@ -317,6 +317,420 @@ def _safe_rate(value):
     return rate
 
 
+def _find_report_sheet(sheet_names):
+    for name in sheet_names:
+        if '판매' in name and '리포트' in name:
+            return name
+    return None
+
+
+def _find_section_row(df, keyword):
+    for idx in range(len(df)):
+        row = df.iloc[idx].tolist()
+        row_text = ' '.join(_normalize_text(value) for value in row if _normalize_text(value))
+        if keyword in row_text:
+            return idx
+    return None
+
+
+def _parse_discount_sales_section(df):
+    section_row_idx = _find_section_row(df, '2. 할인권종별 판매현황')
+    if section_row_idx is None:
+        return {}, 0
+
+    header_row_idx = section_row_idx + 1
+    if header_row_idx >= len(df):
+        return {}, 0
+
+    header_row = df.iloc[header_row_idx].tolist()
+    column_map = {}
+    for idx, value in enumerate(header_row):
+        label = _normalize_text(value)
+        if label in ['구분', '권종명', '매수', '금액']:
+            column_map[label] = idx
+
+    if '구분' not in column_map or '권종명' not in column_map or '매수' not in column_map:
+        return {}, 0
+
+    booking_site_idx = column_map['구분']
+    discount_type_idx = column_map['권종명']
+    count_idx = column_map['매수']
+    amount_idx = column_map.get('금액')
+
+    discount_sales = {}
+    current_site = None
+    total_count = 0
+
+    for row_idx in range(header_row_idx + 1, len(df)):
+        row = df.iloc[row_idx].tolist()
+        row_text = ' '.join(_normalize_text(value) for value in row if _normalize_text(value))
+        if not row_text:
+            continue
+        if '3.' in row_text or '성별' in row_text or '연령' in row_text:
+            break
+
+        site_value = _normalize_text(row[booking_site_idx]) if booking_site_idx < len(row) else ''
+        if site_value:
+            current_site = site_value
+
+        discount_type = _normalize_text(row[discount_type_idx]) if discount_type_idx < len(row) else ''
+        if not discount_type or discount_type in ['권종명', '합계', '총계', '계']:
+            continue
+
+        if not current_site:
+            continue
+
+        sales_count = _safe_int(row[count_idx]) if count_idx < len(row) else 0
+        revenue = _safe_int(row[amount_idx]) if amount_idx is not None and amount_idx < len(row) else 0
+        if sales_count == 0 and revenue == 0:
+            continue
+
+        discount_sales.setdefault(current_site, []).append({
+            'discount_type': discount_type,
+            'sales_count': sales_count,
+            'revenue': revenue
+        })
+        total_count += 1
+
+    return discount_sales, total_count
+
+
+def _parse_age_gender_sales_section(df):
+    section_row_idx = _find_section_row(df, '3. 성별, 연령대별 판매현황')
+    if section_row_idx is None:
+        return [], 0
+
+    header_row_idx = section_row_idx + 1
+    if header_row_idx >= len(df):
+        return [], 0
+
+    header_row = df.iloc[header_row_idx].tolist()
+    column_map = {}
+    for idx, value in enumerate(header_row):
+        label = _normalize_text(value)
+        if label in ['연령대', '남', '녀', '성별모름', '계']:
+            column_map[label] = idx
+
+    if '연령대' not in column_map:
+        return [], 0
+
+    age_idx = column_map['연령대']
+    male_idx = column_map.get('남')
+    female_idx = column_map.get('녀')
+    unknown_idx = column_map.get('성별모름')
+    total_idx = column_map.get('계')
+
+    age_gender_sales = []
+    total_count = 0
+
+    for row_idx in range(header_row_idx + 1, len(df)):
+        row = df.iloc[row_idx].tolist()
+        row_text = ' '.join(_normalize_text(value) for value in row if _normalize_text(value))
+        if not row_text:
+            continue
+        if '4.' in row_text or '결제수단' in row_text:
+            break
+
+        age_group = _normalize_text(row[age_idx]) if age_idx < len(row) else ''
+        if not age_group or age_group in ['연령대', '계', '총계']:
+            continue
+
+        male_count = _safe_int(row[male_idx]) if male_idx is not None and male_idx < len(row) else 0
+        female_count = _safe_int(row[female_idx]) if female_idx is not None and female_idx < len(row) else 0
+        unknown_count = _safe_int(row[unknown_idx]) if unknown_idx is not None and unknown_idx < len(row) else 0
+        total = _safe_int(row[total_idx]) if total_idx is not None and total_idx < len(row) else (male_count + female_count + unknown_count)
+
+        if male_count == 0 and female_count == 0 and unknown_count == 0 and total == 0:
+            continue
+
+        age_gender_sales.append({
+            'age_group': age_group,
+            'male_count': male_count,
+            'female_count': female_count,
+            'unknown_count': unknown_count,
+            'total_count': total
+        })
+        total_count += 1
+
+    return age_gender_sales, total_count
+
+
+def _parse_payment_method_sales_section(df):
+    section_row_idx = _find_section_row(df, '4. 결제수단별 판매현황')
+    if section_row_idx is None:
+        return {}, 0
+
+    header_row_idx = section_row_idx + 1
+    if header_row_idx >= len(df):
+        return {}, 0
+
+    header_row = df.iloc[header_row_idx].tolist()
+    normalized_headers = [_normalize_text(value) for value in header_row]
+
+    payment_method_idx = None
+    for idx, label in enumerate(normalized_headers):
+        if label == '결제수단':
+            payment_method_idx = idx
+            break
+
+    if payment_method_idx is None:
+        return {}, 0
+
+    count_idx = None
+    amount_idx = None
+    for idx in range(payment_method_idx + 1, len(normalized_headers)):
+        label = normalized_headers[idx]
+        if label == '매수' and count_idx is None:
+            count_idx = idx
+            continue
+        if label == '금액' and amount_idx is None:
+            amount_idx = idx
+        if count_idx is not None and amount_idx is not None:
+            break
+
+    if count_idx is None:
+        return {}, 0
+
+    payment_method_sales = {}
+    total_count = 0
+
+    for row_idx in range(header_row_idx + 1, len(df)):
+        row = df.iloc[row_idx].tolist()
+        row_text = ' '.join(_normalize_text(value) for value in row if _normalize_text(value))
+        if not row_text:
+            continue
+        if '6.' in row_text or '판매경로' in row_text:
+            break
+
+        method_name = _normalize_text(row[payment_method_idx]) if payment_method_idx < len(row) else ''
+        if not method_name or method_name in ['결제수단', '계', '총계']:
+            continue
+
+        count = _safe_int(row[count_idx]) if count_idx < len(row) else 0
+        amount = _safe_int(row[amount_idx]) if amount_idx is not None and amount_idx < len(row) else 0
+        if count == 0 and amount == 0:
+            continue
+
+        payment_method_sales.setdefault(method_name, {'count': 0, 'amount': 0})
+        payment_method_sales[method_name]['count'] += count
+        payment_method_sales[method_name]['amount'] += amount
+        total_count += 1
+
+    return payment_method_sales, total_count
+
+
+def _parse_card_sales_section(df):
+    section_row_idx = _find_section_row(df, '5.카드별 매출집계')
+    if section_row_idx is None:
+        section_row_idx = _find_section_row(df, '5. 카드별 매출집계')
+    if section_row_idx is None:
+        return {}, 0
+
+    header_row_idx = section_row_idx + 1
+    if header_row_idx >= len(df):
+        return {}, 0
+
+    header_row = df.iloc[header_row_idx].tolist()
+    normalized_headers = [_normalize_text(value) for value in header_row]
+
+    card_name_idx = None
+    for idx, label in enumerate(normalized_headers):
+        if label == '결제수단':
+            card_name_idx = idx
+            break
+
+    if card_name_idx is None:
+        return {}, 0
+
+    count_idx = None
+    amount_idx = None
+    for idx in range(card_name_idx + 1, len(normalized_headers)):
+        label = normalized_headers[idx]
+        if label == '매수' and count_idx is None:
+            count_idx = idx
+            continue
+        if label == '금액' and amount_idx is None:
+            amount_idx = idx
+        if count_idx is not None and amount_idx is not None:
+            break
+
+    if count_idx is None:
+        return {}, 0
+
+    card_sales = {}
+    total_count = 0
+
+    for row_idx in range(header_row_idx + 1, len(df)):
+        row = df.iloc[row_idx].tolist()
+        row_text = ' '.join(_normalize_text(value) for value in row if _normalize_text(value))
+        if not row_text:
+            continue
+        if '6.' in row_text or '판매경로' in row_text:
+            break
+
+        card_name = _normalize_text(row[card_name_idx]) if card_name_idx < len(row) else ''
+        if not card_name or card_name in ['결제수단', '계', '총계']:
+            continue
+
+        count = _safe_int(row[count_idx]) if count_idx < len(row) else 0
+        amount = _safe_int(row[amount_idx]) if amount_idx is not None and amount_idx < len(row) else 0
+        if count == 0 and amount == 0:
+            continue
+
+        card_sales.setdefault(card_name, {'count': 0, 'amount': 0})
+        card_sales[card_name]['count'] += count
+        card_sales[card_name]['amount'] += amount
+        total_count += 1
+
+    return card_sales, total_count
+
+
+def _parse_sales_channel_section(df):
+    section_row_idx = _find_section_row(df, '6. 판매경로별 판매현황')
+    if section_row_idx is None:
+        return [], 0
+
+    header_row_idx = section_row_idx + 1
+    if header_row_idx >= len(df):
+        return [], 0
+
+    header_row = df.iloc[header_row_idx].tolist()
+    column_map = {}
+    for idx, value in enumerate(header_row):
+        label = _normalize_text(value)
+        if label in ['판매경로', '매수', '금액']:
+            column_map[label] = idx
+
+    if '판매경로' not in column_map or '매수' not in column_map:
+        return [], 0
+
+    channel_idx = column_map['판매경로']
+    count_idx = column_map['매수']
+    amount_idx = column_map.get('금액')
+
+    sales_channels = []
+    total_count = 0
+
+    for row_idx in range(header_row_idx + 1, len(df)):
+        row = df.iloc[row_idx].tolist()
+        row_text = ' '.join(_normalize_text(value) for value in row if _normalize_text(value))
+        if not row_text:
+            continue
+        if '7.' in row_text or '지역' in row_text:
+            break
+
+        channel = _normalize_text(row[channel_idx]) if channel_idx < len(row) else ''
+        if not channel or channel in ['판매경로', '계', '총계']:
+            continue
+
+        count = _safe_int(row[count_idx]) if count_idx < len(row) else 0
+        amount = _safe_int(row[amount_idx]) if amount_idx is not None and amount_idx < len(row) else 0
+        if count == 0 and amount == 0:
+            continue
+
+        sales_channels.append({
+            'sales_channel': channel,
+            'count': count,
+            'amount': amount
+        })
+        total_count += 1
+
+    return sales_channels, total_count
+
+
+def _parse_region_sales_section(df):
+    section_row_idx = _find_section_row(df, '7. 지역별 판매현황')
+    if section_row_idx is None:
+        return [], 0
+
+    header_row_idx = section_row_idx + 2
+    if header_row_idx >= len(df):
+        return [], 0
+
+    header_row = df.iloc[header_row_idx].tolist()
+    normalized_headers = [_normalize_text(value) for value in header_row]
+
+    group_starts = []
+    for idx, label in enumerate(normalized_headers):
+        if label and label.endswith('지역별'):
+            group_starts.append((idx, label))
+        elif label == '지역' and not group_starts:
+            group_starts.append((idx, '지역별'))
+
+    if not group_starts:
+        return [], 0
+
+    def _find_count_index(start_idx):
+        for idx in range(start_idx + 1, len(normalized_headers)):
+            if normalized_headers[idx] == '매수':
+                return idx
+        return None
+
+    groups = []
+    for start_idx, title in group_starts:
+        count_idx = _find_count_index(start_idx)
+        groups.append({
+            'title': title,
+            'start_idx': start_idx,
+            'count_idx': count_idx,
+            'rows': []
+        })
+
+    total_count = 0
+
+    for row_idx in range(header_row_idx + 1, len(df)):
+        row = df.iloc[row_idx].tolist()
+        row_text = ' '.join(_normalize_text(value) for value in row if _normalize_text(value))
+        if not row_text:
+            continue
+
+        for group in groups:
+            start_idx = group['start_idx']
+            count_idx = group['count_idx']
+            if start_idx is None or start_idx >= len(row):
+                continue
+            region_name = _normalize_text(row[start_idx])
+            if not region_name or region_name in ['지역', '계', '총계', group['title']]:
+                continue
+            region_count = _safe_int(row[count_idx]) if count_idx is not None and count_idx < len(row) else 0
+            if region_count <= 0:
+                continue
+            group['rows'].append({'region': region_name, 'count': region_count})
+            total_count += 1
+
+    region_groups = [
+        {'title': group['title'], 'rows': group['rows']}
+        for group in groups
+        if group['rows']
+    ]
+    return region_groups, total_count
+
+
+def _parse_final_sales_excel(xls, report_sheet):
+    df = pd.read_excel(xls, sheet_name=report_sheet, header=None)
+    discount_sales, discount_sales_count = _parse_discount_sales_section(df)
+    age_gender_sales, age_gender_count = _parse_age_gender_sales_section(df)
+    payment_method_sales, payment_method_count = _parse_payment_method_sales_section(df)
+    card_sales, card_sales_count = _parse_card_sales_section(df)
+    sales_channel_sales, sales_channel_count = _parse_sales_channel_section(df)
+    region_groups, region_sales_count = _parse_region_sales_section(df)
+    return {
+        'discount_sales': discount_sales,
+        'discount_sales_count': discount_sales_count,
+        'age_gender_sales': age_gender_sales,
+        'age_gender_sales_count': age_gender_count,
+        'payment_method_sales': payment_method_sales,
+        'payment_method_sales_count': payment_method_count,
+        'card_sales': card_sales,
+        'card_sales_count': card_sales_count,
+        'sales_channel_sales': sales_channel_sales,
+        'sales_channel_sales_count': sales_channel_count,
+        'region_sales_groups': region_groups,
+        'region_sales_count': region_sales_count,
+        'sheet_name': report_sheet
+    }
+
+
 def _parse_date(value):
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return None
@@ -612,10 +1026,110 @@ def upload_sales_excel(request, performance_id):
     excel_file = form.cleaned_data['excel_file']
     
     try:
-        parsed = _parse_sales_excel(excel_file, performance)
+        excel_file.seek(0)
+        xls = pd.ExcelFile(excel_file)
+        report_sheet = _find_report_sheet(xls.sheet_names)
+        daily_sheet_candidates = ['일일 판매', '일일판매', 'Daily Sales']
+        has_daily_sheet = any(name in xls.sheet_names for name in daily_sheet_candidates)
+
+        if report_sheet and not has_daily_sheet:
+            parsed = _parse_final_sales_excel(xls, report_sheet)
+        else:
+            parsed = _parse_sales_excel(excel_file, performance)
     except ValueError as exc:
         return JsonResponse({'success': False, 'error': str(exc)}, status=400)
     
+    if 'daily_sales' not in parsed:
+        discount_sales = parsed.get('discount_sales', {})
+        discount_sales_count = parsed.get('discount_sales_count', 0)
+        age_gender_sales = parsed.get('age_gender_sales', [])
+        age_gender_sales_count = parsed.get('age_gender_sales_count', 0)
+        payment_method_sales = parsed.get('payment_method_sales', {})
+        payment_method_sales_count = parsed.get('payment_method_sales_count', 0)
+        card_sales = parsed.get('card_sales', {})
+        card_sales_count = parsed.get('card_sales_count', 0)
+        sales_channel_sales = parsed.get('sales_channel_sales', [])
+        sales_channel_sales_count = parsed.get('sales_channel_sales_count', 0)
+        region_sales_groups = parsed.get('region_sales_groups', [])
+        region_sales_count = parsed.get('region_sales_count', 0)
+        sheet_name = parsed.get('sheet_name', '')
+
+        with transaction.atomic():
+            upload_log = PerformanceSalesUploadLog.objects.create(
+                performance=performance,
+                original_filename=excel_file.name,
+                sheet_name=sheet_name,
+                date_start=None,
+                date_end=None,
+                daily_sales_count=0,
+                grade_sales_count=0,
+                status='success',
+                message='최종 매출(할인권종별) 데이터 저장'
+            )
+
+            final_sales = PerformanceFinalSales.objects.filter(
+                performance=performance,
+                booking_site__isnull=True
+            ).order_by('-updated_at').first()
+
+            if not final_sales:
+                final_sales = PerformanceFinalSales.objects.create(
+                    performance=performance,
+                    booking_site=None,
+                    paid_revenue=Decimal(0),
+                    paid_ticket_count=0,
+                    unpaid_revenue=Decimal(0),
+                    unpaid_ticket_count=0
+                )
+
+            final_sales.booking_site_discount_sales = discount_sales
+            final_sales.age_gender_sales = age_gender_sales
+            final_sales.payment_method_sales = payment_method_sales
+            final_sales.card_sales_summary = [
+                {
+                    'card_type': card_type,
+                    'count': values.get('count', 0),
+                    'amount': values.get('amount', 0)
+                }
+                for card_type, values in card_sales.items()
+            ]
+            final_sales.sales_channel_sales = sales_channel_sales
+            final_sales.region_sales = region_sales_groups
+            final_sales.seoul_region_sales = []
+            final_sales.gyeonggi_region_sales = []
+            final_sales.save(update_fields=[
+                'booking_site_discount_sales',
+                'age_gender_sales',
+                'payment_method_sales',
+                'card_sales_summary',
+                'sales_channel_sales',
+                'region_sales',
+                'seoul_region_sales',
+                'gyeonggi_region_sales'
+            ])
+
+        delete_url = reverse('data_management:performance_sales_upload_log_delete', args=[performance.id, upload_log.id])
+        return JsonResponse({
+            'success': True,
+            'message': '엑셀 업로드가 완료되었습니다.',
+            'daily_sales_count': 0,
+            'grade_sales_count': 0,
+            'date_count': 0,
+            'file_name': excel_file.name,
+            'sheet_name': sheet_name,
+            'date_start': '',
+            'date_end': '',
+            'upload_log_id': upload_log.id,
+            'delete_url': delete_url,
+            'final_sales_type': 'discount_sales',
+            'discount_sales_count': discount_sales_count,
+            'age_gender_sales_count': age_gender_sales_count,
+            'payment_method_sales_count': payment_method_sales_count,
+            'card_sales_count': card_sales_count,
+            'sales_channel_sales_count': sales_channel_sales_count,
+            'region_sales_count': region_sales_count,
+        })
+
     daily_sales_data = parsed['daily_sales']
     if not daily_sales_data:
         return JsonResponse({'success': False, 'error': '저장할 매출 데이터가 없어요'}, status=400)

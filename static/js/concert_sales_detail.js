@@ -969,7 +969,10 @@ document.addEventListener('DOMContentLoaded', function() {
             })))
             .then(({ ok, data }) => {
                 if (ok && data.success) {
-                    const details = `날짜 ${data.date_count || 0}건, 일별 ${data.daily_sales_count || 0}건, 등급 ${data.grade_sales_count || 0}건 저장`;
+                    let details = `날짜 ${data.date_count || 0}건, 일별 ${data.daily_sales_count || 0}건, 등급 ${data.grade_sales_count || 0}건 저장`;
+                    if (data.final_sales_type === 'discount_sales') {
+                        details = `할인권종 ${data.discount_sales_count || 0}건, 연령/성별 ${data.age_gender_sales_count || 0}건, 결제수단 ${data.payment_method_sales_count || 0}건, 카드 ${data.card_sales_count || 0}건, 판매경로 ${data.sales_channel_sales_count || 0}건, 지역 ${data.region_sales_count || 0}건 저장`;
+                    }
                     showExcelUploadStatus('success', '업로드가 완료되었습니다.', details);
                     fileInput.value = '';
                     prependUploadLogRow(data);
@@ -1145,13 +1148,18 @@ function prependUploadLogRow(data) {
         <td class="px-6 py-4 text-sm text-gray-700">${fileName}</td>
         <td class="px-6 py-4 text-right text-sm text-gray-700">${deleteButton}</td>
     `;
-    
-    const emptyNotice = tbody.parentElement?.querySelector('.bg-gray-50');
-    if (emptyNotice) {
-        emptyNotice.remove();
-    }
-    
+
     tbody.prepend(row);
+    removeUploadLogEmptyState();
+}
+
+function removeUploadLogEmptyState() {
+    const container = document.getElementById('upload-log-tbody')?.closest('.bg-white');
+    if (!container) return;
+    const notice = container.querySelector('.bg-gray-50');
+    if (notice) {
+        notice.remove();
+    }
 }
 
 function ensureUploadLogEmptyState() {

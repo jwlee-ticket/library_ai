@@ -7,7 +7,7 @@ from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
 from collections import defaultdict
 from performance.models import Performance
-from data_management.models import PerformanceDailySales, PerformanceDailySalesGrade
+from data_management.models import PerformanceDailySales, PerformanceDailySalesGrade, PerformanceFinalSales
 
 
 @login_required
@@ -457,12 +457,31 @@ def get_concert_dashboard_data(request, pk):
         }
     
     # 나머지 섹션은 빈 데이터로 반환 (추후 확장)
-    discount_sales_data = {}
-    age_gender_sales_data = []
-    payment_method_sales_data = {}
+    final_sales = PerformanceFinalSales.objects.filter(
+        performance=performance,
+        booking_site__isnull=True
+    ).order_by('-updated_at').first()
+    discount_sales_data = final_sales.booking_site_discount_sales if final_sales else {}
+    age_gender_sales_data = final_sales.age_gender_sales if final_sales else []
+    payment_method_sales_data = final_sales.payment_method_sales if final_sales else {}
     card_sales_data = {}
-    sales_channel_sales_data = {}
-    region_sales_data = {}
+    if final_sales:
+        card_sales_data = {
+            item.get('card_type'): {
+                'count': item.get('count', 0),
+                'amount': item.get('amount', 0)
+            }
+            for item in (final_sales.card_sales_summary or [])
+            if item.get('card_type')
+        }
+    sales_channel_sales_data = final_sales.sales_channel_sales if final_sales else []
+    region_sales_groups_data = final_sales.region_sales if final_sales else []
+    if final_sales and final_sales.seoul_region_sales:
+        region_sales_groups_data = [
+            {'title': '지역별', 'rows': final_sales.region_sales or []},
+            {'title': '서울 지역별', 'rows': final_sales.seoul_region_sales or []},
+            {'title': '경기 지역별', 'rows': final_sales.gyeonggi_region_sales or []},
+        ]
     
     return JsonResponse({
         'success': True,
@@ -484,6 +503,6 @@ def get_concert_dashboard_data(request, pk):
             'payment_method_sales': payment_method_sales_data,
             'card_sales': card_sales_data,
             'sales_channel_sales': sales_channel_sales_data,
-            'region_sales': region_sales_data,
+            'region_sales_groups': region_sales_groups_data,
         }
     })

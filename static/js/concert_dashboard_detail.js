@@ -451,9 +451,7 @@ function renderRevenueChart() {
     // 선택된 예매처와 입금 상태 확인
     const selectedSites = getSelectedBookingSites();
     const paidCheckbox = document.getElementById('filter-paid');
-    const unpaidCheckbox = document.getElementById('filter-unpaid');
     const showPaid = paidCheckbox ? paidCheckbox.checked : true;
-    const showUnpaid = unpaidCheckbox ? unpaidCheckbox.checked : true;
     
     // 데이터셋 생성 (예매처별로 그룹화)
     const datasets = [];
@@ -474,18 +472,7 @@ function renderRevenueChart() {
             });
         }
         
-        // 미입금 데이터셋 (막대 차트)
-        if (showUnpaid) {
-            datasets.push({
-                type: 'bar',
-                label: `${site} (미입금)`,
-                data: dates.map(date => dailyRevenue[date]?.[site]?.unpaid || 0),
-                backgroundColor: siteColor + '99', // 60% 투명도
-                borderColor: siteColor + '99',
-                borderWidth: 1,
-                order: 2, // 막대 차트는 아래에 그리기
-            });
-        }
+        // 미입금 데이터셋은 숨김 처리
     });
     
     revenueChart = new Chart(ctx, {
@@ -553,9 +540,7 @@ function renderTicketChart() {
     // 선택된 예매처와 입금 상태 확인
     const selectedSites = getSelectedBookingSites();
     const paidCheckbox = document.getElementById('filter-paid');
-    const unpaidCheckbox = document.getElementById('filter-unpaid');
     const showPaid = paidCheckbox ? paidCheckbox.checked : true;
-    const showUnpaid = unpaidCheckbox ? unpaidCheckbox.checked : true;
     
     // 데이터셋 생성 (예매처별로 그룹화)
     const datasets = [];
@@ -576,18 +561,7 @@ function renderTicketChart() {
             });
         }
         
-        // 미입금 데이터셋 (막대 차트)
-        if (showUnpaid) {
-            datasets.push({
-                type: 'bar',
-                label: `${site} (미입금)`,
-                data: dates.map(date => dailyTickets[date]?.[site]?.unpaid || 0),
-                backgroundColor: siteColor + '99', // 60% 투명도
-                borderColor: siteColor + '99',
-                borderWidth: 1,
-                order: 2, // 막대 차트는 아래에 그리기
-            });
-        }
+        // 미입금 데이터셋은 숨김 처리
     });
     
     ticketChart = new Chart(ctx, {
@@ -716,9 +690,7 @@ function renderBookingSiteSummary() {
     
     const selectedSites = getSelectedBookingSites();
     const paidCheckbox = document.getElementById('filter-paid');
-    const unpaidCheckbox = document.getElementById('filter-unpaid');
     const showPaid = paidCheckbox ? paidCheckbox.checked : true;
-    const showUnpaid = unpaidCheckbox ? unpaidCheckbox.checked : true;
     
     const summary = {};
     bookingSites.forEach(site => {
@@ -729,13 +701,11 @@ function renderBookingSiteSummary() {
         dates.forEach(date => {
             const revenueBySite = dailyRevenue[date]?.[site];
             const ticketsBySite = dailyTickets[date]?.[site];
-            if (revenueBySite) {
-                if (showPaid) summary[site].revenue += revenueBySite.paid || 0;
-                if (showUnpaid) summary[site].revenue += revenueBySite.unpaid || 0;
+            if (revenueBySite && showPaid) {
+                summary[site].revenue += revenueBySite.paid || 0;
             }
-            if (ticketsBySite) {
-                if (showPaid) summary[site].tickets += ticketsBySite.paid || 0;
-                if (showUnpaid) summary[site].tickets += ticketsBySite.unpaid || 0;
+            if (ticketsBySite && showPaid) {
+                summary[site].tickets += ticketsBySite.paid || 0;
             }
         });
     });
@@ -1032,20 +1002,26 @@ function renderSalesChannelSales() {
     tbody.innerHTML = '';
     
     const salesChannelSales = currentData.sales_channel_sales;
-    const salesChannels = Object.keys(salesChannelSales).sort();
+    const salesChannelRows = Array.isArray(salesChannelSales)
+        ? salesChannelSales
+        : Object.keys(salesChannelSales || {}).sort().map(channel => ({
+            sales_channel: channel,
+            count: salesChannelSales[channel]?.count || 0,
+            amount: salesChannelSales[channel]?.amount || 0
+        }));
     
-    if (salesChannels.length === 0) {
+    if (salesChannelRows.length === 0) {
         tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-gray-600">판매경로별 판매 데이터가 없습니다</td></tr>';
         return;
     }
     
-    salesChannels.forEach(salesChannel => {
-        const data = salesChannelSales[salesChannel];
+    salesChannelRows.forEach(item => {
+        const salesChannel = item.sales_channel || '-';
         const row = document.createElement('tr');
         row.className = 'hover:bg-gray-50 transition-colors';
         
-        const count = data.count || 0;
-        const amount = data.amount || 0;
+        const count = item.count || 0;
+        const amount = item.amount || 0;
         
         row.innerHTML = `
             <td class="px-6 py-4">
@@ -1100,9 +1076,15 @@ function renderSalesChannelChart() {
     }
     
     const salesChannelSales = currentData.sales_channel_sales;
-    const salesChannels = Object.keys(salesChannelSales).sort();
+    const salesChannelRows = Array.isArray(salesChannelSales)
+        ? salesChannelSales
+        : Object.keys(salesChannelSales || {}).sort().map(channel => ({
+            sales_channel: channel,
+            count: salesChannelSales[channel]?.count || 0,
+            amount: salesChannelSales[channel]?.amount || 0
+        }));
     
-    if (salesChannels.length === 0) {
+    if (salesChannelRows.length === 0) {
         // 데이터가 없을 때 빈 차트 표시
         salesChannelChart = new Chart(ctx, {
             type: 'pie',
@@ -1126,14 +1108,14 @@ function renderSalesChannelChart() {
         return;
     }
     
-    const labels = salesChannels;
-    const counts = salesChannels.map(channel => salesChannelSales[channel].count || 0);
+    const labels = salesChannelRows.map(item => item.sales_channel || '-');
+    const counts = salesChannelRows.map(item => item.count || 0);
     
     // 총 판매 매수 계산
     const totalCount = counts.reduce((sum, count) => sum + count, 0);
     
     // 색상 생성 (동적 색상 팔레트 사용)
-    const backgroundColors = salesChannels.map((_, index) => {
+    const backgroundColors = salesChannelRows.map((_, index) => {
         return dynamicColors[index % dynamicColors.length];
     });
     
@@ -1185,38 +1167,119 @@ function renderSalesChannelChart() {
  * 지역별 판매현황 테이블 렌더링
  */
 function renderRegionSales() {
-    if (!currentData || !currentData.region_sales) return;
-    
-    const tbody = document.getElementById('region-sales-tbody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    const regionSales = currentData.region_sales;
-    const regions = Object.keys(regionSales).sort();
-    
-    if (regions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="2" class="px-6 py-8 text-center text-gray-600">지역별 판매 데이터가 없습니다</td></tr>';
+    if (!currentData || !currentData.region_sales_groups) return;
+
+    const container = document.getElementById('region-sales-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const regionGroups = currentData.region_sales_groups || [];
+    if (!regionGroups.length) {
+        const empty = document.createElement('div');
+        empty.className = 'rounded-lg border border-gray-100 bg-gray-50 p-6 text-sm text-gray-600';
+        empty.textContent = '지역별 판매 데이터가 없습니다';
+        container.appendChild(empty);
         return;
     }
-    
-    regions.forEach(region => {
-        const data = regionSales[region];
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-gray-50 transition-colors';
-        
-        const count = data.count || 0;
-        
-        row.innerHTML = `
-            <td class="px-6 py-4">
-                <span class="text-base font-medium text-black">${region}</span>
-            </td>
-            <td class="px-6 py-4 text-right">
-                <span class="text-sm text-black">${formatNumber(count)}</span>
-            </td>
+
+    regionGroups.forEach((group, index) => {
+        const title = group.title || '지역별';
+        const rows = group.rows || [];
+        const card = document.createElement('div');
+        card.className = 'rounded-xl border border-gray-100 shadow-sm bg-white p-4';
+        card.innerHTML = `
+            <div class="text-sm font-semibold text-black mb-3">${title}</div>
+            <div class="relative mb-4" style="height: 240px;">
+                <canvas id="region-chart-${index}"></canvas>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-black">지역</th>
+                            <th class="px-4 py-2 text-right text-sm font-semibold text-black">판매 매수</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
         `;
-        
-        tbody.appendChild(row);
+
+        const tbody = card.querySelector('tbody');
+        if (!rows.length) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="2" class="px-4 py-4 text-center text-sm text-gray-600">데이터가 없습니다</td>';
+            tbody.appendChild(row);
+        } else {
+            rows.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-colors';
+                const count = item.count || 0;
+                row.innerHTML = `
+                    <td class="px-4 py-2">
+                        <span class="text-sm text-black">${item.region || '-'}</span>
+                    </td>
+                    <td class="px-4 py-2 text-right">
+                        <span class="text-sm text-black">${formatNumber(count)}</span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        container.appendChild(card);
+
+        const canvas = card.querySelector(`#region-chart-${index}`);
+        if (canvas) {
+            const labels = rows.map(item => item.region || '-');
+            const counts = rows.map(item => item.count || 0);
+            const totalCount = counts.reduce((sum, count) => sum + count, 0);
+            const backgroundColors = labels.map((_, idx) => dynamicColors[idx % dynamicColors.length]);
+
+            new Chart(canvas, {
+                type: 'pie',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: '판매 매수',
+                            data: counts,
+                            backgroundColor: backgroundColors,
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                padding: 10,
+                                font: {
+                                    size: 11,
+                                },
+                                usePointStyle: true,
+                            },
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const percentage = totalCount > 0 ? ((value / totalCount) * 100).toFixed(1) : 0;
+                                    return label + ': ' + formatNumber(value) + '매 (' + percentage + '%)';
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+        }
     });
 }
 
@@ -1224,118 +1287,7 @@ function renderRegionSales() {
  * 지역별 판매현황 차트 렌더링
  */
 function renderRegionChart() {
-    const ctx = document.getElementById('region-chart');
-    if (!ctx) return;
-    
-    // 기존 차트 제거
-    if (regionChart) {
-        regionChart.destroy();
-    }
-    
-    if (!currentData || !currentData.region_sales) {
-        // 데이터가 없을 때 빈 차트 표시
-        regionChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: [],
-                datasets: [],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                    tooltip: {
-                        enabled: false,
-                    },
-                },
-            },
-        });
-        return;
-    }
-    
-    const regionSales = currentData.region_sales;
-    const regions = Object.keys(regionSales).sort();
-    
-    if (regions.length === 0) {
-        // 데이터가 없을 때 빈 차트 표시
-        regionChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: [],
-                datasets: [],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                    tooltip: {
-                        enabled: false,
-                    },
-                },
-            },
-        });
-        return;
-    }
-    
-    const labels = regions;
-    const counts = regions.map(region => regionSales[region].count || 0);
-    
-    // 총 판매 매수 계산
-    const totalCount = counts.reduce((sum, count) => sum + count, 0);
-    
-    // 색상 생성 (동적 색상 팔레트 사용)
-    const backgroundColors = regions.map((_, index) => {
-        return dynamicColors[index % dynamicColors.length];
-    });
-    
-    regionChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: '판매 매수',
-                    data: counts,
-                    backgroundColor: backgroundColors,
-                    borderColor: '#ffffff',
-                    borderWidth: 2,
-                },
-            ],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        padding: 15,
-                        font: {
-                            size: 12,
-                        },
-                        usePointStyle: true,
-                    },
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            const percentage = totalCount > 0 ? ((value / totalCount) * 100).toFixed(1) : 0;
-                            return label + ': ' + formatNumber(value) + '매 (' + percentage + '%)';
-                        },
-                    },
-                },
-            },
-        },
-    });
+    return;
 }
 
 /**
@@ -1380,13 +1332,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 입금/미입금 필터 변경
     const paidFilter = document.getElementById('filter-paid');
-    const unpaidFilter = document.getElementById('filter-unpaid');
-    
     if (paidFilter) {
         paidFilter.addEventListener('change', renderCharts);
-    }
-    if (unpaidFilter) {
-        unpaidFilter.addEventListener('change', renderCharts);
     }
 });
 

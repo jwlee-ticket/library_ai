@@ -44,7 +44,7 @@
                                         <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">연극</a>
                                         <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">뮤지컬</a>
                                         <a href="{% url 'dashboard:concert_overview' %}" class="block px-4 py-3 rounded-xl text-sm bg-primary-200 text-primary font-semibold transition-colors">콘서트</a>
-                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">전시</a>
+                                        
                                     </div>
                                 </div>
                             {% endwith %}
@@ -61,7 +61,7 @@
                                         <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">연극</a>
                                         <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">뮤지컬</a>
                                         <a href="{% url 'dashboard:concert_overview' %}" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">콘서트</a>
-                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">전시</a>
+                                        
                                     </div>
                                 </div>
                             {% endwith %}
@@ -71,12 +71,9 @@
                     <!-- 공연별 대시보드 -->
                     <a href="{% url 'dashboard:list' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'list' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-all duration-200 hover:shadow-sm">공연별 대시보드</a>
                     
-                    <!-- 공연 관리 -->
-                    <a href="{% url 'performance:list' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'performance' and request.resolver_match.url_name == 'list' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-all duration-200 hover:shadow-sm">공연 관리</a>
-                    
                     <!-- 데이터 관리 드롭다운 -->
                     <div class="relative">
-                        {% if request.resolver_match.app_name == 'data_management' %}
+                        {% if request.resolver_match.app_name == 'performance' or request.resolver_match.app_name == 'data_management' %}
                             {% with data_dropdown_open=True %}
                                 <button onclick="toggleDataDropdown()" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-all duration-200 hover:shadow-sm">
                                     <span>데이터 관리</span>
@@ -86,9 +83,8 @@
                                 </button>
                                 <div id="data-dropdown" class="max-h-96 overflow-hidden transition-all duration-300 ease-in-out">
                                     <div class="mt-1 space-y-1">
-                                        <a href="{% url 'data_management:performance_list' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'data_management' and request.resolver_match.url_name == 'performance_list' or request.resolver_match.url_name == 'performance_sales_detail' or request.resolver_match.url_name == 'performance_sales_create' or request.resolver_match.url_name == 'performance_sales_update' or request.resolver_match.url_name == 'performance_sales_delete' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-colors">매출</a>
-                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">마케팅</a>
-                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">리뷰</a>
+                                        <a href="{% url 'performance:list' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'performance' and request.resolver_match.url_name == 'list' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-colors">공연 관리</a>
+                                        <a href="{% url 'data_management:performance_list' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'data_management' and request.resolver_match.url_name == 'performance_list' or request.resolver_match.url_name == 'performance_sales_detail' or request.resolver_match.url_name == 'performance_sales_create' or request.resolver_match.url_name == 'performance_sales_update' or request.resolver_match.url_name == 'performance_sales_delete' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-colors">공연 매출 관리</a>
                                     </div>
                                 </div>
                             {% endwith %}
@@ -102,9 +98,8 @@
                                 </button>
                                 <div id="data-dropdown" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                                     <div class="mt-1 space-y-1">
-                                        <a href="{% url 'data_management:performance_list' %}" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">매출</a>
-                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">마케팅</a>
-                                        <a href="#" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">리뷰</a>
+                                        <a href="{% url 'performance:list' %}" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">공연 관리</a>
+                                        <a href="{% url 'data_management:performance_list' %}" class="block px-4 py-3 rounded-xl text-sm text-black hover:bg-primary-100 hover:text-primary transition-colors">공연 매출 관리</a>
                                     </div>
                                 </div>
                             {% endwith %}

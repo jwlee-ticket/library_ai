@@ -270,8 +270,6 @@ library_ai/
 
 #### data_management
 - 매출 데이터 관리 (공연 공통)
-- 마케팅 데이터 관리 (개발 예정)
-- 리뷰 데이터 관리 (개발 예정)
 - 공연 기반 데이터 입력 및 관리
 
 #### dashboard
@@ -319,7 +317,7 @@ graph TB
     subgraph "Application Layer"
         CoreViews[Core Views<br/>인증/로그인]
         PerfViews[Performance Views<br/>공연 관리]
-        DataViews[Data Management Views<br/>매출/마케팅/리뷰]
+        DataViews[Data Management Views<br/>매출]
         DashViews[Dashboard Views<br/>대시보드]
     end
     

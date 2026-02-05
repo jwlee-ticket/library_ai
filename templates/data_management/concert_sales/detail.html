@@ -2,9 +2,9 @@
 {% load static %}
 
 {% block breadcrumb %}
-    <span class="text-gray-700 font-medium">데이터 관리</span>
+    <span class="text-gray-700 font-medium">공연 매출 관리</span>
     <span class="text-gray-400 mx-2">/</span>
-    <span class="text-gray-700 font-medium">매출</span>
+    <span class="text-gray-700 font-medium">공연 매출</span>
     <span class="text-gray-400 mx-2">/</span>
     <span class="text-black font-medium">{% if performance %}{{ performance.title }}{% else %}공연 매출{% endif %}</span>
 {% endblock %}
@@ -21,7 +21,7 @@
     
     <!-- 페이지 제목 -->
     <div class="mb-6">
-        <h1 class="text-3xl font-semibold text-black">{% if performance %}{{ performance.title }}{% else %}공연 매출{% endif %}</h1>
+    <h1 class="text-3xl font-semibold text-black">{% if performance %}{{ performance.title }}{% else %}공연 매출{% endif %}</h1>
     </div>
     
     <!-- 엑셀 업로드 섹션 -->
@@ -70,40 +70,39 @@
             
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8 mt-6">
                 <h3 class="text-lg font-semibold text-black mb-4">업로드 파일 목록</h3>
-                {% if upload_logs %}
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">업로드일시</th>
-                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">파일명</th>
-                                    <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">삭제</th>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">업로드일시</th>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">파일명</th>
+                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">삭제</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upload-log-tbody" class="divide-y divide-gray-100">
+                            {% for log in upload_logs %}
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ log.uploaded_at|date:"Y-m-d H:i" }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ log.original_filename }}</td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-700">
+                                        <button
+                                            type="button"
+                                            class="p-2 text-danger hover:text-white hover:bg-danger rounded-lg transition-colors"
+                                            data-delete-upload-log
+                                            data-delete-url="{% url 'data_management:performance_sales_upload_log_delete' performance.id log.id %}"
+                                            aria-label="업로드 로그 삭제"
+                                        >
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody id="upload-log-tbody" class="divide-y divide-gray-100">
-                                {% for log in upload_logs %}
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-6 py-4 text-sm text-gray-700">{{ log.uploaded_at|date:"Y-m-d H:i" }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-700">{{ log.original_filename }}</td>
-                                        <td class="px-6 py-4 text-right text-sm text-gray-700">
-                                            <button
-                                                type="button"
-                                                class="p-2 text-danger hover:text-white hover:bg-danger rounded-lg transition-colors"
-                                                data-delete-upload-log
-                                                data-delete-url="{% url 'data_management:performance_sales_upload_log_delete' performance.id log.id %}"
-                                                aria-label="업로드 로그 삭제"
-                                            >
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                </svg>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if not upload_logs %}
                     <div class="rounded-lg border border-gray-100 bg-gray-50 p-6 text-sm text-gray-600">
                         업로드된 파일이 없어요.
                     </div>

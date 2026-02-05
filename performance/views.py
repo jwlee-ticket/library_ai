@@ -24,6 +24,10 @@ def sync_discount_type_grades(performance, discount_type_formset):
             form.instance.applicable_grades.set(matched_grades)
 
 
+def _is_formset_empty(formset):
+    return not any(form.has_changed() for form in formset.forms)
+
+
 class PerformanceListView(LoginRequiredMixin, ListView):
     """공연 목록 뷰"""
     model = Performance
@@ -99,12 +103,23 @@ class PerformanceCreateView(LoginRequiredMixin, CreateView):
             seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
             booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
             discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
-            if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
-                discount_type_formset.is_valid()):
-                seat_grade_formset.save()
-                booking_site_formset.save()
-                discount_type_formset.save()
-                sync_discount_type_grades(performance, discount_type_formset)
+
+            seat_grade_has_data = not _is_formset_empty(seat_grade_formset)
+            booking_site_has_data = not _is_formset_empty(booking_site_formset)
+            discount_type_has_data = not _is_formset_empty(discount_type_formset)
+
+            seat_grade_valid = seat_grade_formset.is_valid() if seat_grade_has_data else True
+            booking_site_valid = booking_site_formset.is_valid() if booking_site_has_data else True
+            discount_type_valid = discount_type_formset.is_valid() if discount_type_has_data else True
+
+            if seat_grade_valid and booking_site_valid and discount_type_valid:
+                if seat_grade_has_data:
+                    seat_grade_formset.save()
+                if booking_site_has_data:
+                    booking_site_formset.save()
+                if discount_type_has_data:
+                    discount_type_formset.save()
+                    sync_discount_type_grades(performance, discount_type_formset)
                 messages.success(self.request, '공연이 성공적으로 등록되었어요')
                 return super().form_valid(form)
             else:
@@ -163,12 +178,23 @@ class PerformanceUpdateView(LoginRequiredMixin, UpdateView):
             seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
             booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
             discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
-            if (seat_grade_formset.is_valid() and booking_site_formset.is_valid() and 
-                discount_type_formset.is_valid()):
-                seat_grade_formset.save()
-                booking_site_formset.save()
-                discount_type_formset.save()
-                sync_discount_type_grades(performance, discount_type_formset)
+
+            seat_grade_has_data = not _is_formset_empty(seat_grade_formset)
+            booking_site_has_data = not _is_formset_empty(booking_site_formset)
+            discount_type_has_data = not _is_formset_empty(discount_type_formset)
+
+            seat_grade_valid = seat_grade_formset.is_valid() if seat_grade_has_data else True
+            booking_site_valid = booking_site_formset.is_valid() if booking_site_has_data else True
+            discount_type_valid = discount_type_formset.is_valid() if discount_type_has_data else True
+
+            if seat_grade_valid and booking_site_valid and discount_type_valid:
+                if seat_grade_has_data:
+                    seat_grade_formset.save()
+                if booking_site_has_data:
+                    booking_site_formset.save()
+                if discount_type_has_data:
+                    discount_type_formset.save()
+                    sync_discount_type_grades(performance, discount_type_formset)
                 messages.success(self.request, '공연 정보가 성공적으로 수정되었어요')
                 return super().form_valid(form)
             else:
