@@ -312,6 +312,24 @@ def get_concert_dashboard_data(request, pk):
         else:
             end_date = today
         start_date = end_date - timedelta(days=6)
+
+        has_sales_in_range = PerformanceDailySales.objects.filter(
+            performance=performance,
+            date__gte=start_date,
+            date__lte=end_date
+        ).exclude(
+            booking_site__name__in=ignore_booking_sites
+        ).exists()
+
+        if not has_sales_in_range:
+            latest_sale_date = PerformanceDailySales.objects.filter(
+                performance=performance
+            ).exclude(
+                booking_site__name__in=ignore_booking_sites
+            ).aggregate(max_date=Max('date'))['max_date']
+            if latest_sale_date:
+                end_date = latest_sale_date
+                start_date = end_date - timedelta(days=6)
     else:
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
