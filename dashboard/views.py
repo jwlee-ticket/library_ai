@@ -5,9 +5,10 @@ from django.db.models import Q, Sum, Min, Max, Avg
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
+import re
 from collections import defaultdict
 from performance.models import Performance
-from data_management.models import PerformanceDailySales, PerformanceDailySalesGrade, PerformanceFinalSales
+from data_management.models import PerformanceDailySales, PerformanceDailySalesGrade, PerformanceFinalSales, PerformanceSalesUploadLog
 
 
 @login_required
@@ -410,49 +411,88 @@ def get_concert_dashboard_data(request, pk):
     total_ticket_count = total_ticket_paid + total_ticket_unpaid
     
     # 등급별 판매현황 데이터 (PerformanceDailySalesGrade에서 합산)
-    grade_sales_data = {}
-    grade_sales_qs = PerformanceDailySalesGrade.objects.filter(
-        daily_sales__performance=performance,
-        daily_sales__date__gte=start_date,
-        daily_sales__date__lte=end_date
-    ).values(
-        'seat_grade__name',
-        'seat_grade__seat_count'
-    ).annotate(
-        paid_count=Sum('paid_count'),
-        unpaid_count=Sum('unpaid_count'),
-        free_count=Sum('free_count'),
-        paid_occupancy_rate=Avg('paid_occupancy_rate'),
-        total_occupancy_rate=Avg('total_occupancy_rate')
-    )
-    
-    for row in grade_sales_qs:
-        grade_name = row['seat_grade__name']
-        seat_count = row['seat_grade__seat_count'] or 0
-        paid_count = row['paid_count'] or 0
-        unpaid_count = row['unpaid_count'] or 0
-        free_count = row['free_count'] or 0
-        total_count = paid_count + unpaid_count + free_count
-        
-        stored_paid_rate = row.get('paid_occupancy_rate')
-        stored_total_rate = row.get('total_occupancy_rate')
-        if stored_paid_rate is not None:
-            paid_occupancy_rate = float(stored_paid_rate)
-        else:
-            paid_occupancy_rate = paid_count / seat_count if seat_count > 0 else 0
-        if stored_total_rate is not None:
-            total_occupancy_rate = float(stored_total_rate)
-        else:
-            total_occupancy_rate = total_count / seat_count if seat_count > 0 else 0
-        
-        grade_sales_data[grade_name] = {
-            'paid_count': paid_count,
-            'unpaid_count': unpaid_count,
-            'free_count': free_count,
-            'paid_occupancy_rate': paid_occupancy_rate,
-            'total_occupancy_rate': total_occupancy_rate,
-            'total_count': total_count,
-        }
+    def build_grade_sales_data(range_start, range_end):
+        grade_sales = {}
+        grade_sales_qs = PerformanceDailySalesGrade.objects.filter(
+            daily_sales__performance=performance,
+            daily_sales__date__gte=range_start,
+            daily_sales__date__lte=range_end
+        ).values(
+            'seat_grade__name',
+            'seat_grade__seat_count'
+        ).annotate(
+            paid_count=Sum('paid_count'),
+            unpaid_count=Sum('unpaid_count'),
+            free_count=Sum('free_count'),
+            paid_occupancy_rate=Avg('paid_occupancy_rate'),
+            total_occupancy_rate=Avg('total_occupancy_rate')
+        )
+
+        for row in grade_sales_qs:
+            grade_name = row['seat_grade__name']
+            seat_count = row['seat_grade__seat_count'] or 0
+            paid_count = row['paid_count'] or 0
+            unpaid_count = row['unpaid_count'] or 0
+            free_count = row['free_count'] or 0
+            total_count = paid_count + unpaid_count + free_count
+
+            stored_paid_rate = row.get('paid_occupancy_rate')
+            stored_total_rate = row.get('total_occupancy_rate')
+            if stored_paid_rate is not None:
+                paid_occupancy_rate = float(stored_paid_rate)
+            else:
+                paid_occupancy_rate = paid_count / seat_count if seat_count > 0 else 0
+            if stored_total_rate is not None:
+                total_occupancy_rate = float(stored_total_rate)
+            else:
+                total_occupancy_rate = total_count / seat_count if seat_count > 0 else 0
+
+            grade_sales[grade_name] = {
+                'paid_count': paid_count,
+                'unpaid_count': unpaid_count,
+                'free_count': free_count,
+                'paid_occupancy_rate': paid_occupancy_rate,
+                'total_occupancy_rate': total_occupancy_rate,
+                'total_count': total_count,
+            }
+        return grade_sales
+
+    def get_upload_file_date(filename):
+        match = re.search(r'(\d{4})(?=\.[^.]+$)', filename or '')
+        if not match:
+            return None
+        month = int(match.group(1)[:2])
+        day = int(match.group(1)[2:])
+        base_year = performance.performance_start.year if performance.performance_start else datetime.now().year
+        if performance.performance_start and month < performance.performance_start.month:
+            base_year += 1
+        try:
+            return datetime(base_year, month, day).date()
+        except ValueError:
+            return None
+
+    latest_file_date = None
+    upload_logs = PerformanceSalesUploadLog.objects.filter(
+        performance=performance
+    ).values_list('original_filename', flat=True)
+    for filename in upload_logs:
+        file_date = get_upload_file_date(filename)
+        if not file_date:
+            continue
+        if latest_file_date is None or file_date > latest_file_date:
+            latest_file_date = file_date
+
+    if latest_file_date:
+        grade_sales_data = build_grade_sales_data(latest_file_date, latest_file_date)
+    else:
+        grade_sales_data = build_grade_sales_data(start_date, end_date)
+
+    if not grade_sales_data:
+        latest_grade_date = PerformanceDailySalesGrade.objects.filter(
+            daily_sales__performance=performance
+        ).aggregate(max_date=Max('daily_sales__date'))['max_date']
+        if latest_grade_date:
+            grade_sales_data = build_grade_sales_data(latest_grade_date, latest_grade_date)
     
     # 나머지 섹션은 빈 데이터로 반환 (추후 확장)
     final_sales = PerformanceFinalSales.objects.filter(

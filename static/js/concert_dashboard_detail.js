@@ -11,6 +11,7 @@ let salesChannelChart = null;
 let regionChart = null;
 let gradeChart = null;
 let currentData = null;
+const chartYAxisWidth = 56;
 
 /**
  * CSS 변수에서 색상 가져오기
@@ -403,6 +404,9 @@ function renderAgeGenderChart() {
             scales: {
                 y: {
                     beginAtZero: true,
+                    afterFit: function(scale) {
+                        scale.width = chartYAxisWidth;
+                    },
                     ticks: {
                         callback: function(value) {
                             return formatNumber(value);
@@ -492,6 +496,9 @@ function renderRevenueChart() {
             scales: {
                 y: {
                     beginAtZero: true,
+                    afterFit: function(scale) {
+                        scale.width = chartYAxisWidth;
+                    },
                     ticks: {
                         callback: function(value) {
                             return formatNumber(value);
