@@ -307,8 +307,8 @@ def get_concert_dashboard_data(request, pk):
 
     if not start_date_str or not end_date_str:
         today = datetime.now().date()
-        if performance.end_date and performance.end_date < today:
-            end_date = performance.end_date
+        if performance.performance_end and performance.performance_end < today:
+            end_date = performance.performance_end
         else:
             end_date = today
         start_date = end_date - timedelta(days=6)
