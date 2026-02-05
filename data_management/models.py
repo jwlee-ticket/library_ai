@@ -123,6 +123,22 @@ class PerformanceDailySalesGrade(models.Model):
         verbose_name='무료 매수',
         help_text='해당 등급의 무료(초대) 매수'
     )
+    paid_occupancy_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name='입금 점유율',
+        help_text='Seat details의 유료 점유율'
+    )
+    total_occupancy_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name='객석 점유율',
+        help_text='Seat details의 객석 점유율'
+    )
     
     class Meta:
         verbose_name = '공연 데일리 등급별 판매'

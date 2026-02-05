@@ -89,11 +89,7 @@ function updateSummaryCards(data) {
     const todayRevenueEl = document.getElementById('aggregated-today-revenue');
     if (todayRevenueEl) {
         const todayRevenue = data.today_revenue || 0;
-        if (todayRevenue > 0) {
-            todayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(todayRevenue)) + '</span>원';
-        } else {
-            todayRevenueEl.innerHTML = '<span class="text-secondary">-</span>';
-        }
+        todayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(todayRevenue)) + '</span>원';
     }
     
     // 매출 프로그래스바 계산
@@ -112,11 +108,10 @@ function updateSummaryCards(data) {
         if (totalTargetRevenue > 0) {
             const rate = Math.min(100, (totalRevenue / totalTargetRevenue) * 100);
             revenueBar.style.width = rate + '%';
-            revenueText.textContent = formatNumber(Math.round(totalRevenue)) + '원';
         } else {
             revenueBar.style.width = '0%';
-            revenueText.textContent = '-';
         }
+        revenueText.textContent = formatNumber(Math.round(totalRevenue)) + '원';
     }
     
     // 목표 매출 텍스트
@@ -145,11 +140,7 @@ function updateSummaryCards(data) {
     const todayTicketsEl = document.getElementById('aggregated-today-tickets');
     if (todayTicketsEl) {
         const todayTickets = data.today_ticket_count || 0;
-        if (todayTickets > 0) {
-            todayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(todayTickets) + '</span>매';
-        } else {
-            todayTicketsEl.innerHTML = '<span class="text-secondary">-</span>';
-        }
+        todayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(todayTickets) + '</span>매';
     }
     
     // 판매 매수 프로그래스바 계산
@@ -165,11 +156,10 @@ function updateSummaryCards(data) {
         if (totalSeats > 0) {
             const ticketsRate = Math.min(100, (totalTickets / totalSeats) * 100);
             ticketsBar.style.width = ticketsRate + '%';
-            ticketsText.textContent = formatNumber(totalTickets) + '매';
         } else {
             ticketsBar.style.width = '0%';
-            ticketsText.textContent = '-';
         }
+        ticketsText.textContent = formatNumber(totalTickets) + '매';
     }
     
     // 총 오픈 판매 매수 텍스트

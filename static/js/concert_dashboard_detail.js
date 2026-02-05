@@ -662,7 +662,7 @@ function renderGradeSales() {
     const grades = Object.keys(gradeSales).sort();
     
     if (grades.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-600">등급별 판매 데이터가 없습니다</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-600">등급별 판매 데이터가 없습니다</td></tr>';
         return;
     }
     
@@ -673,7 +673,6 @@ function renderGradeSales() {
         
         const paidCount = data.paid_count || 0;
         const freeCount = data.free_count || 0;
-        const revenue = data.revenue || 0;
         const paidOccupancyRate = (data.paid_occupancy_rate || 0) * 100;
         const totalOccupancyRate = (data.total_occupancy_rate || 0) * 100;
         const totalCount = data.total_count || 0;
@@ -687,9 +686,6 @@ function renderGradeSales() {
             </td>
             <td class="px-6 py-4 text-right">
                 <span class="text-sm text-black">${formatNumber(freeCount)}</span>
-            </td>
-            <td class="px-6 py-4 text-right">
-                <span class="text-sm text-black">${formatNumber(Math.round(revenue))}원</span>
             </td>
             <td class="px-6 py-4 text-right">
                 <span class="text-sm text-black">${paidOccupancyRate.toFixed(1)}%</span>

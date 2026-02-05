@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Library AI{% endblock %}</title>
+    <title>{% block title %}Library Sales{% endblock %}</title>
     
     <!-- Pretendard 폰트 -->
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -24,7 +24,7 @@
         <!-- 좌측 사이드바 (고정) -->
         <aside class="w-60 bg-primary-50 border-r border-[#2a3038]/10 fixed left-0 top-0 h-screen shadow-sm">
             <div class="p-8">
-                <h2 class="text-2xl font-semibold text-brand mb-6 pb-6 border-b border-[#2a3038]/10">Library AI</h2>
+                <h2 class="text-2xl font-semibold text-brand mb-6 pb-6 border-b border-[#2a3038]/10">Library Sales</h2>
                 <nav class="space-y-1">
                     <!-- 전체 -->
                     <a href="{% url 'dashboard:index' %}" class="block px-4 py-3 rounded-xl text-sm {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' %}bg-primary-200 text-primary font-semibold{% else %}text-black hover:bg-primary-100 hover:text-primary{% endif %} transition-all duration-200 hover:shadow-sm">전체 대시보드</a>

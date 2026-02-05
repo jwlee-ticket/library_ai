@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, DetailView, TemplateView
-from django.db.models import Q, Sum, Min, Max
+from django.db.models import Q, Sum, Min, Max, Avg
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
@@ -101,9 +101,13 @@ def get_concert_aggregated_summary_data(request):
         # 오늘 날짜
         today = datetime.now().date()
         
+        ignore_booking_sites = ['미', '미지정', '합계', 'TOTAL', '계', '전체', '총계', '유료 계', '초대']
+
         # 모든 콘서트의 일일 매출 데이터 조회
         all_daily_sales = PerformanceDailySales.objects.filter(
             performance__genre='concert'
+        ).exclude(
+            booking_site__name__in=ignore_booking_sites
         )
         
         # 총 매출 계산 (모든 날짜의 모든 콘서트)
@@ -299,16 +303,35 @@ def get_concert_dashboard_data(request, pk):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
     
+    ignore_booking_sites = ['미', '미지정', '합계', 'TOTAL', '계', '전체', '총계', '유료 계', '초대']
+
     if not start_date_str or not end_date_str:
-        date_range = PerformanceDailySales.objects.filter(
+        sales_date_range = PerformanceDailySales.objects.filter(
             performance=performance
-        ).aggregate(min_date=Min('date'), max_date=Max('date'))
-        if date_range['min_date'] and date_range['max_date']:
-            start_date = date_range['min_date']
-            end_date = date_range['max_date']
+        ).exclude(
+            booking_site__name__in=ignore_booking_sites
+        ).aggregate(
+            min_date=Min('date'),
+            max_date=Max('date')
+        )
+        grade_date_range = PerformanceDailySalesGrade.objects.filter(
+            daily_sales__performance=performance
+        ).aggregate(
+            min_date=Min('daily_sales__date'),
+            max_date=Max('daily_sales__date')
+        )
+
+        min_candidates = [sales_date_range['min_date'], grade_date_range['min_date']]
+        max_candidates = [sales_date_range['max_date'], grade_date_range['max_date']]
+        min_candidates = [value for value in min_candidates if value]
+        max_candidates = [value for value in max_candidates if value]
+
+        if min_candidates and max_candidates:
+            start_date = min(min_candidates)
+            end_date = max(max_candidates)
         else:
             end_date = datetime.now().date()
-            start_date = end_date - timedelta(days=6)
+            start_date = end_date - timedelta(days=7)
     else:
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
@@ -321,6 +344,8 @@ def get_concert_dashboard_data(request, pk):
         performance=performance,
         date__gte=start_date,
         date__lte=end_date
+    ).exclude(
+        booking_site__name__in=ignore_booking_sites
     ).order_by('date', 'booking_site')
     
     date_list = []
@@ -335,7 +360,7 @@ def get_concert_dashboard_data(request, pk):
         if sale.booking_site:
             booking_site_set.add(sale.booking_site.name)
     booking_site_set.update(performance.booking_sites.values_list('name', flat=True))
-    booking_sites = sorted({name for name in booking_site_set if name not in ['미', '미지정', '합계', 'TOTAL', '계', '전체', '총계']})
+    booking_sites = sorted({name for name in booking_site_set if name not in ignore_booking_sites})
     
     # 날짜별, 예매처별, 입금/미입금별로 데이터 정리
     daily_revenue_data = {}  # {date: {site: {paid: 0, unpaid: 0}}}
@@ -394,34 +419,38 @@ def get_concert_dashboard_data(request, pk):
         daily_sales__date__lte=end_date
     ).values(
         'seat_grade__name',
-        'seat_grade__seat_count',
-        'seat_grade__price'
+        'seat_grade__seat_count'
     ).annotate(
         paid_count=Sum('paid_count'),
         unpaid_count=Sum('unpaid_count'),
-        free_count=Sum('free_count')
+        free_count=Sum('free_count'),
+        paid_occupancy_rate=Avg('paid_occupancy_rate'),
+        total_occupancy_rate=Avg('total_occupancy_rate')
     )
     
     for row in grade_sales_qs:
         grade_name = row['seat_grade__name']
         seat_count = row['seat_grade__seat_count'] or 0
-        price = row['seat_grade__price'] or 0
         paid_count = row['paid_count'] or 0
         unpaid_count = row['unpaid_count'] or 0
         free_count = row['free_count'] or 0
         total_count = paid_count + unpaid_count + free_count
         
-        paid_occupancy_rate = 0
-        total_occupancy_rate = 0
-        if seat_count > 0:
-            paid_occupancy_rate = paid_count / seat_count
-            total_occupancy_rate = total_count / seat_count
+        stored_paid_rate = row.get('paid_occupancy_rate')
+        stored_total_rate = row.get('total_occupancy_rate')
+        if stored_paid_rate is not None:
+            paid_occupancy_rate = float(stored_paid_rate)
+        else:
+            paid_occupancy_rate = paid_count / seat_count if seat_count > 0 else 0
+        if stored_total_rate is not None:
+            total_occupancy_rate = float(stored_total_rate)
+        else:
+            total_occupancy_rate = total_count / seat_count if seat_count > 0 else 0
         
         grade_sales_data[grade_name] = {
             'paid_count': paid_count,
             'unpaid_count': unpaid_count,
             'free_count': free_count,
-            'revenue': float(price) * float(paid_count),
             'paid_occupancy_rate': paid_occupancy_rate,
             'total_occupancy_rate': total_occupancy_rate,
             'total_count': total_count,

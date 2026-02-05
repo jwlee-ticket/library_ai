@@ -1,6 +1,6 @@
 # 디자인 시스템
 
-Library AI 프로젝트의 디자인 시스템 가이드입니다.
+Library Sales 프로젝트의 디자인 시스템 가이드입니다.
 
 ## 디자인 원칙
 
@@ -28,7 +28,7 @@ Library AI 프로젝트의 디자인 시스템 가이드입니다.
 
 ## 톤앤보이스
 
-Library AI는 공연업계 종사자들이 편안하고 자신감 있게 사용할 수 있도록 **따뜻하고 다정하며, 명확하고 간결한** 커뮤니케이션을 지향합니다.
+Library Sales는 공연업계 종사자들이 편안하고 자신감 있게 사용할 수 있도록 **따뜻하고 다정하며, 명확하고 간결한** 커뮤니케이션을 지향합니다.
 
 - **따뜻하고 다정함**: 사용자를 배려하는 친근한 말투로, 딱딱한 업무용 표현보다는 자연스러운 대화 톤을 사용합니다. 사용자의 실수를 비난하지 않고 도움을 제공합니다.
 - **명확하고 간결함**: 전문 용어를 피하고 누구나 이해할 수 있는 표현을 사용하며, 불필요한 설명을 제거하고 핵심만 전달합니다.
@@ -112,9 +112,9 @@ const brandColor = getCSSVariable('--color-brand');
 ### 사용 예시
 ```html
 <!-- 브랜드 컬러 (로고, 브랜드명) -->
-<div class="text-[#f65938] font-semibold text-lg">Library AI</div>
+<div class="text-[#f65938] font-semibold text-lg">Library Sales</div>
 <!-- 또는 CSS 변수 사용 -->
-<div class="text-brand font-semibold text-lg">Library AI</div>
+<div class="text-brand font-semibold text-lg">Library Sales</div>
 
 <!-- Dark Slate 배경 (사이드바, 강조 영역) -->
 <div class="bg-[#2a3038] text-white p-6 rounded-xl">
