@@ -1135,6 +1135,14 @@ function prependUploadLogRow(data) {
     
     const row = document.createElement('tr');
     row.className = 'hover:bg-gray-50 transition-colors';
+    const downloadUrl = data.download_url || '';
+    const downloadButton = downloadUrl
+        ? `<a href="${downloadUrl}" class="p-2 text-primary hover:text-white hover:bg-primary rounded-lg transition-colors inline-flex items-center justify-center" aria-label="업로드 파일 다운로드">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"></path>
+                </svg>
+            </a>`
+        : '-';
     const deleteUrl = data.delete_url || '';
     const deleteButton = deleteUrl
         ? `<button type="button" class="p-2 text-danger hover:text-white hover:bg-danger rounded-lg transition-colors" data-delete-upload-log data-delete-url="${deleteUrl}" aria-label="업로드 로그 삭제">
@@ -1146,6 +1154,7 @@ function prependUploadLogRow(data) {
     row.innerHTML = `
         <td class="px-6 py-4 text-sm text-gray-700">${uploadedAt}</td>
         <td class="px-6 py-4 text-sm text-gray-700">${fileName}</td>
+        <td class="px-6 py-4 text-right text-sm text-gray-700">${downloadButton}</td>
         <td class="px-6 py-4 text-right text-sm text-gray-700">${deleteButton}</td>
     `;
 

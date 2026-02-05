@@ -306,32 +306,12 @@ def get_concert_dashboard_data(request, pk):
     ignore_booking_sites = ['미', '미지정', '합계', 'TOTAL', '계', '전체', '총계', '유료 계', '초대']
 
     if not start_date_str or not end_date_str:
-        sales_date_range = PerformanceDailySales.objects.filter(
-            performance=performance
-        ).exclude(
-            booking_site__name__in=ignore_booking_sites
-        ).aggregate(
-            min_date=Min('date'),
-            max_date=Max('date')
-        )
-        grade_date_range = PerformanceDailySalesGrade.objects.filter(
-            daily_sales__performance=performance
-        ).aggregate(
-            min_date=Min('daily_sales__date'),
-            max_date=Max('daily_sales__date')
-        )
-
-        min_candidates = [sales_date_range['min_date'], grade_date_range['min_date']]
-        max_candidates = [sales_date_range['max_date'], grade_date_range['max_date']]
-        min_candidates = [value for value in min_candidates if value]
-        max_candidates = [value for value in max_candidates if value]
-
-        if min_candidates and max_candidates:
-            start_date = min(min_candidates)
-            end_date = max(max_candidates)
+        today = datetime.now().date()
+        if performance.end_date and performance.end_date < today:
+            end_date = performance.end_date
         else:
-            end_date = datetime.now().date()
-            start_date = end_date - timedelta(days=7)
+            end_date = today
+        start_date = end_date - timedelta(days=6)
     else:
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()

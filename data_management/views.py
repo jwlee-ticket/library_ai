@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse, reverse_lazy
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
 import json
@@ -13,7 +13,13 @@ from decimal import Decimal
 import pandas as pd
 from django.db import transaction
 import os
-from .models import PerformanceDailySales, PerformanceFinalSales, PerformanceDailySalesGrade, PerformanceSalesUploadLog
+from .models import (
+    PerformanceDailySales,
+    PerformanceFinalSales,
+    PerformanceDailySalesGrade,
+    PerformanceSalesUploadLog,
+    PerformanceSalesUploadActionLog
+)
 from .forms import PerformanceDailySalesForm, PerformanceFinalSalesForm, PerformanceSalesDailyFormSet, PerformanceSalesExcelUploadForm
 from .constants import AGE_GROUPS, REGIONS, SEOUL_REGIONS, GYEONGGI_REGIONS
 from performance.models import Performance, BookingSite, SeatGrade
@@ -52,6 +58,23 @@ class PerformanceListView(ListView):
         context['search_query'] = self.request.GET.get('search', '')
         context['genre_choices'] = Performance.GENRE_CHOICES
         return context
+
+
+def _get_actor_name(user):
+    if user and user.is_authenticated:
+        return user.get_username()
+    return ''
+
+
+def _create_sales_upload_action_log(action_type, performance, upload_log, actor):
+    PerformanceSalesUploadActionLog.objects.create(
+        performance=performance,
+        upload_log=upload_log,
+        actor=actor if actor and actor.is_authenticated else None,
+        actor_name=_get_actor_name(actor),
+        original_filename=upload_log.original_filename if upload_log else '',
+        action_type=action_type
+    )
 
 
 class PerformanceSalesDetailView(ListView):
@@ -1057,6 +1080,7 @@ def upload_sales_excel(request, performance_id):
             upload_log = PerformanceSalesUploadLog.objects.create(
                 performance=performance,
                 original_filename=excel_file.name,
+                uploaded_file=excel_file,
                 sheet_name=sheet_name,
                 date_start=None,
                 date_end=None,
@@ -1065,6 +1089,7 @@ def upload_sales_excel(request, performance_id):
                 status='success',
                 message='최종 매출(할인권종별) 데이터 저장'
             )
+            _create_sales_upload_action_log('upload', performance, upload_log, request.user)
 
             final_sales = PerformanceFinalSales.objects.filter(
                 performance=performance,
@@ -1108,6 +1133,7 @@ def upload_sales_excel(request, performance_id):
             ])
 
         delete_url = reverse('data_management:performance_sales_upload_log_delete', args=[performance.id, upload_log.id])
+        download_url = reverse('data_management:performance_sales_upload_log_download', args=[performance.id, upload_log.id])
         return JsonResponse({
             'success': True,
             'message': '엑셀 업로드가 완료되었습니다.',
@@ -1120,6 +1146,7 @@ def upload_sales_excel(request, performance_id):
             'date_end': '',
             'upload_log_id': upload_log.id,
             'delete_url': delete_url,
+            'download_url': download_url,
             'final_sales_type': 'discount_sales',
             'discount_sales_count': discount_sales_count,
             'age_gender_sales_count': age_gender_sales_count,
@@ -1146,6 +1173,7 @@ def upload_sales_excel(request, performance_id):
         upload_log = PerformanceSalesUploadLog.objects.create(
             performance=performance,
             original_filename=excel_file.name,
+            uploaded_file=excel_file,
             sheet_name=sheet_name,
             date_start=date_start,
             date_end=date_end,
@@ -1153,6 +1181,7 @@ def upload_sales_excel(request, performance_id):
             grade_sales_count=0,
             status='success',
         )
+        _create_sales_upload_action_log('upload', performance, upload_log, request.user)
 
         PerformanceDailySales.objects.filter(
             performance=performance,
@@ -1262,6 +1291,7 @@ def upload_sales_excel(request, performance_id):
         upload_log.grade_sales_count = grade_sales_count
         upload_log.save(update_fields=['daily_sales_count', 'grade_sales_count'])
     delete_url = reverse('data_management:performance_sales_upload_log_delete', args=[performance.id, upload_log.id])
+    download_url = reverse('data_management:performance_sales_upload_log_download', args=[performance.id, upload_log.id])
     
     return JsonResponse({
         'success': True,
@@ -1275,6 +1305,7 @@ def upload_sales_excel(request, performance_id):
         'date_end': date_end.strftime('%Y-%m-%d') if date_end else '',
         'upload_log_id': upload_log.id,
         'delete_url': delete_url,
+        'download_url': download_url,
     })
 
 
@@ -1284,8 +1315,28 @@ def delete_sales_upload_log(request, performance_id, log_id):
     """업로드 파일 목록에서 로그 삭제"""
     performance = get_object_or_404(Performance, id=performance_id)
     upload_log = get_object_or_404(PerformanceSalesUploadLog, id=log_id, performance=performance)
+    _create_sales_upload_action_log('delete', performance, upload_log, request.user)
     upload_log.delete()
     return JsonResponse({'success': True})
+
+
+@login_required
+@require_http_methods(["GET"])
+def download_sales_upload_log(request, performance_id, log_id):
+    """업로드된 엑셀 파일 다운로드"""
+    performance = get_object_or_404(Performance, id=performance_id)
+    upload_log = get_object_or_404(PerformanceSalesUploadLog, id=log_id, performance=performance)
+    if not upload_log.uploaded_file:
+        return JsonResponse({'success': False, 'error': '다운로드할 파일이 없어요'}, status=404)
+    try:
+        _create_sales_upload_action_log('download', performance, upload_log, request.user)
+        return FileResponse(
+            upload_log.uploaded_file.open('rb'),
+            as_attachment=True,
+            filename=upload_log.original_filename
+        )
+    except FileNotFoundError:
+        return JsonResponse({'success': False, 'error': '파일을 찾을 수 없어요'}, status=404)
 
 
 @login_required

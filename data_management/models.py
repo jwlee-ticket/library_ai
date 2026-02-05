@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.core.validators import MinValueValidator
 
 
@@ -388,6 +389,13 @@ class PerformanceSalesUploadLog(models.Model):
         verbose_name='공연'
     )
     original_filename = models.CharField(max_length=255, verbose_name='파일명')
+    uploaded_file = models.FileField(
+        upload_to='sales_uploads/',
+        null=True,
+        blank=True,
+        verbose_name='업로드 파일',
+        help_text='업로드된 엑셀 파일'
+    )
     sheet_name = models.CharField(max_length=100, blank=True, verbose_name='시트명')
     date_start = models.DateField(null=True, blank=True, verbose_name='데이터 시작일')
     date_end = models.DateField(null=True, blank=True, verbose_name='데이터 종료일')
@@ -407,3 +415,52 @@ class PerformanceSalesUploadLog(models.Model):
     
     def __str__(self):
         return f'{self.performance.title} - {self.original_filename}'
+
+
+class PerformanceSalesUploadActionLog(models.Model):
+    """공연 매출 업로드/삭제/다운로드 액션 이력"""
+
+    ACTION_CHOICES = [
+        ('upload', '업로드'),
+        ('delete', '삭제'),
+        ('download', '다운로드'),
+    ]
+
+    performance = models.ForeignKey(
+        'performance.Performance',
+        on_delete=models.CASCADE,
+        related_name='sales_upload_action_logs',
+        verbose_name='공연'
+    )
+    upload_log = models.ForeignKey(
+        'PerformanceSalesUploadLog',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='action_logs',
+        verbose_name='업로드 기록'
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sales_upload_action_logs',
+        verbose_name='사용자'
+    )
+    actor_name = models.CharField(max_length=150, blank=True, verbose_name='사용자 이름')
+    original_filename = models.CharField(max_length=255, blank=True, verbose_name='파일명')
+    action_type = models.CharField(max_length=20, choices=ACTION_CHOICES, verbose_name='액션')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일시')
+
+    class Meta:
+        verbose_name = '공연 매출 업로드 액션 이력'
+        verbose_name_plural = '공연 매출 업로드 액션 이력'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['performance', 'created_at']),
+            models.Index(fields=['action_type']),
+        ]
+
+    def __str__(self):
+        return f'{self.performance.title} - {self.action_type}'

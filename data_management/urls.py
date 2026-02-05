@@ -16,6 +16,7 @@ urlpatterns = [
     path('sales/<int:performance_id>/create/', views.PerformanceSalesCreateView.as_view(), name='performance_sales_create'),
     path('sales/<int:performance_id>/upload-excel/', views.upload_sales_excel, name='performance_sales_upload_excel'),
     path('sales/<int:performance_id>/upload-logs/<int:log_id>/delete/', views.delete_sales_upload_log, name='performance_sales_upload_log_delete'),
+    path('sales/<int:performance_id>/upload-logs/<int:log_id>/download/', views.download_sales_upload_log, name='performance_sales_upload_log_download'),
     path('sales/<int:performance_id>/save-daily/', views.save_daily_sales, name='save_daily_sales'),
     path('sales/<int:performance_id>/get-daily/', views.get_daily_sales, name='get_daily_sales'),
     path('sales/<int:pk>/edit/', views.PerformanceSalesUpdateView.as_view(), name='performance_sales_update'),
