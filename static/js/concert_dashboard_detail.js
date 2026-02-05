@@ -197,28 +197,22 @@ function updateSummaryCards() {
         }
     }
     
-    // 최근 데이터가 있는 날짜 사용 (없으면 오늘 날짜)
-    const availableDates = currentData.dates || [];
-    const latestDate = availableDates.length ? availableDates[availableDates.length - 1] : null;
+    const todayStr = new Date().toISOString().split('T')[0];
     
     // 최근 날짜 매출 계산
     if (todayRevenueEl && currentData.daily_revenue) {
-        let latestRevenue = 0;
+        let todayRevenue = 0;
         const bookingSites = currentData.booking_sites || [];
-        
-        if (latestDate && currentData.daily_revenue[latestDate]) {
+        if (currentData.daily_revenue[todayStr]) {
             bookingSites.forEach(site => {
-                if (currentData.daily_revenue[latestDate][site]) {
-                    latestRevenue += (currentData.daily_revenue[latestDate][site].paid || 0);
-                    latestRevenue += (currentData.daily_revenue[latestDate][site].unpaid || 0);
+                if (currentData.daily_revenue[todayStr][site]) {
+                    todayRevenue += (currentData.daily_revenue[todayStr][site].paid || 0);
+                    todayRevenue += (currentData.daily_revenue[todayStr][site].unpaid || 0);
                 }
             });
         }
-        
-        if (latestRevenue > 0) {
-            todayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(latestRevenue)) + '</span>원';
-        } else if (totalRevenue > 0) {
-            todayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(totalRevenue)) + '</span>원';
+        if (todayRevenue > 0) {
+            todayRevenueEl.innerHTML = '<span class="text-black">' + formatNumber(Math.round(todayRevenue)) + '</span>원';
         } else {
             todayRevenueEl.innerHTML = '<span class="text-secondary">-</span>';
         }
@@ -270,22 +264,18 @@ function updateSummaryCards() {
     
     // 최근 날짜 판매 매수 계산
     if (todayTicketsEl && currentData.daily_tickets) {
-        let latestTickets = 0;
+        let todayTickets = 0;
         const bookingSites = currentData.booking_sites || [];
-        
-        if (latestDate && currentData.daily_tickets[latestDate]) {
+        if (currentData.daily_tickets[todayStr]) {
             bookingSites.forEach(site => {
-                if (currentData.daily_tickets[latestDate][site]) {
-                    latestTickets += (currentData.daily_tickets[latestDate][site].paid || 0);
-                    latestTickets += (currentData.daily_tickets[latestDate][site].unpaid || 0);
+                if (currentData.daily_tickets[todayStr][site]) {
+                    todayTickets += (currentData.daily_tickets[todayStr][site].paid || 0);
+                    todayTickets += (currentData.daily_tickets[todayStr][site].unpaid || 0);
                 }
             });
         }
-        
-        if (latestTickets > 0) {
-            todayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(latestTickets) + '</span>매';
-        } else if (totalTickets > 0) {
-            todayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(totalTickets) + '</span>매';
+        if (todayTickets > 0) {
+            todayTicketsEl.innerHTML = '<span class="text-black">' + formatNumber(todayTickets) + '</span>매';
         } else {
             todayTicketsEl.innerHTML = '<span class="text-secondary">-</span>';
         }

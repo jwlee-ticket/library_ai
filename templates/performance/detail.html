@@ -184,9 +184,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">예매처</label>
-                    {% if performance.booking_sites.all %}
+                    {% if display_booking_sites %}
                         <div class="flex flex-wrap gap-3">
-                            {% for booking_site in performance.booking_sites.all %}
+                            {% for booking_site in display_booking_sites %}
                                 {% if booking_site.url %}
                                     <a href="{{ booking_site.url }}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-medium">{{ booking_site.name }}</a>
                                 {% else %}

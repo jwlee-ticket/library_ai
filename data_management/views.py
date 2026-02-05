@@ -271,6 +271,8 @@ def _is_valid_seat_grade_label(label):
     normalized = _normalize_text(label)
     if not normalized:
         return False
+    if '%' in normalized:
+        return False
     if normalized in ['TOT', '금액']:
         return True
     if re.fullmatch(r'[0-9,.\s]+', normalized):
@@ -533,14 +535,11 @@ def _parse_card_sales_section(df):
     header_row = df.iloc[header_row_idx].tolist()
     normalized_headers = [_normalize_text(value) for value in header_row]
 
-    card_name_idx = None
-    for idx, label in enumerate(normalized_headers):
-        if label == '결제수단':
-            card_name_idx = idx
-            break
-
-    if card_name_idx is None:
+    card_name_indices = [idx for idx, label in enumerate(normalized_headers) if label == '결제수단']
+    if not card_name_indices:
         return {}, 0
+    # 카드별 매출집계는 오른쪽 블록(두 번째 결제수단)을 사용
+    card_name_idx = card_name_indices[-1]
 
     count_idx = None
     amount_idx = None

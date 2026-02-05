@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db import transaction
 from django.db.models import Q
-from .models import Performance, SeatGrade
+from .models import Performance, SeatGrade, BookingSite
 from .forms import PerformanceForm, SeatGradeFormSet, BookingSiteFormSet, DiscountTypeFormSet
 
 
@@ -26,6 +26,20 @@ def sync_discount_type_grades(performance, discount_type_formset):
 
 def _is_formset_empty(formset):
     return not any(form.has_changed() for form in formset.forms)
+
+
+AGGREGATE_BOOKING_SITE_NAMES = ['미', '미지정', '유료 계', '초대', '합계', 'TOTAL', '계', '전체', '총계']
+
+
+def _get_visible_booking_sites(performance):
+    return performance.booking_sites.exclude(name__in=AGGREGATE_BOOKING_SITE_NAMES)
+
+
+def _get_booking_site_formset(instance=None, data=None):
+    queryset = BookingSite.objects.exclude(name__in=AGGREGATE_BOOKING_SITE_NAMES)
+    if data is not None:
+        return BookingSiteFormSet(data, instance=instance, queryset=queryset)
+    return BookingSiteFormSet(instance=instance, queryset=queryset)
 
 
 class PerformanceListView(LoginRequiredMixin, ListView):
@@ -69,6 +83,12 @@ class PerformanceDetailView(LoginRequiredMixin, DetailView):
     template_name = 'performance/detail.html'
     context_object_name = 'performance'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        performance = self.object
+        context['display_booking_sites'] = _get_visible_booking_sites(performance)
+        return context
+
 
 class PerformanceCreateView(LoginRequiredMixin, CreateView):
     """공연 생성 뷰"""
@@ -85,13 +105,13 @@ class PerformanceCreateView(LoginRequiredMixin, CreateView):
             context['genre_filter'] = self.object.genre
             # 인라인 폼셋 초기화
             context['seat_grade_formset'] = SeatGradeFormSet(instance=self.object)
-            context['booking_site_formset'] = BookingSiteFormSet(instance=self.object)
+            context['booking_site_formset'] = _get_booking_site_formset(instance=self.object)
             context['discount_type_formset'] = DiscountTypeFormSet(instance=self.object)
         else:
             context['genre_filter'] = ''
             # 새 객체 생성 시 빈 폼셋
             context['seat_grade_formset'] = SeatGradeFormSet()
-            context['booking_site_formset'] = BookingSiteFormSet()
+            context['booking_site_formset'] = _get_booking_site_formset()
             context['discount_type_formset'] = DiscountTypeFormSet()
         return context
     
@@ -101,7 +121,7 @@ class PerformanceCreateView(LoginRequiredMixin, CreateView):
             
             # 인라인 폼셋 처리
             seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
-            booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
+            booking_site_formset = _get_booking_site_formset(instance=performance, data=self.request.POST)
             discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
 
             seat_grade_has_data = not _is_formset_empty(seat_grade_formset)
@@ -133,11 +153,11 @@ class PerformanceCreateView(LoginRequiredMixin, CreateView):
         context = self.get_context_data(form=form)
         if hasattr(self, 'object') and self.object:
             context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST, instance=self.object)
-            context['booking_site_formset'] = BookingSiteFormSet(self.request.POST, instance=self.object)
+            context['booking_site_formset'] = _get_booking_site_formset(instance=self.object, data=self.request.POST)
             context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST, instance=self.object)
         else:
             context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST)
-            context['booking_site_formset'] = BookingSiteFormSet(self.request.POST)
+            context['booking_site_formset'] = _get_booking_site_formset(data=self.request.POST)
             context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST)
         return self.render_to_response(context)
 
@@ -164,7 +184,7 @@ class PerformanceUpdateView(LoginRequiredMixin, UpdateView):
             context['genre_filter'] = self.object.genre
             # 인라인 폼셋 초기화 (기존 데이터 로드)
             context['seat_grade_formset'] = SeatGradeFormSet(instance=self.object)
-            context['booking_site_formset'] = BookingSiteFormSet(instance=self.object)
+            context['booking_site_formset'] = _get_booking_site_formset(instance=self.object)
             context['discount_type_formset'] = DiscountTypeFormSet(instance=self.object)
         else:
             context['genre_filter'] = ''
@@ -176,7 +196,7 @@ class PerformanceUpdateView(LoginRequiredMixin, UpdateView):
             
             # 인라인 폼셋 처리
             seat_grade_formset = SeatGradeFormSet(self.request.POST, instance=performance)
-            booking_site_formset = BookingSiteFormSet(self.request.POST, instance=performance)
+            booking_site_formset = _get_booking_site_formset(instance=performance, data=self.request.POST)
             discount_type_formset = DiscountTypeFormSet(self.request.POST, instance=performance)
 
             seat_grade_has_data = not _is_formset_empty(seat_grade_formset)
@@ -208,7 +228,7 @@ class PerformanceUpdateView(LoginRequiredMixin, UpdateView):
         # 폼셋 검증 실패 시 폼셋을 다시 컨텍스트에 포함
         context = self.get_context_data(form=form)
         context['seat_grade_formset'] = SeatGradeFormSet(self.request.POST, instance=self.object)
-        context['booking_site_formset'] = BookingSiteFormSet(self.request.POST, instance=self.object)
+        context['booking_site_formset'] = _get_booking_site_formset(instance=self.object, data=self.request.POST)
         context['discount_type_formset'] = DiscountTypeFormSet(self.request.POST, instance=self.object)
         return self.render_to_response(context)
 

@@ -9,12 +9,12 @@
 
 {% block content %}
     <!-- 페이지 제목 -->
-    <div class="mb-6">
+    <div class="mb-8">
         <h1 class="text-3xl font-semibold text-black">콘서트 통합 대시보드</h1>
     </div>
     
     <!-- 요약 카드 섹션 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
         <!-- 매출 현황 카드 -->
         <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
             <h3 class="text-lg font-semibold text-black mb-6">매출 현황</h3>
@@ -91,7 +91,7 @@
     </div>
     
     <!-- 목표액 달성 현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
         <h2 class="text-xl font-semibold text-black mb-6">목표액 달성 현황</h2>
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -111,16 +111,16 @@
     </div>
     
     <!-- 기간별 매출 그래프 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
         <!-- 타이틀과 필터를 같은 행에 배치 -->
         <div class="mb-6">
             <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <h2 class="text-xl font-semibold text-black">기간별 매출 그래프</h2>
                 
                 <!-- 필터 섹션 - 오른쪽 상단 정렬 -->
-                <div class="flex flex-col items-end gap-4">
+                <div class="flex flex-col items-end gap-6">
                     <!-- 기간 선택 라디오 버튼 -->
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-6">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input 
                                 type="radio" 
@@ -155,7 +155,7 @@
                     </div>
                     
                     <!-- 날짜 입력 필드 -->
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-6">
                         <label class="text-sm font-medium text-gray-700 whitespace-nowrap">시작일</label>
                         <input 
                             type="date" 
@@ -186,16 +186,16 @@
     </div>
     
     <!-- 기간별 매출 테이블 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
         <!-- 타이틀과 필터를 같은 행에 배치 -->
         <div class="mb-6">
             <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <h2 class="text-xl font-semibold text-black">기간별 매출 테이블</h2>
                 
                 <!-- 테이블 전용 필터 섹션 - 오른쪽 상단 정렬 -->
-                <div class="flex flex-col items-end gap-4">
+                <div class="flex flex-col items-end gap-6">
                     <!-- 기간 선택 라디오 버튼 -->
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-6">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input 
                                 type="radio" 
@@ -230,7 +230,7 @@
                     </div>
                     
                     <!-- 날짜 입력 필드 -->
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-6">
                         <label class="text-sm font-medium text-gray-700 whitespace-nowrap">시작일</label>
                         <input 
                             type="date" 
