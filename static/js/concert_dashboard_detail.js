@@ -11,6 +11,7 @@ let salesChannelChart = null;
 let regionChart = null;
 let gradeChart = null;
 let currentData = null;
+let chartData = null;
 const chartYAxisWidth = 56;
 
 /**
@@ -110,28 +111,37 @@ async function loadDashboardData(startDate, endDate) {
         const data = await response.json();
         
         if (data.success) {
-            currentData = data.data;
-            if (currentData?.applied_start_date && currentData?.applied_end_date) {
+            const isFiltered = !!(startDate && endDate);
+            if (!isFiltered || !currentData) {
+                currentData = data.data;
+            }
+            chartData = data.data;
+            if (chartData?.applied_start_date && chartData?.applied_end_date) {
                 const startDateInput = document.getElementById('filter-start-date');
                 const endDateInput = document.getElementById('filter-end-date');
                 if (startDateInput && endDateInput) {
-                    startDateInput.value = currentData.applied_start_date;
-                    endDateInput.value = currentData.applied_end_date;
+                    startDateInput.value = chartData.applied_start_date;
+                    endDateInput.value = chartData.applied_end_date;
                 }
             }
-            updateSummaryCards();
-            updateBookingSiteFilters();
-            renderCharts();
-            renderGradeSales();
-            renderGradeChart();
-            renderDiscountSales();
-            renderAgeGenderChart();
-            renderPaymentMethodSales();
-            renderCardSales();
-            renderSalesChannelSales();
-            renderSalesChannelChart();
-            renderRegionSales();
-            renderRegionChart();
+            if (!isFiltered) {
+                updateSummaryCards();
+                updateBookingSiteFilters();
+                renderCharts();
+                renderBookingSiteSummary();
+                renderGradeSales();
+                renderGradeChart();
+                renderDiscountSales();
+                renderAgeGenderChart();
+                renderPaymentMethodSales();
+                renderCardSales();
+                renderSalesChannelSales();
+                renderSalesChannelChart();
+                renderRegionSales();
+                renderRegionChart();
+            } else {
+                renderCharts();
+            }
         } else {
             console.error('데이터 로드 실패:', data.error);
             alert('데이터를 불러올 수 없습니다: ' + (data.error || '알 수 없는 오류'));
@@ -317,11 +327,10 @@ function updateBookingSiteFilters() {
  * 차트 렌더링
  */
 function renderCharts() {
-    if (!currentData) return;
+    if (!chartData) return;
     
     renderRevenueChart();
     renderTicketChart();
-    renderBookingSiteSummary();
 }
 
 /**
@@ -436,9 +445,11 @@ function renderRevenueChart() {
         revenueChart.destroy();
     }
     
-    const dates = currentData.dates;
-    const bookingSites = currentData.booking_sites;
-    const dailyRevenue = currentData.daily_revenue;
+    const data = chartData || currentData;
+    if (!data) return;
+    const dates = data.dates;
+    const bookingSites = data.booking_sites;
+    const dailyRevenue = data.daily_revenue;
     
     // 선택된 예매처와 입금 상태 확인
     const selectedSites = getSelectedBookingSites();
@@ -528,9 +539,11 @@ function renderTicketChart() {
         ticketChart.destroy();
     }
     
-    const dates = currentData.dates;
-    const bookingSites = currentData.booking_sites;
-    const dailyTickets = currentData.daily_tickets;
+    const data = chartData || currentData;
+    if (!data) return;
+    const dates = data.dates;
+    const bookingSites = data.booking_sites;
+    const dailyTickets = data.daily_tickets;
     
     // 선택된 예매처와 입금 상태 확인
     const selectedSites = getSelectedBookingSites();
