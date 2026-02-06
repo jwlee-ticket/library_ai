@@ -174,11 +174,10 @@ function updateSummaryCards() {
         if (targetRevenue > 0) {
             const rate = Math.min(100, (totalRevenue / targetRevenue) * 100);
             revenueBar.style.width = rate + '%';
-            revenueText.textContent = formatNumber(Math.round(totalRevenue)) + '원';
         } else {
             revenueBar.style.width = '0%';
-            revenueText.textContent = '-';
         }
+        revenueText.textContent = formatNumber(Math.round(totalRevenue)) + '원';
     }
     
     if (totalRevenueEl) {
@@ -244,11 +243,10 @@ function updateSummaryCards() {
         if (totalSeats > 0) {
             const ticketsRate = Math.min(100, (totalTickets / totalSeats) * 100);
             ticketsBar.style.width = ticketsRate + '%';
-            ticketsText.textContent = formatNumber(totalTickets) + '매';
         } else {
             ticketsBar.style.width = '0%';
-            ticketsText.textContent = '-';
         }
+        ticketsText.textContent = formatNumber(totalTickets) + '매';
     }
     
     if (totalTicketsEl) {
