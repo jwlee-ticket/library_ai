@@ -12,7 +12,7 @@ let regionChart = null;
 let gradeChart = null;
 let currentData = null;
 let chartData = null;
-const chartYAxisWidth = 56;
+const chartYAxisWidth = 84;
 
 /**
  * CSS 변수에서 색상 가져오기
