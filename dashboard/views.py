@@ -346,6 +346,31 @@ def get_concert_dashboard_data(request, pk):
     ).exclude(
         booking_site__name__in=ignore_booking_sites
     ).order_by('date', 'booking_site')
+
+    # 예매처별 비중용 전체 기간 집계 (필터 기간과 무관)
+    booking_site_summary_all_time = []
+    all_time_site_rows = (
+        PerformanceDailySales.objects
+        .filter(
+            performance=performance,
+            booking_site__isnull=False,
+        )
+        .exclude(
+            booking_site__name__in=ignore_booking_sites
+        )
+        .values('booking_site__name')
+        .annotate(
+            revenue=Sum('paid_revenue'),
+            tickets=Sum('paid_ticket_count')
+        )
+        .order_by('booking_site__name')
+    )
+    for row in all_time_site_rows:
+        booking_site_summary_all_time.append({
+            'site': row['booking_site__name'],
+            'revenue': float(row['revenue'] or 0),
+            'tickets': int(row['tickets'] or 0),
+        })
     
     date_list = []
     current_date = start_date
@@ -544,6 +569,7 @@ def get_concert_dashboard_data(request, pk):
             'booking_sites': booking_sites,
             'daily_revenue': daily_revenue_data,
             'daily_tickets': daily_ticket_data,
+            'booking_site_summary_all_time': booking_site_summary_all_time,
             'target_revenue': target_revenue,
             'break_even_point': break_even_point,
             'total_seats': total_seats,

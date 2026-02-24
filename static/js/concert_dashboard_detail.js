@@ -690,53 +690,74 @@ function renderGradeSales() {
 function renderBookingSiteSummary() {
     const tbody = document.getElementById('booking-site-tbody');
     if (!tbody || !currentData) return;
-    
-    const dates = currentData.dates || [];
-    const bookingSites = currentData.booking_sites || [];
-    const dailyRevenue = currentData.daily_revenue || {};
-    const dailyTickets = currentData.daily_tickets || {};
-    
-    const selectedSites = getSelectedBookingSites();
-    const paidCheckbox = document.getElementById('filter-paid');
-    const showPaid = paidCheckbox ? paidCheckbox.checked : true;
-    
-    const summary = {};
-    bookingSites.forEach(site => {
-        if (selectedSites.length && !selectedSites.includes(site)) {
+
+    const summaryRows = currentData.booking_site_summary_all_time || [];
+    if (summaryRows.length === 0) {
+        // Fallback for older API responses
+        const fallbackSummary = {};
+        const dates = currentData.dates || [];
+        const bookingSites = currentData.booking_sites || [];
+        const dailyRevenue = currentData.daily_revenue || {};
+        const dailyTickets = currentData.daily_tickets || {};
+        bookingSites.forEach(site => {
+            fallbackSummary[site] = { revenue: 0, tickets: 0 };
+            dates.forEach(date => {
+                const revenueBySite = dailyRevenue[date]?.[site];
+                const ticketsBySite = dailyTickets[date]?.[site];
+                if (revenueBySite) {
+                    fallbackSummary[site].revenue += revenueBySite.paid || 0;
+                }
+                if (ticketsBySite) {
+                    fallbackSummary[site].tickets += ticketsBySite.paid || 0;
+                }
+            });
+        });
+        const fallbackSites = Object.keys(fallbackSummary).sort();
+        if (!fallbackSites.length) {
+            tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-gray-600">예매처별 데이터가 없습니다</td></tr>';
             return;
         }
-        summary[site] = { revenue: 0, tickets: 0 };
-        dates.forEach(date => {
-            const revenueBySite = dailyRevenue[date]?.[site];
-            const ticketsBySite = dailyTickets[date]?.[site];
-            if (revenueBySite && showPaid) {
-                summary[site].revenue += revenueBySite.paid || 0;
-            }
-            if (ticketsBySite && showPaid) {
-                summary[site].tickets += ticketsBySite.paid || 0;
-            }
+        tbody.innerHTML = '';
+        fallbackSites.forEach(site => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors';
+            row.innerHTML = `
+                <td class="px-6 py-4">
+                    <span class="text-base font-medium text-black">${site}</span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <span class="text-sm text-black">${formatNumber(Math.round(fallbackSummary[site].revenue))}원</span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <span class="text-sm text-black">${formatNumber(fallbackSummary[site].tickets)}매</span>
+                </td>
+            `;
+            tbody.appendChild(row);
         });
-    });
-    
-    const sites = Object.keys(summary).sort();
-    if (!sites.length) {
+        return;
+    }
+
+    if (!summaryRows.length) {
         tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-gray-600">예매처별 데이터가 없습니다</td></tr>';
         return;
     }
-    
+
     tbody.innerHTML = '';
-    sites.forEach(site => {
+    summaryRows.forEach(item => {
         const row = document.createElement('tr');
         row.className = 'hover:bg-gray-50 transition-colors';
+        const site = item.site || '-';
+        const revenue = item.revenue || 0;
+        const tickets = item.tickets || 0;
         row.innerHTML = `
             <td class="px-6 py-4">
                 <span class="text-base font-medium text-black">${site}</span>
             </td>
             <td class="px-6 py-4 text-right">
-                <span class="text-sm text-black">${formatNumber(Math.round(summary[site].revenue))}원</span>
+                <span class="text-sm text-black">${formatNumber(Math.round(revenue))}원</span>
             </td>
             <td class="px-6 py-4 text-right">
-                <span class="text-sm text-black">${formatNumber(summary[site].tickets)}매</span>
+                <span class="text-sm text-black">${formatNumber(tickets)}매</span>
             </td>
         `;
         tbody.appendChild(row);
