@@ -59,6 +59,36 @@ function parseJsonSafely(jsonString) {
     }
 }
 
+function toggleVisibilityById(id, visible) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (visible) {
+        el.classList.remove('hidden');
+    } else {
+        el.classList.add('hidden');
+    }
+}
+
+function updateFinalReportSectionsVisibility() {
+    if (!currentData) return;
+    const visibility = currentData.final_report_visibility || {};
+
+    const hasDiscount = !!visibility.has_discount_sales;
+    const hasAgeGender = !!visibility.has_age_gender_sales;
+    const hasPayment = !!visibility.has_payment_method_sales;
+    const hasCard = !!visibility.has_card_sales;
+    const hasSalesChannel = !!visibility.has_sales_channel_sales;
+    const hasRegion = !!visibility.has_region_sales;
+
+    toggleVisibilityById('section-discount-sales', hasDiscount);
+    toggleVisibilityById('section-age-gender-sales', hasAgeGender);
+    toggleVisibilityById('section-sales-channel-sales', hasSalesChannel);
+    toggleVisibilityById('section-region-sales', hasRegion);
+    toggleVisibilityById('section-payment-method-sales', hasPayment);
+    toggleVisibilityById('section-card-sales', hasCard);
+    toggleVisibilityById('section-payment-card-grid', hasPayment || hasCard);
+}
+
 /**
  * 예매처 색상 가져오기
  */
@@ -127,6 +157,7 @@ async function loadDashboardData(startDate, endDate) {
             if (!isFiltered) {
                 updateSummaryCards();
                 updateBookingSiteFilters();
+                updateFinalReportSectionsVisibility();
                 renderCharts();
                 renderBookingSiteSummary();
                 renderGradeSales();

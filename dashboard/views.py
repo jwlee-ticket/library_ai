@@ -559,6 +559,14 @@ def get_concert_dashboard_data(request, pk):
             {'title': '서울 지역별', 'rows': final_sales.seoul_region_sales or []},
             {'title': '경기 지역별', 'rows': final_sales.gyeonggi_region_sales or []},
         ]
+    final_report_visibility = {
+        'has_discount_sales': bool(discount_sales_data),
+        'has_age_gender_sales': bool(age_gender_sales_data),
+        'has_payment_method_sales': bool(payment_method_sales_data),
+        'has_card_sales': bool(card_sales_data),
+        'has_sales_channel_sales': bool(sales_channel_sales_data),
+        'has_region_sales': bool(region_sales_groups_data),
+    }
     
     return JsonResponse({
         'success': True,
@@ -582,5 +590,6 @@ def get_concert_dashboard_data(request, pk):
             'card_sales': card_sales_data,
             'sales_channel_sales': sales_channel_sales_data,
             'region_sales_groups': region_sales_groups_data,
+            'final_report_visibility': final_report_visibility,
         }
     })

@@ -215,7 +215,7 @@
     </div>
     
     <!-- 할인권종별 판매현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
+    <div id="section-discount-sales" class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
         <h2 class="text-xl font-semibold text-black mb-6">할인권종별 판매현황</h2>
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -235,7 +235,7 @@
     </div>
     
     <!-- 성별, 연령대별 판매현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
+    <div id="section-age-gender-sales" class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-6">
         <h2 class="text-xl font-semibold text-black mb-6">성별, 연령대별 판매현황</h2>
         <div class="relative" style="height: 400px;">
             <canvas id="age-gender-chart"></canvas>
@@ -243,9 +243,9 @@
     </div>
     
     <!-- 결제수단별 판매현황, 카드별 매출집계 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+    <div id="section-payment-card-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <!-- 결제수단별 판매현황 -->
-        <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+        <div id="section-payment-method-sales" class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
             <h2 class="text-xl font-semibold text-black mb-6">결제수단별 판매현황</h2>
             <div class="overflow-x-auto">
                 <table class="w-full">
@@ -264,7 +264,7 @@
         </div>
         
         <!-- 카드별 매출집계 -->
-        <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+        <div id="section-card-sales" class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
             <h2 class="text-xl font-semibold text-black mb-6">카드별 매출집계</h2>
             <div class="overflow-x-auto">
                 <table class="w-full">
@@ -284,7 +284,7 @@
     </div>
     
     <!-- 판매경로별 판매현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
+    <div id="section-sales-channel-sales" class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
         <h2 class="text-xl font-semibold text-black mb-6">판매경로별 판매현황</h2>
         
         <!-- 테이블과 차트를 같은 행에 배치 -->
@@ -317,7 +317,7 @@
     </div>
     
     <!-- 지역별 판매현황 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
+    <div id="section-region-sales" class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
         <h2 class="text-xl font-semibold text-black mb-6">지역별 판매현황</h2>
         <div id="region-sales-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             <!-- JavaScript로 동적 생성 -->
