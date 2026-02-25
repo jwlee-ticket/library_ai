@@ -578,7 +578,7 @@ function renderPeriodRevenueTable() {
         // 각 공연별 매출 셀 생성
         performances.forEach(performance => {
             const cell = document.createElement('td');
-            cell.className = 'px-6 py-4 text-right text-sm text-black';
+            cell.className = 'px-6 py-4 text-right text-sm text-black whitespace-nowrap';
             
             const performanceId = performance.id.toString();
             const revenue = data[period]?.[performanceId] || 0;
@@ -587,7 +587,7 @@ function renderPeriodRevenueTable() {
                 cell.textContent = formatNumber(Math.round(revenue)) + '원';
             } else {
                 cell.textContent = '-';
-                cell.className = 'px-6 py-4 text-right text-sm text-secondary';
+                cell.className = 'px-6 py-4 text-right text-sm text-secondary whitespace-nowrap';
             }
             
             row.appendChild(cell);
