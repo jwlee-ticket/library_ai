@@ -5,6 +5,7 @@ from .models import (
     PerformanceDailySalesGrade,
     PerformanceFinalSalesGrade,
     PerformanceSalesUploadLog,
+    MusicalEpisodeSales,
 )
 
 
@@ -165,3 +166,20 @@ class PerformanceSalesUploadLogAdmin(admin.ModelAdmin):
     list_filter = ['performance', 'status', 'uploaded_at']
     search_fields = ['performance__title', 'original_filename']
     readonly_fields = ['uploaded_at']
+
+
+@admin.register(MusicalEpisodeSales)
+class MusicalEpisodeSalesAdmin(admin.ModelAdmin):
+    list_display = [
+        'performance',
+        'episode_no',
+        'show_date',
+        'show_time',
+        'paid_ticket_count',
+        'paid_revenue',
+        'updated_at',
+    ]
+    list_filter = ['performance', 'show_date', 'upload_log']
+    search_fields = ['performance__title', 'remark']
+    ordering = ['performance', 'episode_no']
+    readonly_fields = ['created_at', 'updated_at']

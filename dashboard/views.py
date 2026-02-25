@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import re
 from collections import defaultdict
 from performance.models import Performance
-from data_management.models import PerformanceDailySales, PerformanceDailySalesGrade, PerformanceFinalSales, PerformanceSalesUploadLog
+from data_management.models import PerformanceDailySales, PerformanceDailySalesGrade, PerformanceFinalSales, PerformanceSalesUploadLog, MusicalEpisodeSales
 
 
 @login_required
@@ -591,5 +591,118 @@ def get_concert_dashboard_data(request, pk):
             'sales_channel_sales': sales_channel_sales_data,
             'region_sales_groups': region_sales_groups_data,
             'final_report_visibility': final_report_visibility,
+        }
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_musical_dashboard_data(request, pk):
+    """뮤지컬 공연별 대시보드 데이터 API"""
+    performance = get_object_or_404(Performance, id=pk, genre='musical')
+
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    today = datetime.now().date()
+    if not start_date_str or not end_date_str:
+        if performance.performance_end and performance.performance_end < today:
+            end_date = performance.performance_end
+        else:
+            end_date = today
+        start_date = end_date - timedelta(days=6)
+    else:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return JsonResponse({'success': False, 'error': '올바른 날짜 형식이 아니에요'}, status=400)
+
+    latest_upload_log = (
+        PerformanceSalesUploadLog.objects
+        .filter(performance=performance)
+        .order_by('-uploaded_at', '-id')
+        .first()
+    )
+
+    if latest_upload_log:
+        episode_qs = MusicalEpisodeSales.objects.filter(
+            performance=performance,
+            upload_log=latest_upload_log
+        )
+    else:
+        episode_qs = MusicalEpisodeSales.objects.none()
+    total_revenue = float(episode_qs.aggregate(total=Sum('paid_revenue'))['total'] or 0)
+    total_ticket_count = int(episode_qs.aggregate(total=Sum('paid_ticket_count'))['total'] or 0)
+
+    target_revenue = float(performance.target_revenue) if performance.target_revenue else None
+    break_even_point = float(performance.break_even_point) if performance.break_even_point else None
+
+    total_seats = 0
+    for seat_grade in performance.seat_grades.all():
+        total_seats += seat_grade.seat_count
+
+    date_list = []
+    current_date = start_date
+    while current_date <= end_date:
+        date_list.append(current_date.strftime('%Y-%m-%d'))
+        current_date += timedelta(days=1)
+
+    range_qs = episode_qs.filter(show_date__gte=start_date, show_date__lte=end_date)
+    daily_agg = range_qs.values('show_date').annotate(
+        revenue=Sum('paid_revenue'),
+        tickets=Sum('paid_ticket_count'),
+    ).order_by('show_date')
+    revenue_map = {item['show_date'].strftime('%Y-%m-%d'): float(item['revenue'] or 0) for item in daily_agg}
+    ticket_map = {item['show_date'].strftime('%Y-%m-%d'): int(item['tickets'] or 0) for item in daily_agg}
+
+    daily_revenue = {d: {'뮤지컬': {'paid': revenue_map.get(d, 0), 'unpaid': 0}} for d in date_list}
+    daily_tickets = {d: {'뮤지컬': {'paid': ticket_map.get(d, 0), 'unpaid': 0}} for d in date_list}
+
+    table_rows = []
+    for episode in episode_qs.order_by('episode_no'):
+        cast_items = [name for name in (episode.cast_map or {}).values() if name]
+        table_rows.append({
+            'episode_no': episode.episode_no,
+            'show_date': episode.show_date.strftime('%Y-%m-%d') if episode.show_date else '',
+            'show_day': episode.show_day or '',
+            'show_time': episode.show_time.strftime('%H:%M') if episode.show_time else '',
+            'cast': ', '.join(cast_items),
+            'paid': {
+                'count': int(episode.paid_ticket_count or 0),
+                'rate': float(episode.paid_rate) if episode.paid_rate is not None else None,
+                'revenue': float(episode.paid_revenue or 0),
+            },
+            'unpaid': {
+                'count': int(episode.unpaid_ticket_count or 0),
+                'rate': float(episode.unpaid_rate) if episode.unpaid_rate is not None else None,
+                'revenue': float(episode.unpaid_revenue or 0),
+            },
+            'invited': {
+                'count': int(episode.invited_ticket_count or 0),
+                'rate': float(episode.invited_rate) if episode.invited_rate is not None else None,
+            },
+            'total_paid': {
+                'count': int(episode.total_paid_ticket_count or 0),
+                'rate': float(episode.total_paid_rate) if episode.total_paid_rate is not None else None,
+            },
+            'remark': episode.remark or '',
+        })
+
+    return JsonResponse({
+        'success': True,
+        'data': {
+            'dates': date_list,
+            'applied_start_date': start_date.strftime('%Y-%m-%d'),
+            'applied_end_date': end_date.strftime('%Y-%m-%d'),
+            'booking_sites': ['뮤지컬'],
+            'daily_revenue': daily_revenue,
+            'daily_tickets': daily_tickets,
+            'target_revenue': target_revenue,
+            'break_even_point': break_even_point,
+            'total_seats': total_seats,
+            'total_revenue': total_revenue,
+            'total_ticket_count': total_ticket_count,
+            'episode_rows': table_rows,
         }
     })

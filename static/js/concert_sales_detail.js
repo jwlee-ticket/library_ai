@@ -918,6 +918,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const fileInput = document.getElementById('excel-file-input');
+            const passwordInput = document.getElementById('excel-password-input');
             const file = fileInput.files[0];
             
             if (!file) {
@@ -927,8 +928,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 파일 확장자 확인
             const fileName = file.name.toLowerCase();
-            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-                showExcelUploadStatus('error', '지원하지 않는 파일 형식입니다.', '.xlsx 또는 .xls 파일만 업로드 가능합니다.');
+            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls') && !fileName.endsWith('.xlsb')) {
+                showExcelUploadStatus('error', '지원하지 않는 파일 형식입니다.', '.xlsx, .xls, .xlsb 파일만 업로드 가능합니다.');
                 return;
             }
             
@@ -941,6 +942,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // FormData 생성
             const formData = new FormData();
             formData.append('excel_file', file);
+            if (passwordInput && passwordInput.value) {
+                formData.append('excel_password', passwordInput.value);
+            }
             formData.append('csrfmiddlewaretoken', csrfToken);
             
             // 업로드 진행 중 상태 표시
@@ -972,9 +976,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     let details = `날짜 ${data.date_count || 0}건, 일별 ${data.daily_sales_count || 0}건, 등급 ${data.grade_sales_count || 0}건 저장`;
                     if (data.final_sales_type === 'discount_sales') {
                         details = `할인권종 ${data.discount_sales_count || 0}건, 연령/성별 ${data.age_gender_sales_count || 0}건, 결제수단 ${data.payment_method_sales_count || 0}건, 카드 ${data.card_sales_count || 0}건, 판매경로 ${data.sales_channel_sales_count || 0}건, 지역 ${data.region_sales_count || 0}건 저장`;
+                    } else if (data.musical_type === 'episode_sales') {
+                        details = `회차 ${data.saved_count || 0}건 저장 (마지막 No. ${data.max_no || 0})`;
                     }
                     showExcelUploadStatus('success', '업로드가 완료되었습니다.', details);
                     fileInput.value = '';
+                    if (passwordInput) {
+                        passwordInput.value = '';
+                    }
                     prependUploadLogRow(data);
                 } else {
                     showExcelUploadStatus('error', '업로드 실패', data.error || '알 수 없는 오류가 발생했습니다.');

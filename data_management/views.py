@@ -6,10 +6,11 @@ from django.urls import reverse, reverse_lazy
 from django.db.models import Q
 from django.http import JsonResponse, FileResponse
 from django.views.decorators.http import require_http_methods
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
 import json
 import re
 from decimal import Decimal
+from io import BytesIO
 import pandas as pd
 from django.db import transaction
 import os
@@ -18,12 +19,12 @@ from .models import (
     PerformanceFinalSales,
     PerformanceDailySalesGrade,
     PerformanceSalesUploadLog,
-    PerformanceSalesUploadActionLog
+    PerformanceSalesUploadActionLog,
+    MusicalEpisodeSales,
 )
 from .forms import PerformanceDailySalesForm, PerformanceFinalSalesForm, PerformanceSalesDailyFormSet, PerformanceSalesExcelUploadForm
 from .constants import AGE_GROUPS, REGIONS, SEOUL_REGIONS, GYEONGGI_REGIONS
 from performance.models import Performance, BookingSite, SeatGrade
-
 
 class PerformanceListView(ListView):
     """매출 관리를 위한 공연 목록 뷰 (모든 장르)"""
@@ -762,6 +763,337 @@ def _parse_date(value):
         return None
 
 
+def _parse_excel_serial_date(value):
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, (int, float)):
+        try:
+            return (datetime(1899, 12, 30) + timedelta(days=float(value))).date()
+        except (ValueError, OverflowError):
+            return None
+    parsed = _parse_date(value)
+    return parsed
+
+
+def _parse_excel_fraction_time(value):
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    if isinstance(value, datetime):
+        return value.time().replace(second=0, microsecond=0)
+    if isinstance(value, time):
+        return value.replace(second=0, microsecond=0)
+    if isinstance(value, (int, float)):
+        try:
+            total_seconds = int(round((float(value) % 1) * 24 * 60 * 60))
+            hour = (total_seconds // 3600) % 24
+            minute = (total_seconds % 3600) // 60
+            return time(hour=hour, minute=minute)
+        except (ValueError, OverflowError):
+            return None
+    text = _normalize_text(value)
+    if not text:
+        return None
+    for fmt in ['%H:%M', '%H:%M:%S']:
+        try:
+            return datetime.strptime(text, fmt).time().replace(second=0, microsecond=0)
+        except ValueError:
+            continue
+    return None
+
+
+def _safe_decimal(value, default='0'):
+    text = _normalize_text(value)
+    if not text:
+        return Decimal(default)
+    text = text.replace(',', '')
+    try:
+        return Decimal(str(float(text))).quantize(Decimal('1'))
+    except Exception:
+        return Decimal(default)
+
+
+def _safe_ratio_decimal(value):
+    rate = _safe_rate(value)
+    if rate is None:
+        return None
+    return Decimal(str(rate))
+
+
+def _decrypt_excel_if_needed(excel_file, password=None):
+    excel_file.seek(0)
+    raw = excel_file.read()
+    if not password:
+        return BytesIO(raw), False
+    try:
+        import msoffcrypto
+    except Exception as exc:
+        raise ValueError('비밀번호 파일 처리를 위한 msoffcrypto-tool 패키지가 필요해요') from exc
+
+    office_file = msoffcrypto.OfficeFile(BytesIO(raw))
+    if not office_file.is_encrypted():
+        return BytesIO(raw), False
+
+    decrypted_stream = BytesIO()
+    try:
+        office_file.load_key(password=password)
+        office_file.decrypt(decrypted_stream)
+    except Exception as exc:
+        raise ValueError('엑셀 비밀번호가 올바르지 않거나 복호화에 실패했어요') from exc
+    decrypted_stream.seek(0)
+    return decrypted_stream, True
+
+
+def _open_excel_file(file_obj, original_filename=''):
+    filename = (original_filename or '').lower()
+    if filename.endswith('.xlsb'):
+        try:
+            import pyxlsb  # noqa: F401
+        except Exception as exc:
+            raise ValueError('.xlsb 처리를 위한 pyxlsb 패키지가 필요해요') from exc
+        return pd.ExcelFile(file_obj, engine='pyxlsb')
+    return pd.ExcelFile(file_obj)
+
+
+def _find_musical_episode_sheet(sheet_names):
+    candidates = ['회차별 판매', '회차별판매', 'Episode Sales']
+    return next((name for name in candidates if name in sheet_names), None)
+
+
+def _read_header_tokens(df, header_row_idx, col_idx):
+    tokens = []
+    for row_offset in [2, 1, 0]:
+        idx = header_row_idx - row_offset
+        if idx < 0 or idx >= len(df):
+            continue
+        cell = df.iloc[idx, col_idx] if col_idx < len(df.columns) else None
+        text = _normalize_text(cell)
+        if text:
+            tokens.append(text)
+    return tokens
+
+
+def _build_forward_filled_labels(df, row_idx, col_count):
+    if row_idx < 0 or row_idx >= len(df):
+        return [''] * col_count
+    labels = []
+    last_label = ''
+    for col_idx in range(col_count):
+        cell = df.iloc[row_idx, col_idx] if col_idx < len(df.columns) else None
+        label = _normalize_text(cell)
+        if label:
+            last_label = label
+        labels.append(last_label)
+    return labels
+
+
+def _token_has_all(tokens, words):
+    joined = ' '.join(tokens)
+    return all(word in joined for word in words)
+
+
+def _parse_musical_episode_sheet(xls, sheet_name):
+    df = pd.read_excel(xls, sheet_name=sheet_name, header=None)
+    header_row_idx = None
+    for idx in range(min(20, len(df))):
+        row = [_normalize_text(value) for value in df.iloc[idx].tolist()]
+        if any(value in ['No.', 'No'] for value in row) and 'Date' in row and 'Time' in row:
+            header_row_idx = idx
+            break
+    if header_row_idx is None:
+        raise ValueError('회차별 판매 시트에서 No./Date/Time 헤더를 찾을 수 없어요')
+
+    col_count = len(df.columns)
+    no_idx = date_idx = day_idx = time_idx = None
+    remark_indices = []
+    paid_count_idx = paid_rate_idx = paid_revenue_idx = None
+    unpaid_count_idx = unpaid_rate_idx = unpaid_revenue_idx = None
+    invited_count_idx = invited_rate_idx = None
+    total_paid_count_idx = total_paid_rate_idx = None
+
+    header_labels = [_normalize_text(df.iloc[header_row_idx, col]) for col in range(col_count)]
+    group_labels = _build_forward_filled_labels(df, header_row_idx - 1, col_count)
+
+    for col_idx, label in enumerate(header_labels):
+        if label in ['No.', 'No']:
+            no_idx = col_idx
+        elif label == 'Date':
+            date_idx = col_idx
+        elif label == 'Day':
+            day_idx = col_idx
+        elif label == 'Time':
+            time_idx = col_idx
+        elif label in ['비고', 'Remark'] or '비고' in group_labels[col_idx]:
+            remark_indices.append(col_idx)
+    if remark_indices:
+        explicit_remark_indices = [idx for idx in remark_indices if header_labels[idx] in ['비고', 'Remark']]
+        if explicit_remark_indices:
+            remark_indices = [explicit_remark_indices[0]]
+        else:
+            # 비고 그룹이 여러 컬럼이면 왼쪽 첫 컬럼을 우선 사용
+            remark_indices = [min(remark_indices)]
+
+
+    if no_idx is None or date_idx is None or time_idx is None:
+        raise ValueError('회차별 판매 시트에서 필수 컬럼(No./Date/Time)을 찾을 수 없어요')
+
+    for col_idx in range(col_count):
+        tokens = _read_header_tokens(df, header_row_idx, col_idx)
+        if not tokens:
+            continue
+        group_label = group_labels[col_idx]
+        label = header_labels[col_idx]
+
+        if paid_count_idx is None and '유료' in group_label and '입금' in group_label and label in ['수량', '매수']:
+            paid_count_idx = col_idx
+        elif paid_rate_idx is None and '유료' in group_label and '입금' in group_label and label in ['%', '비율']:
+            paid_rate_idx = col_idx
+        elif paid_revenue_idx is None and '유료' in group_label and '입금' in group_label and label == '금액':
+            paid_revenue_idx = col_idx
+        elif unpaid_count_idx is None and '유료' in group_label and '미입금' in group_label and label in ['수량', '매수']:
+            unpaid_count_idx = col_idx
+        elif unpaid_rate_idx is None and '유료' in group_label and '미입금' in group_label and label in ['%', '비율']:
+            unpaid_rate_idx = col_idx
+        elif unpaid_revenue_idx is None and '유료' in group_label and '미입금' in group_label and label == '금액':
+            unpaid_revenue_idx = col_idx
+        elif invited_count_idx is None and '초대' in group_label and label in ['수량', '매수']:
+            invited_count_idx = col_idx
+        elif invited_rate_idx is None and '초대' in group_label and label in ['%', '비율']:
+            invited_rate_idx = col_idx
+        elif total_paid_count_idx is None and '합계' in group_label and '입금' in group_label and label in ['수량', '매수']:
+            total_paid_count_idx = col_idx
+        elif total_paid_rate_idx is None and '합계' in group_label and '입금' in group_label and label in ['%', '비율']:
+            total_paid_rate_idx = col_idx
+
+    cast_columns = []
+    for col_idx, group_label in enumerate(group_labels):
+        if 'CAST' in group_label.upper():
+            cast_name = header_labels[col_idx]
+            if cast_name and cast_name not in ['No.', 'No', 'Date', 'Day', 'Time']:
+                cast_columns.append((col_idx, cast_name))
+
+    if not cast_columns:
+        cast_start_idx = time_idx + 1
+        cast_end_idx = remark_idx if remark_idx is not None else col_count
+        metric_candidates = [idx for idx in [
+            paid_count_idx, paid_rate_idx, paid_revenue_idx,
+            unpaid_count_idx, unpaid_rate_idx, unpaid_revenue_idx,
+            invited_count_idx, invited_rate_idx,
+            total_paid_count_idx, total_paid_rate_idx,
+        ] if idx is not None]
+        if metric_candidates:
+            cast_end_idx = min(cast_end_idx, min(metric_candidates))
+        else:
+            metric_stop_keywords = ['유료', '입금', '미입금', '초대', '합계', '비고']
+            for col_idx in range(cast_start_idx, col_count):
+                label = header_labels[col_idx]
+                group_label = group_labels[col_idx]
+                if label in ['수량', '매수', '금액', '%', '비율'] or any(word in group_label for word in metric_stop_keywords):
+                    cast_end_idx = min(cast_end_idx, col_idx)
+                    break
+
+        for col_idx in range(cast_start_idx, max(cast_start_idx, cast_end_idx)):
+            cast_name = _normalize_text(df.iloc[header_row_idx, col_idx])
+            if cast_name:
+                cast_columns.append((col_idx, cast_name))
+
+    rows = []
+    max_no = 0
+    for row_idx in range(header_row_idx + 1, len(df)):
+        row = df.iloc[row_idx].tolist()
+        episode_no = _safe_int(row[no_idx]) if no_idx < len(row) else 0
+        if episode_no <= 0:
+            continue
+
+        show_date = _parse_excel_serial_date(row[date_idx] if date_idx < len(row) else None)
+        if not show_date:
+            continue
+
+        cast_map = {}
+        for col_idx, cast_name in cast_columns:
+            if col_idx >= len(row):
+                continue
+            cast_value = _normalize_text(row[col_idx])
+            if cast_value:
+                cast_map[cast_name] = cast_value
+
+        row_data = {
+            'episode_no': episode_no,
+            'show_date': show_date,
+            'show_day': _normalize_text(row[day_idx]) if day_idx is not None and day_idx < len(row) else '',
+            'show_time': _parse_excel_fraction_time(row[time_idx]) if time_idx < len(row) else None,
+            'cast_map': cast_map,
+            'paid_ticket_count': _safe_int(row[paid_count_idx]) if paid_count_idx is not None and paid_count_idx < len(row) else 0,
+            'paid_rate': _safe_ratio_decimal(row[paid_rate_idx]) if paid_rate_idx is not None and paid_rate_idx < len(row) else None,
+            'paid_revenue': _safe_decimal(row[paid_revenue_idx]) if paid_revenue_idx is not None and paid_revenue_idx < len(row) else Decimal('0'),
+            'unpaid_ticket_count': _safe_int(row[unpaid_count_idx]) if unpaid_count_idx is not None and unpaid_count_idx < len(row) else 0,
+            'unpaid_rate': _safe_ratio_decimal(row[unpaid_rate_idx]) if unpaid_rate_idx is not None and unpaid_rate_idx < len(row) else None,
+            'unpaid_revenue': _safe_decimal(row[unpaid_revenue_idx]) if unpaid_revenue_idx is not None and unpaid_revenue_idx < len(row) else Decimal('0'),
+            'invited_ticket_count': _safe_int(row[invited_count_idx]) if invited_count_idx is not None and invited_count_idx < len(row) else 0,
+            'invited_rate': _safe_ratio_decimal(row[invited_rate_idx]) if invited_rate_idx is not None and invited_rate_idx < len(row) else None,
+            'total_paid_ticket_count': _safe_int(row[total_paid_count_idx]) if total_paid_count_idx is not None and total_paid_count_idx < len(row) else 0,
+            'total_paid_rate': _safe_ratio_decimal(row[total_paid_rate_idx]) if total_paid_rate_idx is not None and total_paid_rate_idx < len(row) else None,
+            'remark': '',
+        }
+        if remark_indices:
+            remark_texts = []
+            for remark_idx in remark_indices:
+                if remark_idx >= len(row):
+                    continue
+                remark_text = _normalize_text(row[remark_idx])
+                if not remark_text:
+                    continue
+                # 숫자 전용 값은 비고 텍스트로 보지 않음
+                if re.fullmatch(r'[0-9,.\s]+', remark_text):
+                    continue
+                remark_texts.append(remark_text)
+            row_data['remark'] = ' / '.join(remark_texts)
+
+        rows.append(row_data)
+        if episode_no > max_no:
+            max_no = episode_no
+
+    if not rows:
+        raise ValueError('회차별 판매 시트에서 숫자 No. 행 데이터를 찾을 수 없어요')
+    return rows, {'max_no': max_no, 'sheet_name': sheet_name}
+
+
+def _save_musical_episode_rows(performance, upload_log, rows, max_no):
+    MusicalEpisodeSales.objects.filter(
+        performance=performance,
+        episode_no__lte=max_no
+    ).delete()
+
+    instances = [
+        MusicalEpisodeSales(
+            performance=performance,
+            upload_log=upload_log,
+            episode_no=row['episode_no'],
+            show_date=row['show_date'],
+            show_day=row['show_day'],
+            show_time=row['show_time'],
+            cast_map=row['cast_map'],
+            paid_ticket_count=row['paid_ticket_count'],
+            paid_rate=row['paid_rate'],
+            paid_revenue=row['paid_revenue'],
+            unpaid_ticket_count=row['unpaid_ticket_count'],
+            unpaid_rate=row['unpaid_rate'],
+            unpaid_revenue=row['unpaid_revenue'],
+            invited_ticket_count=row['invited_ticket_count'],
+            invited_rate=row['invited_rate'],
+            total_paid_ticket_count=row['total_paid_ticket_count'],
+            total_paid_rate=row['total_paid_rate'],
+            remark=row['remark'],
+        )
+        for row in rows if row['episode_no'] <= max_no
+    ]
+    MusicalEpisodeSales.objects.bulk_create(instances, batch_size=500)
+    return {'saved_count': len(instances)}
+
+
 def _find_header_row(df):
     for idx in range(len(df)):
         row = df.iloc[idx].astype(str).tolist()
@@ -1046,18 +1378,63 @@ def upload_sales_excel(request, performance_id):
         return JsonResponse({'success': False, 'error': '입력값을 확인해주세요', 'errors': form.errors}, status=400)
     
     excel_file = form.cleaned_data['excel_file']
+    excel_password = request.POST.get('excel_password', '').strip()
     
     try:
-        excel_file.seek(0)
-        xls = pd.ExcelFile(excel_file)
+        prepared_excel, _ = _decrypt_excel_if_needed(excel_file, excel_password)
+        xls = _open_excel_file(prepared_excel, excel_file.name)
         report_sheet = _find_report_sheet(xls.sheet_names)
         daily_sheet_candidates = ['일일 판매', '일일판매', 'Daily Sales']
         has_daily_sheet = any(name in xls.sheet_names for name in daily_sheet_candidates)
+        musical_sheet = _find_musical_episode_sheet(xls.sheet_names)
 
-        if report_sheet and not has_daily_sheet:
+        if performance.genre == 'musical' and musical_sheet:
+            rows, meta = _parse_musical_episode_sheet(xls, musical_sheet)
+            max_no = meta.get('max_no') or 0
+            sheet_name = meta.get('sheet_name', musical_sheet)
+            date_start = min(row['show_date'] for row in rows) if rows else None
+            date_end = max(row['show_date'] for row in rows) if rows else None
+
+            with transaction.atomic():
+                excel_file.seek(0)
+                upload_log = PerformanceSalesUploadLog.objects.create(
+                    performance=performance,
+                    original_filename=excel_file.name,
+                    uploaded_file=excel_file,
+                    sheet_name=sheet_name,
+                    date_start=date_start,
+                    date_end=date_end,
+                    daily_sales_count=0,
+                    grade_sales_count=0,
+                    status='success',
+                    message=f'뮤지컬 회차별 데이터 저장 (max_no={max_no})'
+                )
+                _create_sales_upload_action_log('upload', performance, upload_log, request.user)
+                result = _save_musical_episode_rows(performance, upload_log, rows, max_no)
+
+            delete_url = reverse('data_management:performance_sales_upload_log_delete', args=[performance.id, upload_log.id])
+            download_url = reverse('data_management:performance_sales_upload_log_download', args=[performance.id, upload_log.id])
+            return JsonResponse({
+                'success': True,
+                'message': '엑셀 업로드가 완료되었습니다.',
+                'daily_sales_count': 0,
+                'grade_sales_count': 0,
+                'date_count': len({row['show_date'] for row in rows}),
+                'file_name': excel_file.name,
+                'sheet_name': sheet_name,
+                'date_start': date_start.strftime('%Y-%m-%d') if date_start else '',
+                'date_end': date_end.strftime('%Y-%m-%d') if date_end else '',
+                'upload_log_id': upload_log.id,
+                'delete_url': delete_url,
+                'download_url': download_url,
+                'musical_type': 'episode_sales',
+                'max_no': max_no,
+                'saved_count': result.get('saved_count', 0),
+            })
+        elif report_sheet and not has_daily_sheet:
             parsed = _parse_final_sales_excel(xls, report_sheet)
         else:
-            parsed = _parse_sales_excel(excel_file, performance)
+            parsed = _parse_sales_excel(prepared_excel, performance)
     except ValueError as exc:
         return JsonResponse({'success': False, 'error': str(exc)}, status=400)
     
@@ -1077,6 +1454,7 @@ def upload_sales_excel(request, performance_id):
         sheet_name = parsed.get('sheet_name', '')
 
         with transaction.atomic():
+            excel_file.seek(0)
             upload_log = PerformanceSalesUploadLog.objects.create(
                 performance=performance,
                 original_filename=excel_file.name,
@@ -1170,6 +1548,7 @@ def upload_sales_excel(request, performance_id):
     date_end = max(dates_in_file) if dates_in_file else None
     
     with transaction.atomic():
+        excel_file.seek(0)
         upload_log = PerformanceSalesUploadLog.objects.create(
             performance=performance,
             original_filename=excel_file.name,
@@ -1315,8 +1694,26 @@ def delete_sales_upload_log(request, performance_id, log_id):
     """업로드 파일 목록에서 로그 삭제"""
     performance = get_object_or_404(Performance, id=performance_id)
     upload_log = get_object_or_404(PerformanceSalesUploadLog, id=log_id, performance=performance)
-    _create_sales_upload_action_log('delete', performance, upload_log, request.user)
-    upload_log.delete()
+
+    with transaction.atomic():
+        # 뮤지컬은 업로드 로그 삭제 시 해당 로그 기반 회차 데이터도 함께 제거
+        if performance.genre == 'musical':
+            MusicalEpisodeSales.objects.filter(
+                performance=performance,
+                upload_log=upload_log
+            ).delete()
+
+        _create_sales_upload_action_log('delete', performance, upload_log, request.user)
+        upload_log.delete()
+
+        # 업로드 로그가 더 이상 없으면 뮤지컬 데이터 전체를 정리
+        if performance.genre == 'musical':
+            has_remaining_upload_logs = PerformanceSalesUploadLog.objects.filter(
+                performance=performance
+            ).exists()
+            if not has_remaining_upload_logs:
+                MusicalEpisodeSales.objects.filter(performance=performance).delete()
+
     return JsonResponse({'success': True})
 
 

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load performance_tags %}
+{% load custom_filters %}
 {% load static %}
 
 {% block breadcrumb %}
@@ -14,100 +15,129 @@
         <h1 class="text-3xl font-semibold text-black">{{ performance.title }}</h1>
     </div>
     
-    <!-- KPI 카드 영역 -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <p class="text-sm text-gray-600">총 매출</p>
-            <p class="text-3xl font-bold text-black mt-2" id="summary-total-revenue">-</p>
+    <!-- 요약 카드 섹션 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+            <h3 class="text-lg font-semibold text-black mb-6">매출 현황</h3>
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700">총 매출</span>
+                    <span class="text-sm font-semibold text-black" id="summary-total-revenue-text">-</span>
+                </div>
+                <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <div id="revenue-progress-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width: 0%;"></div>
+                    <div id="revenue-bep-marker" class="absolute top-[-2px] bottom-[-2px] w-[2px] bg-danger rounded-full hidden" style="left: 0%;"></div>
+                </div>
+                <div class="flex items-center justify-between mt-1 text-xs text-secondary">
+                    <span>0원</span>
+                    <span id="summary-target-revenue-text">
+                        {% if performance.target_revenue %}
+                            <span class="target-revenue-value">{{ performance.target_revenue|floatformat:0|intcomma }}</span>원
+                        {% else %}
+                            목표 미설정
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-xs text-gray-500">손익분기점</span>
+                    <span class="text-xs font-semibold text-danger" id="summary-break-even-text">-</span>
+                </div>
+            </div>
         </div>
-        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <p class="text-sm text-gray-600">총 판매 매수</p>
-            <p class="text-3xl font-bold text-black mt-2" id="summary-total-tickets">-</p>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <p class="text-sm text-gray-600">기간</p>
-            <p class="text-lg font-semibold text-black mt-2">
-                {{ performance.performance_start|date:"Y.m.d" }} ~ {{ performance.performance_end|date:"Y.m.d" }}
-            </p>
+
+        <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+            <h3 class="text-lg font-semibold text-black mb-6">판매 매수 현황</h3>
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700">총 판매 매수</span>
+                    <span class="text-sm font-semibold text-black" id="summary-total-tickets-text">-</span>
+                </div>
+                <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <div id="tickets-progress-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width: 0%;"></div>
+                </div>
+                <div class="flex items-center justify-between mt-1 text-xs text-secondary">
+                    <span>0매</span>
+                    <span id="summary-total-seats-text">-</span>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <!-- 차트 섹션 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-black">매출 추이</h2>
-                <span class="text-xs text-gray-600">일별</span>
+
+    <!-- 일간 그래프 섹션 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
+        <div class="mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <h2 class="text-xl font-semibold text-black">일간 그래프</h2>
+                <div class="flex items-center gap-4">
+                    <label class="text-sm font-medium text-gray-700 whitespace-nowrap">시작일</label>
+                    <input
+                        type="date"
+                        id="filter-start-date"
+                        class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                    >
+                    <label class="text-sm font-medium text-gray-700 whitespace-nowrap">종료일</label>
+                    <input
+                        type="date"
+                        id="filter-end-date"
+                        class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                    >
+                    <button
+                        id="filter-apply-btn"
+                        class="px-4 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm whitespace-nowrap"
+                    >
+                        적용
+                    </button>
+                </div>
             </div>
-            <div class="relative h-56 rounded-lg bg-gray-50 border border-gray-100">
+        </div>
+
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-black mb-6">매출</h3>
+            <div class="relative" style="height: 400px;">
                 <canvas id="revenue-chart"></canvas>
             </div>
         </div>
-        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-black">판매 매수 추이</h2>
-                <span class="text-xs text-gray-600">일별</span>
-            </div>
-            <div class="relative h-56 rounded-lg bg-gray-50 border border-gray-100">
+
+        <div>
+            <h3 class="text-lg font-semibold text-black mb-6">판매 매수</h3>
+            <div class="relative" style="height: 400px;">
                 <canvas id="ticket-chart"></canvas>
             </div>
         </div>
     </div>
-    
-    <!-- 세부 섹션 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h2 class="text-xl font-semibold text-black mb-4">등급별 판매 현황</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div class="lg:col-span-3 overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">등급</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수(유료)</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수(무료)</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">금액</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">유료 점유율</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">객석 점유율</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">총 판매 좌석</th>
-                            </tr>
-                        </thead>
-                        <tbody id="grade-sales-tbody" class="divide-y divide-gray-100"></tbody>
-                    </table>
-                </div>
-                <div class="lg:col-span-2">
-                    <div class="relative h-56 rounded-lg bg-gray-50 border border-gray-100">
-                        <canvas id="grade-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h2 class="text-xl font-semibold text-black mb-4">예매처별 비중</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">예매처</th>
-                            <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매출</th>
-                            <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수</th>
-                        </tr>
-                    </thead>
-                    <tbody id="booking-site-tbody" class="divide-y divide-gray-100"></tbody>
-                </table>
-            </div>
+
+    <!-- 회차별 판매 테이블 -->
+    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
+        <h2 class="text-xl font-semibold text-black mb-6">회차별 판매</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">Date</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">Time</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">CAST</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black whitespace-nowrap">유료 계(입금)</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black whitespace-nowrap">유료 계(미입금)</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black whitespace-nowrap">초대</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black whitespace-nowrap">합계(입금)</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">비고</th>
+                    </tr>
+                </thead>
+                <tbody id="musical-episode-tbody" class="divide-y divide-gray-100">
+                </tbody>
+            </table>
         </div>
     </div>
-    
+
     <script type="application/json" id="concert-dashboard-data">
     {
         "performanceId": {{ performance.id }},
-        "dataUrl": "{% url 'dashboard:concert_dashboard_data' performance.id %}"
+        "dataUrl": "{% url 'dashboard:musical_dashboard_data' performance.id %}"
     }
     </script>
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/concert_dashboard_detail.js' %}"></script>
+    <script src="{% static 'js/musical_dashboard_detail.js' %}"></script>
 {% endblock %}
 

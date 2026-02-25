@@ -417,6 +417,85 @@ class PerformanceSalesUploadLog(models.Model):
         return f'{self.performance.title} - {self.original_filename}'
 
 
+class MusicalEpisodeSales(models.Model):
+    """뮤지컬 회차별 판매 데이터"""
+
+    performance = models.ForeignKey(
+        'performance.Performance',
+        on_delete=models.CASCADE,
+        related_name='musical_episode_sales',
+        verbose_name='공연'
+    )
+    upload_log = models.ForeignKey(
+        'PerformanceSalesUploadLog',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='musical_episode_sales',
+        verbose_name='업로드 기록'
+    )
+
+    episode_no = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        verbose_name='회차 No.'
+    )
+    show_date = models.DateField(verbose_name='공연일')
+    show_day = models.CharField(max_length=10, blank=True, verbose_name='요일')
+    show_time = models.TimeField(null=True, blank=True, verbose_name='공연 시간')
+
+    cast_map = models.JSONField(default=dict, blank=True, verbose_name='CAST')
+
+    paid_ticket_count = models.IntegerField(default=0, validators=[MinValueValidator(0)], verbose_name='유료 계(입금) 수량')
+    paid_rate = models.DecimalField(max_digits=7, decimal_places=6, null=True, blank=True, verbose_name='유료 계(입금) 비율')
+    paid_revenue = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='유료 계(입금) 금액'
+    )
+
+    unpaid_ticket_count = models.IntegerField(default=0, validators=[MinValueValidator(0)], verbose_name='유료 계(미입금) 수량')
+    unpaid_rate = models.DecimalField(max_digits=7, decimal_places=6, null=True, blank=True, verbose_name='유료 계(미입금) 비율')
+    unpaid_revenue = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='유료 계(미입금) 금액'
+    )
+
+    invited_ticket_count = models.IntegerField(default=0, validators=[MinValueValidator(0)], verbose_name='초대 수량')
+    invited_rate = models.DecimalField(max_digits=7, decimal_places=6, null=True, blank=True, verbose_name='초대 비율')
+
+    total_paid_ticket_count = models.IntegerField(default=0, validators=[MinValueValidator(0)], verbose_name='합계(입금) 수량')
+    total_paid_rate = models.DecimalField(max_digits=7, decimal_places=6, null=True, blank=True, verbose_name='합계(입금) 비율')
+
+    remark = models.TextField(blank=True, verbose_name='비고')
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일시')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='수정일시')
+
+    class Meta:
+        verbose_name = '뮤지컬 회차별 판매'
+        verbose_name_plural = '뮤지컬 회차별 판매'
+        ordering = ['performance', 'episode_no']
+        indexes = [
+            models.Index(fields=['performance', 'show_date']),
+            models.Index(fields=['performance', 'show_date', 'show_time']),
+            models.Index(fields=['upload_log']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['performance', 'episode_no'],
+                name='uniq_musical_episode_no_performance',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.performance.title} - {self.episode_no}회차'
+
+
 class PerformanceSalesUploadActionLog(models.Model):
     """공연 매출 업로드/삭제/다운로드 액션 이력"""
 

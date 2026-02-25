@@ -308,7 +308,7 @@ class PerformanceSalesExcelUploadForm(forms.Form):
     excel_file = forms.FileField(
         required=True,
         label='엑셀 파일',
-        help_text='.xlsx 또는 .xls 파일만 업로드 가능합니다.'
+        help_text='.xlsx, .xls, .xlsb 파일만 업로드 가능합니다.'
     )
     
     def clean_excel_file(self):
@@ -317,8 +317,8 @@ class PerformanceSalesExcelUploadForm(forms.Form):
             raise ValidationError('엑셀 파일이 필요해요')
         
         file_name = excel_file.name.lower()
-        if not (file_name.endswith('.xlsx') or file_name.endswith('.xls')):
-            raise ValidationError('지원하지 않는 파일 형식이에요 (.xlsx, .xls만 가능)')
+        if not (file_name.endswith('.xlsx') or file_name.endswith('.xls') or file_name.endswith('.xlsb')):
+            raise ValidationError('지원하지 않는 파일 형식이에요 (.xlsx, .xls, .xlsb만 가능)')
         
         return excel_file
 
