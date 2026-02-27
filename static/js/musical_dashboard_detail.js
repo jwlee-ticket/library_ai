@@ -7,6 +7,15 @@ const chartYAxisWidth = 84;
 const NOL_TICKET_COLOR = '#4154FF';
 const TICKET_LINE_COLOR = '#16a34a';  /* success - 판매 매수 라인 */
 
+/** 합계(입금) %에 따른 행 배경색 (design-system 기준) */
+function getTotalPaidRateCellStyle(rate) {
+    if (rate == null || Number.isNaN(Number(rate))) return '';
+    const r = Number(rate);
+    if (r >= 1) return 'background-color: #dbeafe;';   /* 100% 이상: 파란 계열 */
+    if (r >= 0.5) return 'background-color: #ffedd5;';  /* 50% 이상 100% 미만: 주황 계열 */
+    return 'background-color: #fee2e2;';               /* 50% 미만: 빨간 계열 */
+}
+
 function parseJsonSafely(jsonString) {
     if (!jsonString || jsonString.trim() === '') return null;
     try {
@@ -249,6 +258,8 @@ function renderEpisodeTable() {
     rows.forEach((row) => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-50 transition-colors';
+        const rowBgStyle = getTotalPaidRateCellStyle(row.total_paid?.rate);
+        if (rowBgStyle) tr.setAttribute('style', rowBgStyle);
         tr.innerHTML = `
             <td class="px-6 py-4 text-sm text-black whitespace-nowrap">${formatEpisodeDate(row.show_date, row.show_day)}</td>
             <td class="px-6 py-4 text-sm text-black whitespace-nowrap">${row.show_time || '-'}</td>
@@ -281,6 +292,24 @@ document.addEventListener('DOMContentLoaded', function() {
     if (applyBtn && startDateInput && endDateInput) {
         applyBtn.addEventListener('click', function() {
             loadDashboardData(startDateInput.value, endDateInput.value);
+        });
+    }
+
+    const legendTrigger = document.getElementById('episode-legend-trigger');
+    const legendTooltip = document.getElementById('episode-legend-tooltip');
+    const legendWrap = document.getElementById('episode-legend-wrap');
+    if (legendTrigger && legendTooltip) {
+        legendTrigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isHidden = legendTooltip.classList.contains('hidden');
+            legendTooltip.classList.toggle('hidden', !isHidden);
+            legendTooltip.classList.toggle('block', isHidden);
+        });
+        document.addEventListener('click', function(e) {
+            if (legendWrap && !legendWrap.contains(e.target)) {
+                legendTooltip.classList.add('hidden');
+                legendTooltip.classList.remove('block');
+            }
         });
     }
 });

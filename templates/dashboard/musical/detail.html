@@ -101,7 +101,30 @@
 
     <!-- 회차별 판매 테이블 -->
     <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
-        <h2 class="text-xl font-semibold text-black mb-6">회차별 판매</h2>
+        <div class="flex items-center gap-2 mb-6">
+            <h2 class="text-xl font-semibold text-black">회차별 판매</h2>
+            <div class="relative" id="episode-legend-wrap">
+                <button type="button" id="episode-legend-trigger" class="inline-flex items-center justify-center w-6 h-6 rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 hover:border-gray-400 transition-colors" aria-label="색상 기준 안내">
+                    <span class="text-sm font-medium leading-none">?</span>
+                </button>
+                <div id="episode-legend-tooltip" class="absolute left-0 top-full mt-2 z-20 hidden w-72 p-4 bg-white border border-gray-200 text-black text-xs rounded-lg shadow-lg">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block rounded-full shrink-0 border border-gray-300" style="width: 14px; height: 14px; background-color: #dbeafe;"></span>
+                            <span>100% 이상</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block rounded-full shrink-0 border border-gray-300" style="width: 14px; height: 14px; background-color: #ffedd5;"></span>
+                            <span>50% ~ 100%</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block rounded-full shrink-0 border border-gray-300" style="width: 14px; height: 14px; background-color: #fee2e2;"></span>
+                            <span>50% 미만</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50 border-b border-gray-200">
