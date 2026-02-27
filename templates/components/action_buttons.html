@@ -9,21 +9,21 @@
 {% include 'components/action_buttons.html' with object=performance show_edit=True show_delete=True %}
 {% endcomment %}
 
-<div class="flex gap-3">
+<div class="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3">
     {% if show_edit != False %}
-        <a href="{% url 'performance:update' object.pk %}" class="btn btn-outline">
+        <a href="{% url 'performance:update' object.pk %}" class="btn btn-outline w-full sm:w-auto min-w-24 transition-colors" aria-label="공연 수정">
             수정
         </a>
     {% endif %}
     
     {% if show_delete != False %}
-        <a href="{% url 'performance:delete' object.pk %}" class="btn btn-error">
+        <a href="{% url 'performance:delete' object.pk %}" class="btn btn-error w-full sm:w-auto min-w-24 transition-colors" aria-label="공연 삭제">
             삭제
         </a>
     {% endif %}
     
     {% if show_back != False %}
-        <a href="{% url 'performance:list' %}" class="btn btn-ghost">
+        <a href="{% url 'performance:list' %}" class="btn btn-ghost w-full sm:w-auto min-w-24 transition-colors" aria-label="공연 목록으로 이동">
             목록으로
         </a>
     {% endif %}

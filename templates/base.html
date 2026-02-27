@@ -22,31 +22,31 @@
 </head>
 <body class="bg-white text-black">
     <div class="min-h-screen flex">
-        <aside class="w-52 h-screen fixed top-0 left-0 bg-surface border-r border-gray-200 shadow-sm overflow-y-auto">
-            <div class="p-5">
-                <h2 class="text-xl font-semibold text-brand mb-5 pb-3 border-b border-gray-200">Library Sales</h2>
-                <ul class="menu gap-1 w-full text-sm [&_li>a]:px-3 [&_li>a]:py-2.5 [&_li>a]:rounded-xl [&_li>a]:transition-colors [&_li>a]:duration-200">
+        <aside class="w-60 h-screen fixed top-0 left-0 bg-surface border-r border-gray-200 shadow-sm overflow-y-auto">
+            <div class="p-6">
+                <h2 class="text-xl font-semibold text-brand mb-6 pb-4 border-b border-gray-200">Library Sales</h2>
+                <ul class="menu gap-1.5 w-full text-[15px] [&_li>a]:px-4 [&_li>a]:py-3 [&_li>a]:rounded-xl [&_li>a]:transition-colors [&_li>a]:duration-200">
                     <!-- 전체 대시보드 (메인) -->
                     <li>
-                        <a href="{% url 'dashboard:index' %}" class="{% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' %}active{% endif %}">
+                        <a href="{% url 'dashboard:index' %}" class="{% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">
                             전체
                         </a>
                     </li>
                     <!-- 장르별 대시보드 드롭다운 -->
                     <li>
                         <details {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'concert_overview' or request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'musical_overview' or request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' %}open{% endif %}>
-                            <summary class="px-3 py-2.5 rounded-xl transition-colors duration-200">장르별 대시보드</summary>
-                            <ul class="ml-2 border-l border-gray-200 pl-2">
-                                <li><a href="{% url 'dashboard:concert_overview' %}" class="{% if request.resolver_match.url_name == 'concert_overview' %}active{% endif %}">콘서트</a></li>
-                                <li><a href="{% url 'dashboard:musical_overview' %}" class="{% if request.resolver_match.url_name == 'musical_overview' %}active{% endif %}">뮤지컬</a></li>
-                                <li><a href="{% url 'dashboard:theater_overview' %}" class="{% if request.resolver_match.url_name == 'theater_overview' %}active{% endif %}">연극</a></li>
+                            <summary class="px-4 py-3 rounded-xl text-black font-medium hover:bg-white transition-colors duration-200">장르별 대시보드</summary>
+                            <ul class="ml-3 mt-1 border-l border-gray-200 pl-3">
+                                <li><a href="{% url 'dashboard:concert_overview' %}" class="{% if request.resolver_match.url_name == 'concert_overview' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">콘서트</a></li>
+                                <li><a href="{% url 'dashboard:musical_overview' %}" class="{% if request.resolver_match.url_name == 'musical_overview' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">뮤지컬</a></li>
+                                <li><a href="{% url 'dashboard:theater_overview' %}" class="{% if request.resolver_match.url_name == 'theater_overview' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">연극</a></li>
                             </ul>
                         </details>
                     </li>
                     
                     <!-- 공연별 대시보드 -->
                     <li>
-                        <a href="{% url 'dashboard:list' %}" class="{% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'list' %}active{% endif %}">
+                        <a href="{% url 'dashboard:list' %}" class="{% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'list' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">
                             공연별 대시보드
                         </a>
                     </li>
@@ -54,10 +54,10 @@
                     <!-- 데이터 관리 드롭다운 -->
                     <li>
                         <details {% if request.resolver_match.app_name == 'performance' or request.resolver_match.app_name == 'data_management' %}open{% endif %}>
-                            <summary class="px-3 py-2.5 rounded-xl transition-colors duration-200">데이터 관리</summary>
-                            <ul class="ml-2 border-l border-gray-200 pl-2">
-                                <li><a href="{% url 'performance:list' %}" class="{% if request.resolver_match.app_name == 'performance' and request.resolver_match.url_name == 'list' %}active{% endif %}">공연 관리</a></li>
-                                <li><a href="{% url 'data_management:performance_list' %}" class="{% if request.resolver_match.app_name == 'data_management' and request.resolver_match.url_name == 'performance_list' or request.resolver_match.url_name == 'performance_sales_detail' or request.resolver_match.url_name == 'performance_sales_create' or request.resolver_match.url_name == 'performance_sales_update' or request.resolver_match.url_name == 'performance_sales_delete' %}active{% endif %}">공연 매출 관리</a></li>
+                            <summary class="px-4 py-3 rounded-xl text-black font-medium hover:bg-white transition-colors duration-200">데이터 관리</summary>
+                            <ul class="ml-3 mt-1 border-l border-gray-200 pl-3">
+                                <li><a href="{% url 'performance:list' %}" class="{% if request.resolver_match.app_name == 'performance' and request.resolver_match.url_name == 'list' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">공연 관리</a></li>
+                                <li><a href="{% url 'data_management:performance_list' %}" class="{% if request.resolver_match.app_name == 'data_management' and request.resolver_match.url_name == 'performance_list' or request.resolver_match.url_name == 'performance_sales_detail' or request.resolver_match.url_name == 'performance_sales_create' or request.resolver_match.url_name == 'performance_sales_update' or request.resolver_match.url_name == 'performance_sales_delete' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">공연 매출 관리</a></li>
                             </ul>
                         </details>
                     </li>
@@ -65,11 +65,11 @@
             </div>
         </aside>
 
-        <div class="flex-1 flex flex-col ml-52 min-h-screen">
-            <header class="navbar bg-surface border-b border-gray-200 sticky top-0 z-20 px-6">
-                <div class="flex-1">
+        <div class="flex-1 flex flex-col ml-60 min-h-screen">
+            <header class="navbar h-16 bg-surface border-b border-gray-200 sticky top-0 z-20 px-8">
+                <div class="flex-1 min-w-0">
                     <div class="breadcrumbs text-sm">
-                        <ul>
+                        <ul class="flex items-center gap-1 text-gray-600 [&_li]:font-medium [&_li]:truncate">
                             {% block breadcrumb %}
                                 <li></li>
                             {% endblock %}
@@ -82,14 +82,14 @@
                             <button
                                 type="button"
                                 onclick="toggleUserDropdown()"
-                                class="btn btn-ghost btn-circle"
+                                class="btn btn-ghost btn-circle hover:bg-white"
                                 aria-label="사용자 메뉴"
                             >
                                 <svg class="w-7 h-7 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </button>
-                            <ul id="user-dropdown" class="menu dropdown-content bg-white rounded-box z-30 mt-3 w-52 p-2 shadow hidden">
+                            <ul id="user-dropdown" class="menu dropdown-content bg-white rounded-xl z-30 mt-3 w-52 p-2 shadow border border-gray-100 hidden">
                                 <li class="menu-title text-gray-500">
                                     <span>
                                         {% if user.first_name %}
@@ -106,7 +106,7 @@
                 </div>
             </header>
 
-            <main class="flex-1 overflow-y-auto p-8">
+            <main class="flex-1 overflow-y-auto p-8 lg:p-10">
                 {% block content %}
                     <!-- 페이지 내용 -->
                 {% endblock %}

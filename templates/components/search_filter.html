@@ -5,9 +5,9 @@
 {% include 'components/search_filter.html' with genre_filter=genre_filter search_query=search_query genre_choices=genre_choices %}
 {% endcomment %}
 
-<div class="card bg-white border border-gray-200 rounded-xl shadow-sm mb-8">
+<div class="card bg-white border border-gray-200 rounded-xl shadow-sm mb-10">
     <div class="card-body p-6">
-    <form method="get" class="flex flex-col lg:flex-row lg:items-end gap-4">
+    <form method="get" class="flex flex-col lg:flex-row lg:flex-nowrap lg:items-end gap-4 lg:gap-5">
         <!-- 검색 입력 -->
         <div class="flex-1">
             <input
@@ -15,35 +15,31 @@
                 name="search" 
                 value="{{ search_query }}" 
                 placeholder="공연명, 공연장, 제작/주최를 검색해보세요" 
-                class="input input-bordered w-full bg-white text-black"
+                class="input input-bordered w-full bg-white text-black border-gray-200 focus:border-primary focus:outline-none"
                 aria-label="공연 검색어"
             >
         </div>
         
         <!-- 장르 필터 -->
-        {% include 'components/genre_dropdown.html' with genre_filter=genre_filter genre_choices=genre_choices prefix="genre-filter" auto_submit=True %}
+        {% include 'components/genre_dropdown.html' with genre_filter=genre_filter genre_choices=genre_choices prefix="genre-filter" auto_submit=True width_class="w-full lg:w-52" %}
         
-        <!-- 검색 버튼 -->
-        <div class="shrink-0">
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:ml-auto">
             <button 
                 type="submit" 
-                class="btn btn-primary"
+                class="btn btn-primary w-full sm:w-auto min-w-24"
             >
                 검색
             </button>
-        </div>
-        
-        <!-- 초기화 버튼 -->
-        {% if genre_filter or search_query %}
-            <div class="shrink-0">
+
+            {% if genre_filter or search_query %}
                 <a 
-                    href="{% url 'performance:list' %}" 
-                    class="btn btn-outline"
+                    href="{{ request.path }}" 
+                    class="btn btn-outline w-full sm:w-auto min-w-24"
                 >
                     초기화
                 </a>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </form>
     </div>
 </div>
