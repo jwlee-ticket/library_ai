@@ -1,28 +1,6 @@
 // 드롭다운 토글 함수들
 
 /**
- * 장르별 대시보드 드롭다운 토글
- */
-function toggleGenreDropdown() {
-    const dropdown = document.getElementById('genre-dropdown');
-    const arrow = document.getElementById('genre-arrow');
-    if (!dropdown || !arrow) return;
-    dropdown.classList.toggle('hidden');
-    arrow.classList.toggle('rotate-180');
-}
-
-/**
- * 데이터 관리 드롭다운 토글
- */
-function toggleDataDropdown() {
-    const dropdown = document.getElementById('data-dropdown');
-    const arrow = document.getElementById('data-arrow');
-    if (!dropdown || !arrow) return;
-    dropdown.classList.toggle('hidden');
-    arrow.classList.toggle('rotate-180');
-}
-
-/**
  * 사용자 드롭다운 토글
  */
 function toggleUserDropdown() {

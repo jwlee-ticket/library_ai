@@ -26,6 +26,9 @@
   /* Secondary 컬러 */
   --color-secondary: #78716c;
   
+  /* Surface 컬러 (사이드바, 헤더 배경) */
+  --color-surface: #f3f4f5;
+  
   /* Link 컬러 (Primary와 동일) */
   --color-link: var(--color-primary);
   
@@ -61,4 +64,33 @@
   */
 body {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/**
+  * daisyUI 공통 액션 컬러 오버라이드
+  * 기본 oklch 테마 대신 프로젝트 Primary(#2a3038)를 강제 적용
+  */
+.btn-primary {
+    background-color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible,
+.btn-primary:active {
+    background-color: var(--color-primary-800) !important;
+    border-color: var(--color-primary-800) !important;
+    color: #ffffff !important;
+}
+
+.radio-primary {
+    --chkbg: var(--color-primary);
+    --chkfg: #ffffff;
+    --chkbd: var(--color-primary);
+}
+
+.radio-primary:checked {
+    border-color: var(--color-primary) !important;
+    background-color: var(--color-primary) !important;
 }

@@ -5,17 +5,17 @@
 {% include 'components/search_filter.html' with genre_filter=genre_filter search_query=search_query genre_choices=genre_choices %}
 {% endcomment %}
 
-<div class="card bg-base-100 border border-base-200 shadow-sm mb-6">
+<div class="card bg-white border border-gray-200 rounded-xl shadow-sm mb-8">
     <div class="card-body p-6">
-    <form method="get" class="flex flex-col md:flex-row gap-4">
+    <form method="get" class="flex flex-col lg:flex-row lg:items-center gap-4">
         <!-- 검색 입력 -->
         <div class="flex-1">
-            <input 
+            <input
                 type="text" 
                 name="search" 
                 value="{{ search_query }}" 
                 placeholder="공연명, 공연장, 제작/주최를 검색해보세요" 
-                class="input input-bordered w-full"
+                class="input input-bordered w-full bg-white text-black"
             >
         </div>
         
@@ -23,7 +23,7 @@
         {% include 'components/genre_dropdown.html' with genre_filter=genre_filter genre_choices=genre_choices prefix="genre-filter" auto_submit=True %}
         
         <!-- 검색 버튼 -->
-        <div>
+        <div class="shrink-0">
             <button 
                 type="submit" 
                 class="btn btn-primary"
@@ -34,7 +34,7 @@
         
         <!-- 초기화 버튼 -->
         {% if genre_filter or search_query %}
-            <div>
+            <div class="shrink-0">
                 <a 
                     href="{% url 'performance:list' %}" 
                     class="btn btn-outline"

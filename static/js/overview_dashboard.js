@@ -1,4 +1,8 @@
 // 전체 대시보드 (콘서트·뮤지컬·연극)
+function getCSSVariable(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 let summaryUrl = null;
 let periodRevenueUrl = null;
 let genreChart = null;
@@ -109,15 +113,30 @@ function renderGenreChart(genres) {
     const filtered = values.map((v, i) => ({ label: labels[i], value: v, color: colors[i] })).filter(x => x.value > 0);
 
     if (legendEl) {
-        legendEl.innerHTML = filtered
-            .map(
-                (x) =>
-                    '<div class="flex items-center gap-2 mb-2">' +
-                    '<span class="w-3 h-3 rounded-full flex-shrink-0" style="background:' + x.color + '"></span>' +
-                    '<span class="text-sm text-gray-700">' + x.label + ' ' + ((x.value / total) * 100).toFixed(1) + '%</span>' +
-                    '</div>'
-            )
-            .join('');
+        const ticketData = {
+            '콘서트': (genres.concert && genres.concert.total_ticket_count) || 0,
+            '뮤지컬': (genres.musical && genres.musical.total_ticket_count) || 0,
+            '연극': (genres.theater && genres.theater.total_ticket_count) || 0,
+        };
+        legendEl.innerHTML = '<div class="grid grid-cols-1 gap-4">' +
+            filtered.map((x) => {
+                const pct = ((x.value / total) * 100).toFixed(1);
+                const tickets = ticketData[x.label] || 0;
+                return '<div class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">' +
+                    '<span class="w-4 h-4 rounded-full flex-shrink-0" style="background:' + x.color + '"></span>' +
+                    '<div class="flex-1">' +
+                        '<div class="flex items-baseline justify-between mb-1">' +
+                            '<span class="text-sm font-semibold text-black">' + x.label + '</span>' +
+                            '<span class="text-lg font-bold text-black">' + pct + '%</span>' +
+                        '</div>' +
+                        '<div class="flex items-center justify-between text-xs text-gray-500">' +
+                            '<span>매출 ' + formatRevenue(x.value) + '</span>' +
+                            '<span>판매 ' + formatNumber(tickets) + '매</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('') +
+        '</div>';
     }
 
     genreChart = new Chart(canvas, {
@@ -186,13 +205,13 @@ async function loadPeriodRevenue() {
             console.error('기간별 로드 실패:', json.error);
             return;
         }
-        renderPeriodChart(json.data.periods || [], json.data.data || {});
+        renderPeriodChart(json.data.periods || [], json.data.concert || {}, json.data.musical || {});
     } catch (e) {
         console.error('기간별 로드 오류:', e);
     }
 }
 
-function renderPeriodChart(periods, data) {
+function renderPeriodChart(periods, concertData, musicalData) {
     const canvas = document.getElementById('overview-period-chart');
     if (!canvas) return;
     const periodType = document.querySelector('input[name="overview-period-type"]:checked')?.value || 'monthly';
@@ -207,7 +226,8 @@ function renderPeriodChart(periods, data) {
         }
         return p;
     });
-    const values = periods.map((p) => data[p] || 0);
+    const concertValues = periods.map((p) => concertData[p] || 0);
+    const musicalValues = periods.map((p) => musicalData[p] || 0);
 
     if (periodChart) {
         periodChart.destroy();
@@ -219,11 +239,18 @@ function renderPeriodChart(periods, data) {
             labels: labels,
             datasets: [
                 {
-                    label: '전체 매출',
-                    data: values,
-                    backgroundColor: 'rgba(42, 48, 56, 0.8)',
-                    borderColor: '#2a3038',
-                    borderWidth: 1,
+                    label: '콘서트',
+                    data: concertValues,
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 0,
+                },
+                {
+                    label: '뮤지컬',
+                    data: musicalValues,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: '#10b981',
+                    borderWidth: 0,
                 },
             ],
         },
@@ -231,21 +258,34 @@ function renderPeriodChart(periods, data) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: { boxWidth: 12, boxHeight: 12, borderRadius: 3, useBorderRadius: true, padding: 16, font: { size: 13 } },
+                },
                 tooltip: {
                     callbacks: {
+                        afterBody: function (items) {
+                            if (items.length === 0) return '';
+                            const idx = items[0].dataIndex;
+                            const total = concertValues[idx] + musicalValues[idx];
+                            return '합계: ' + formatRevenue(total);
+                        },
                         label: function (ctx) {
-                            return formatRevenue(ctx.raw);
+                            return ctx.dataset.label + ': ' + formatRevenue(ctx.raw);
                         },
                     },
                 },
             },
             scales: {
                 x: {
+                    stacked: true,
                     grid: { display: false },
                     ticks: { maxRotation: 45 },
                 },
                 y: {
+                    stacked: true,
                     grid: { display: false },
                     ticks: {
                         callback: function (v) {

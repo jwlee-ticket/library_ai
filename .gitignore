@@ -54,3 +54,10 @@ Thumbs.db
 node_modules/
 .npm
 
+# Tailwind Standalone + daisyUI (static/css/install-daisyui.sh 실행 후 생성)
+static/css/tailwindcss
+static/css/tailwindcss.exe
+static/css/output.css
+static/css/daisyui.mjs
+static/css/daisyui-theme.mjs
+

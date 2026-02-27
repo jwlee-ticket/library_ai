@@ -87,7 +87,7 @@ class MusicalOverviewDashboardView(TemplateView):
 
 class OverviewDashboardView(TemplateView):
     """전체 대시보드 뷰 (콘서트·뮤지컬·연극 통합, 연극은 레이아웃만)"""
-    template_name = 'dashboard/overview.html'
+    template_name = 'dashboard/main.html'
 
 
 @login_required
@@ -317,13 +317,13 @@ def get_overall_period_revenue_data(request):
             musical_by_period[key] += rev
 
         all_periods = sorted(set(concert_by_period.keys()) | set(musical_by_period.keys()))
-        period_totals = {k: concert_by_period[k] + musical_by_period[k] for k in all_periods}
 
         return JsonResponse({
             'success': True,
             'data': {
                 'periods': all_periods,
-                'data': period_totals,
+                'concert': {k: concert_by_period.get(k, 0) for k in all_periods},
+                'musical': {k: musical_by_period.get(k, 0) for k in all_periods},
             },
         })
     except Exception as e:

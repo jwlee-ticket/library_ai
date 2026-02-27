@@ -342,7 +342,7 @@ function updateBookingSiteFilters() {
         checkbox.id = `filter-site-${index}`;
         checkbox.dataset.site = site;
         checkbox.checked = true;
-        checkbox.className = 'w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary-200 focus:ring-2';
+        checkbox.className = 'w-4 h-4 text-black border-gray-300 rounded focus:ring-primary-200 focus:ring-2';
         
         const span = document.createElement('span');
         span.className = 'text-sm text-black';

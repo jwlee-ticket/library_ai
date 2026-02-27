@@ -6,8 +6,7 @@
 {% endblock %}
 
 {% block content %}
-    <!-- 페이지 제목 -->
-    <div class="mb-8">
+    <div class="mb-14">
         <h1 class="text-3xl font-semibold text-black">공연별 대시보드</h1>
     </div>
     
@@ -16,21 +15,21 @@
     
     <!-- 공연 리스트 테이블 -->
     {% if performances %}
-        <div class="card bg-base-100 border border-base-200 shadow-sm mb-8">
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm mb-12">
             <div class="overflow-x-auto">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">장르</th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">공연명</th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">공연장</th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">공연 기간</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">장르</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">공연명</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">공연장</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">공연 기간</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for performance in performances %}
                             <tr 
-                                class="hover cursor-pointer"
+                                class="cursor-pointer hover:bg-gray-50 transition-colors duration-200"
                                 onclick="window.location.href='{% url 'dashboard:detail' performance.pk %}'"
                             >
                                 <td class="px-6 py-4">
@@ -57,10 +56,10 @@
         <!-- 페이지네이션 -->
         {% include 'components/pagination.html' with page_obj=page_obj %}
     {% else %}
-        <div class="card bg-base-100 border border-base-200 shadow-sm">
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm">
             <div class="card-body p-12 text-center">
-            <p class="text-gray-600 text-lg">등록된 공연이 없어요</p>
-            <p class="text-sm text-gray-500 mt-2">공연을 먼저 등록해 주세요.</p>
+                <p class="text-gray-700 text-lg font-medium">등록된 공연이 없어요</p>
+                <p class="text-sm text-gray-500 mt-2">검색 조건을 확인하거나 공연을 먼저 등록해 주세요.</p>
             </div>
         </div>
     {% endif %}

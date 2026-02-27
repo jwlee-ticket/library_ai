@@ -1088,8 +1088,8 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'loading':
                 bgColor = 'bg-primary/10';
                 borderColor = 'border-primary';
-                textColor = 'text-primary';
-                iconColor = 'text-primary';
+                textColor = 'text-black';
+                iconColor = 'text-black';
                 iconSvg = `
                     <svg class="w-5 h-5 ${iconColor} animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1146,7 +1146,7 @@ function prependUploadLogRow(data) {
     row.className = 'hover:bg-gray-50 transition-colors';
     const downloadUrl = data.download_url || '';
     const downloadButton = downloadUrl
-        ? `<a href="${downloadUrl}" class="p-2 text-primary hover:text-white hover:bg-primary rounded-lg transition-colors inline-flex items-center justify-center" aria-label="업로드 파일 다운로드">
+        ? `<a href="${downloadUrl}" class="p-2 text-black hover:text-white hover:bg-primary rounded-lg transition-colors inline-flex items-center justify-center" aria-label="업로드 파일 다운로드">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"></path>
                 </svg>

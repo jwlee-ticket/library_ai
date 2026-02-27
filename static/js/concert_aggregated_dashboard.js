@@ -533,7 +533,7 @@ function renderPeriodRevenueTable() {
     // 공연명 헤더 추가
     performances.forEach(performance => {
         const th = document.createElement('th');
-        th.className = 'px-6 py-4 text-right text-sm font-semibold text-black';
+        th.className = 'px-6 py-4 text-right text-sm font-semibold text-black bg-surface';
         th.textContent = performance.title;
         thead.appendChild(th);
     });

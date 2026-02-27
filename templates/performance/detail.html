@@ -188,7 +188,7 @@
                         <div class="flex flex-wrap gap-3">
                             {% for booking_site in display_booking_sites %}
                                 {% if booking_site.url %}
-                                    <a href="{{ booking_site.url }}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-medium">{{ booking_site.name }}</a>
+                                    <a href="{{ booking_site.url }}" target="_blank" rel="noopener noreferrer" class="text-black hover:underline font-medium">{{ booking_site.name }}</a>
                                 {% else %}
                                     <span class="text-gray-600">{{ booking_site.name }}</span>
                                 {% endif %}

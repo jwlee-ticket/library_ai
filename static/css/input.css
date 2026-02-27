@@ -1,0 +1,74 @@
+/**
+ * Tailwind CSS + daisyUI (Django)
+ * 참고: https://daisyui.com/docs/install/django/
+ */
+@import "tailwindcss";
+
+/* Tailwind가 스캔할 경로 (프로젝트 루트 기준 HTML, JS, Python) */
+@source "../../**/*.{html,py,js}";
+
+/* 실행 파일·플러그인 제외 */
+@source not "./tailwindcss";
+@source not "./daisyui{,*}.mjs";
+
+@plugin "./daisyui.mjs";
+
+@plugin "./daisyui-theme.mjs" {
+  name: "librarysales";
+  default: true;
+  color-scheme: light;
+  --color-primary: #2a3038;
+  --color-primary-content: #ffffff;
+  --color-secondary: #78716c;
+  --color-secondary-content: #ffffff;
+  --color-accent: #f65938;
+  --color-accent-content: #ffffff;
+  --color-neutral: #2a3038;
+  --color-neutral-content: #ffffff;
+  --color-base-100: #ffffff;
+  --color-base-200: #f3f4f5;
+  --color-base-300: #e5e7eb;
+  --color-base-content: #000000;
+  --color-success: #16a34a;
+  --color-success-content: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-content: #ffffff;
+  --color-error: #dc2626;
+  --color-error-content: #ffffff;
+  --color-info: #3b82f6;
+  --color-info-content: #ffffff;
+}
+
+/**
+ * Library Sales 디자인 시스템 컬러 (기존 theme 유지)
+ */
+@theme {
+  --color-brand: #f65938;
+  --color-primary: #2a3038;
+  --color-primary-50: color-mix(in srgb, var(--color-primary) 5%, white);
+  --color-primary-100: color-mix(in srgb, var(--color-primary) 10%, white);
+  --color-primary-200: color-mix(in srgb, var(--color-primary) 20%, white);
+  --color-primary-300: color-mix(in srgb, var(--color-primary) 30%, white);
+  --color-primary-800: color-mix(in srgb, var(--color-primary) 80%, black);
+  --color-primary-900: color-mix(in srgb, var(--color-primary) 90%, black);
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  --color-secondary: #78716c;
+  --color-surface: #f3f4f5;
+  --color-link: var(--color-primary);
+  --color-chart-nolticket: #3b82f6;
+  --color-chart-yes24: #06b6d4;
+  --color-chart-melonticket: #10b981;
+  --color-chart-ticketlink: #f59e0b;
+  --color-chart-site-5: #8b5cf6;
+  --color-chart-site-6: #ec4899;
+  --color-chart-site-7: #f97316;
+  --color-chart-site-8: #14b8a6;
+  --color-chart-paid-opacity: 1;
+  --color-chart-unpaid-opacity: 0.6;
+}
+
+body {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+

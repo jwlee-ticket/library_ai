@@ -222,7 +222,7 @@ function renderMusicalList(musicalList, totalRevenue, totalTargetRevenue) {
 
         row.innerHTML = `
             <td class="px-6 py-4">
-                <a href="/dashboard-performance/${musical.id}/" class="text-base font-medium text-primary hover:underline">${title}</a>
+                <a href="/dashboard-performance/${musical.id}/" class="text-base font-medium text-black hover:underline">${title}</a>
             </td>
             <td class="px-6 py-4 text-right">
                 <span class="text-sm text-black">${formatNumber(Math.round(totalRevenueItem))}원</span>
@@ -252,7 +252,7 @@ function renderMusicalList(musicalList, totalRevenue, totalTargetRevenue) {
     const totalRev = totalRevenue != null ? totalRevenue : musicalList.reduce((s, m) => s + (m.total_revenue || 0), 0);
     const totalTgt = totalTargetRevenue != null ? totalTargetRevenue : musicalList.reduce((s, m) => s + (m.target_revenue || 0), 0);
     const sumRow = document.createElement('tr');
-    sumRow.className = 'bg-gray-50 border-t-2 border-gray-200 font-semibold';
+    sumRow.className = 'border-t-2 border-gray-200 font-semibold';
     sumRow.innerHTML = `
         <td class="px-6 py-4 text-sm text-black">합계</td>
         <td class="px-6 py-4 text-right text-sm text-black">${formatNumber(Math.round(totalRev))}원</td>
@@ -271,7 +271,7 @@ async function loadPeriodRevenueData() {
         return;
     }
 
-    const periodType = document.querySelector('input[name="period-type"]:checked')?.value || 'monthly';
+    const periodType = document.querySelector('input[name="period-type"]:checked')?.value || 'weekly';
     const startDate = document.getElementById('period-start-date')?.value;
     const endDate = document.getElementById('period-end-date')?.value;
 
@@ -338,7 +338,7 @@ function renderPeriodRevenueChart() {
     const performances = currentPeriodData.performances;
     const data = currentPeriodData.data;
 
-    const periodType = document.querySelector('input[name="period-type"]:checked')?.value || 'monthly';
+    const periodType = document.querySelector('input[name="period-type"]:checked')?.value || 'weekly';
     const labels = periods.map(period => {
         if (periodType === 'daily') {
             const date = new Date(period + 'T00:00:00');
@@ -425,7 +425,7 @@ function renderPeriodRevenueChart() {
  * 기간 선택 시 날짜 자동 설정
  */
 function setDefaultDatesForPeriod() {
-    const periodType = document.querySelector('input[name="period-type"]:checked')?.value || 'monthly';
+    const periodType = document.querySelector('input[name="period-type"]:checked')?.value || 'weekly';
     const startDateInput = document.getElementById('period-start-date');
     const endDateInput = document.getElementById('period-end-date');
 
@@ -453,7 +453,7 @@ function setDefaultDatesForPeriod() {
  * 테이블용 기간 선택 시 날짜 자동 설정
  */
 function setDefaultDatesForTablePeriod() {
-    const periodType = document.querySelector('input[name="table-period-type"]:checked')?.value || 'monthly';
+    const periodType = document.querySelector('input[name="table-period-type"]:checked')?.value || 'weekly';
     const startDateInput = document.getElementById('table-period-start-date');
     const endDateInput = document.getElementById('table-period-end-date');
 
@@ -486,7 +486,7 @@ async function loadPeriodRevenueTableData() {
         return;
     }
 
-    const periodType = document.querySelector('input[name="table-period-type"]:checked')?.value || 'monthly';
+    const periodType = document.querySelector('input[name="table-period-type"]:checked')?.value || 'weekly';
     const startDate = document.getElementById('table-period-start-date')?.value;
     const endDate = document.getElementById('table-period-end-date')?.value;
 
@@ -537,14 +537,14 @@ function renderPeriodRevenueTable() {
     const performances = currentTablePeriodData.performances;
     const data = currentTablePeriodData.data;
 
-    const periodType = document.querySelector('input[name="table-period-type"]:checked')?.value || 'monthly';
+    const periodType = document.querySelector('input[name="table-period-type"]:checked')?.value || 'weekly';
 
     const existingHeaderCells = thead.querySelectorAll('th:not(:first-child)');
     existingHeaderCells.forEach(cell => cell.remove());
 
     performances.forEach(performance => {
         const th = document.createElement('th');
-        th.className = 'px-6 py-4 text-right text-sm font-semibold text-black';
+        th.className = 'px-6 py-4 text-right text-sm font-semibold text-black bg-white';
         th.textContent = performance.title;
         thead.appendChild(th);
     });
