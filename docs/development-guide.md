@@ -590,3 +590,39 @@ erDiagram
 - ForeignKey 관계를 통한 데이터 일관성 보장
 - 폼 검증을 통한 추가 데이터 무결성 보장
 - `unique_together`를 통한 중복 방지
+
+---
+
+## 뮤지컬 대시보드 매출/매수 진단 (Django shell)
+
+뮤지컬 장르별 대시보드에서 매출·판매 매수가 예상과 다르게 나올 때, 동일 공연명으로 Performance가 중복 등록되었는지 확인할 수 있다.
+
+```bash
+python manage.py shell
+```
+
+```python
+from performance.models import Performance
+from data_management.models import PerformanceSalesUploadLog, MusicalEpisodeSales
+from django.db.models import Sum
+
+# 예: '긴긴밤' 포함 공연 조회
+title_filter = '긴긴밤'
+perfs = Performance.objects.filter(genre='musical', title__icontains=title_filter).order_by('id')
+print(f"공연명 '{title_filter}' 포함 뮤지컬 건수: {perfs.count()}")
+
+for p in perfs:
+    latest = PerformanceSalesUploadLog.objects.filter(performance=p).order_by('-uploaded_at', '-id').first()
+    if not latest:
+        print(f"  id={p.id}, title={p.title!r} -> 업로드 없음")
+        continue
+    qs = MusicalEpisodeSales.objects.filter(performance=p, upload_log=latest)
+    rev = qs.aggregate(paid=Sum('paid_revenue'), unpaid=Sum('unpaid_revenue'))
+    tkt = qs.aggregate(paid=Sum('paid_ticket_count'), unpaid=Sum('unpaid_ticket_count'))
+    revenue = float(rev['paid'] or 0) + float(rev['unpaid'] or 0)
+    tickets = int(tkt['paid'] or 0) + int(tkt['unpaid'] or 0)
+    print(f"  id={p.id}, title={p.title!r}, upload_log_id={latest.id}, 회차수={qs.count()}, 매출={revenue:,.0f}, 매수={tickets:,}")
+```
+
+- 동일 공연명이 2건 이상이면 요약 API에서 공연명별 대표 1건만 사용하므로, 위 수정 후에는 한 번만 집계된다.
+- 중복 Performance를 정리하려면 관리자에서 불필요한 공연을 삭제하거나, 데이터 이전 후 하나만 남기면 된다.

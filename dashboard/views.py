@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, DetailView, TemplateView
-from django.db.models import Q, Sum, Min, Max, Avg
+from django.db.models import Q, Sum, Min, Max, Avg, OuterRef, Subquery
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
@@ -78,6 +78,11 @@ class PerformanceDashboardDetailView(DetailView):
 class ConcertOverviewDashboardView(TemplateView):
     """콘서트 통합 대시보드 뷰"""
     template_name = 'dashboard/concert/overview.html'
+
+
+class MusicalOverviewDashboardView(TemplateView):
+    """뮤지컬 통합 대시보드 뷰"""
+    template_name = 'dashboard/musical/overview.html'
 
 
 @login_required
@@ -279,6 +284,208 @@ def get_concert_period_revenue_data(request):
         for period_key in periods:
             data[period_key] = dict(period_data[period_key])
         
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'periods': periods,
+                'performances': performances,
+                'data': data,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_musical_aggregated_summary_data(request):
+    """뮤지컬 통합 대시보드 요약 데이터 API (공연별 최신 업로드 회차 기준).
+    총 매출·판매 매수는 상세 대시보드와 동일하게 입금(paid)만 사용하여,
+    각 뮤지컬 상세 페이지의 합계를 더하면 장르별 총계와 일치한다."""
+    try:
+        musicals = Performance.objects.filter(genre='musical').order_by('id')
+
+        if not musicals.exists():
+            return JsonResponse({
+                'success': True,
+                'data': {
+                    'total_revenue': 0,
+                    'total_ticket_count': 0,
+                    'today_revenue': 0,
+                    'today_ticket_count': 0,
+                    'total_target_revenue': 0,
+                    'total_break_even_point': 0,
+                    'total_seats': 0,
+                    'musical_list': [],
+                    'data_start_date': None,
+                    'data_end_date': None,
+                }
+            })
+
+        # 공연명(title)별 대표 1건만 사용 (동일 공연이 중복 등록된 경우 2배 집계 방지)
+        seen_titles = set()
+        representative_musicals = [p for p in musicals if p.title not in seen_titles and not seen_titles.add(p.title)]
+
+        today = datetime.now().date()
+
+        total_revenue = 0
+        total_ticket_count = 0
+        total_target_revenue = 0
+        total_break_even_point = 0
+        total_seats = 0
+        musical_list = []
+        data_start_date = None  # 매출 데이터 실제 기간 (기간별 그래프/테이블 기본값용)
+        data_end_date = None
+
+        for perf in representative_musicals:
+            latest_log = (
+                PerformanceSalesUploadLog.objects
+                .filter(performance=perf)
+                .order_by('-uploaded_at', '-id')
+                .first()
+            )
+            if latest_log:
+                episode_qs = MusicalEpisodeSales.objects.filter(performance=perf, upload_log=latest_log)
+                # 상세 대시보드와 동일: 입금(paid)만 사용 → 상세 각 공연 합계 = 장르별 총계
+                rev = episode_qs.aggregate(total=Sum('paid_revenue'))
+                tkt = episode_qs.aggregate(total=Sum('paid_ticket_count'))
+                perf_revenue = float(rev['total'] or 0)
+                perf_tickets = int(tkt['total'] or 0)
+                dr = episode_qs.aggregate(mn=Min('show_date'), mx=Max('show_date'))
+                if dr.get('mn') and dr.get('mx'):
+                    data_start_date = min(data_start_date, dr['mn']) if data_start_date else dr['mn']
+                    data_end_date = max(data_end_date, dr['mx']) if data_end_date else dr['mx']
+            else:
+                perf_revenue = 0
+                perf_tickets = 0
+
+            total_revenue += perf_revenue
+            total_ticket_count += perf_tickets
+
+            if perf.target_revenue:
+                total_target_revenue += float(perf.target_revenue)
+            if perf.break_even_point:
+                total_break_even_point += float(perf.break_even_point)
+            for sg in perf.seat_grades.all():
+                total_seats += sg.seat_count
+
+            target_revenue = float(perf.target_revenue) if perf.target_revenue else 0
+            achievement_rate = (perf_revenue / target_revenue * 100) if target_revenue > 0 else 0
+            musical_list.append({
+                'id': perf.id,
+                'title': perf.title,
+                'target_revenue': target_revenue,
+                'total_revenue': perf_revenue,
+                'achievement_rate': achievement_rate,
+            })
+
+        today_episodes = MusicalEpisodeSales.objects.filter(
+            performance__genre='musical',
+            show_date=today,
+        )
+        # 상세 대시보드와 동일: 입금(paid)만 사용
+        today_rev = today_episodes.aggregate(total=Sum('paid_revenue'))
+        today_revenue = float(today_rev['total'] or 0)
+        today_ticket_result = today_episodes.aggregate(total=Sum('paid_ticket_count'))
+        today_ticket_count = int(today_ticket_result['total'] or 0)
+
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'total_revenue': total_revenue,
+                'total_ticket_count': total_ticket_count,
+                'today_revenue': today_revenue,
+                'today_ticket_count': today_ticket_count,
+                'total_target_revenue': total_target_revenue,
+                'total_break_even_point': total_break_even_point,
+                'total_seats': total_seats,
+                'musical_list': musical_list,
+                'data_start_date': data_start_date.isoformat() if data_start_date else None,
+                'data_end_date': data_end_date.isoformat() if data_end_date else None,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_musical_period_revenue_data(request):
+    """뮤지컬 통합 대시보드 기간별 매출 데이터 API (show_date 기준).
+    공연별 최신 업로드 회차만 사용·입금(paid)만 집계·공연명별 대표 1건으로 요약·상세와 일치."""
+    try:
+        period_type = request.GET.get('period_type', 'daily')
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+
+        today = datetime.now().date()
+        if not start_date_str or not end_date_str:
+            if period_type == 'daily':
+                end_date = today
+                start_date = end_date - timedelta(days=29)
+            elif period_type == 'weekly':
+                end_date = today
+                start_date = end_date - timedelta(weeks=3, days=end_date.weekday())
+            else:
+                end_date = today
+                if today.month >= 3:
+                    start_date = today.replace(month=today.month - 2, day=1)
+                else:
+                    start_date = today.replace(year=today.year - 1, month=12 + today.month - 2, day=1)
+        else:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'success': False, 'error': '올바른 날짜 형식이 아니에요'}, status=400)
+
+        musicals = Performance.objects.filter(genre='musical').order_by('id')
+        # 공연명별 대표 1건 (요약 대시보드·상세와 동일)
+        seen_titles = set()
+        representative_musicals = [p for p in musicals if p.title not in seen_titles and not seen_titles.add(p.title)]
+        title_to_rep_id = {p.title: p.id for p in representative_musicals}
+
+        # 공연별 최신 업로드 로그만 사용 (요약·상세와 동일)
+        latest_log_subq = (
+            PerformanceSalesUploadLog.objects
+            .filter(performance=OuterRef('performance'))
+            .order_by('-uploaded_at', '-id')
+        )
+        episodes = (
+            MusicalEpisodeSales.objects.filter(
+                performance__genre='musical',
+                show_date__gte=start_date,
+                show_date__lte=end_date,
+                upload_log=Subquery(latest_log_subq.values('id')[:1]),
+            )
+            .select_related('performance')
+        )
+
+        # 입금(paid)만 사용 (상세·요약과 동일)
+        period_data = defaultdict(lambda: defaultdict(float))
+        for ep in episodes:
+            show_date = ep.show_date
+            rep_id = title_to_rep_id.get(ep.performance.title, ep.performance.id)
+            revenue = float(ep.paid_revenue or 0)
+            if period_type == 'daily':
+                period_key = show_date.strftime('%Y-%m-%d')
+            elif period_type == 'weekly':
+                week_start = show_date - timedelta(days=show_date.weekday())
+                period_key = week_start.strftime('%Y-%m-%d')
+            else:
+                period_key = show_date.strftime('%Y-%m')
+            period_data[period_key][rep_id] += revenue
+
+        periods = sorted(period_data.keys())
+        performances = [{'id': p.id, 'title': p.title} for p in representative_musicals]
+        data = {k: dict(v) for k, v in period_data.items()}
+
         return JsonResponse({
             'success': True,
             'data': {
