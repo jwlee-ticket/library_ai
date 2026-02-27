@@ -32,7 +32,7 @@ sleep 2
 # Tailwind CSS 빌드
 echo " "
 echo "--------------------------------- Tailwind CSS 빌드 실행 ---------------------------------"
-python manage.py tailwind build
+./static/css/tailwindcss -i static/css/input.css -o static/css/output.css
 sleep 2
 
 # 정적 파일 수집
