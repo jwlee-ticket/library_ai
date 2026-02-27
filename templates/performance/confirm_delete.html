@@ -8,7 +8,8 @@
 
 {% block content %}
     <div class="max-w-md mx-auto mt-12">
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
+        <div class="card bg-base-100 border border-base-200 shadow-sm">
+            <div class="card-body p-8">
             <!-- 경고 아이콘 -->
             <div class="flex justify-center mb-6">
                 <div class="w-16 h-16 rounded-full bg-danger/10 text-danger flex items-center justify-center">
@@ -27,13 +28,13 @@
             </p>
             
             <!-- 공연명 강조 -->
-            <div class="bg-danger/10 border border-danger/20 rounded-lg p-4 mb-6">
+            <div class="alert bg-danger/10 border border-danger/20 rounded-lg mb-6">
                 <p class="text-sm text-gray-600 text-center mb-2">삭제할 공연</p>
                 <p class="text-lg font-semibold text-danger text-center">{{ object.title }}</p>
             </div>
             
             <!-- 경고 메시지 -->
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div class="alert bg-warning/10 border border-warning/20 rounded-lg mb-6">
                 <p class="text-sm text-yellow-800 text-center">
                     삭제된 공연은 복구할 수 없어요
                 </p>
@@ -42,13 +43,14 @@
             <!-- 버튼 -->
             <form method="post" class="flex gap-3">
                 {% csrf_token %}
-                <a href="{% url 'performance:detail' object.pk %}" class="flex-1 px-6 py-3 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors text-center">
+                <a href="{% url 'performance:detail' object.pk %}" class="btn btn-ghost flex-1">
                     취소
                 </a>
-                <button type="submit" class="flex-1 px-6 py-3 bg-danger text-white rounded-lg font-medium hover:bg-danger/90 active:bg-danger/80 transition-colors shadow-sm">
+                <button type="submit" class="btn btn-error flex-1">
                     삭제
                 </button>
             </form>
+            </div>
         </div>
     </div>
 {% endblock %}

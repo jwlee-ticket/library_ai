@@ -28,7 +28,8 @@
     {% if performance %}
         <div class="mb-12">
             
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
+            <div class="card bg-base-100 rounded-xl border border-base-200 shadow-sm">
+                <div class="card-body p-8">
                 <div class="space-y-4">
                     <!-- 업로드 폼 -->
                     <form id="excel-upload-form" method="post" action="{% url 'data_management:performance_sales_upload_excel' performance.id %}" enctype="multipart/form-data" class="space-y-4">
@@ -41,7 +42,7 @@
                                     id="excel-file-input" 
                                     name="excel_file" 
                                     accept=".xlsx,.xls,.xlsb"
-                                    class="w-full h-14 px-4 py-2 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200 file:mr-3 file:h-10 file:px-4 file:py-2 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white file:cursor-pointer hover:file:bg-primary-900"
+                                    class="file-input file-input-bordered w-full"
                                 >
                             </div>
                             <div class="w-64">
@@ -51,13 +52,13 @@
                                     id="excel-password-input"
                                     name="excel_password"
                                     placeholder="잠긴 파일일 때만 입력"
-                                    class="w-full h-14 px-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                                    class="input input-bordered w-full"
                                 >
                             </div>
                             <button 
                                 type="submit"
                                 id="excel-upload-btn"
-                                class="h-14 px-6 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm"
+                                class="btn btn-primary"
                             >
                                 업로드
                             </button>
@@ -75,13 +76,15 @@
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
             
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8 mt-6">
+            <div class="card bg-base-100 rounded-xl border border-base-200 shadow-sm mt-6">
+                <div class="card-body p-8">
                 <h3 class="text-lg font-semibold text-black mb-4">업로드 파일 목록</h3>
                 <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 border-b border-gray-200">
+                    <table class="table">
+                        <thead>
                             <tr>
                                 <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">업로드일시</th>
                                 <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">파일명</th>
@@ -89,16 +92,16 @@
                                 <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">삭제</th>
                             </tr>
                         </thead>
-                        <tbody id="upload-log-tbody" class="divide-y divide-gray-100">
+                        <tbody id="upload-log-tbody">
                             {% for log in upload_logs %}
-                                <tr class="hover:bg-gray-50 transition-colors">
+                                <tr class="hover">
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ log.uploaded_at|date:"Y-m-d H:i" }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ log.original_filename }}</td>
                                     <td class="px-6 py-4 text-right text-sm text-gray-700">
                                         {% if log.uploaded_file %}
                                             <a
                                                 href="{% url 'data_management:performance_sales_upload_log_download' performance.id log.id %}"
-                                                class="p-2 text-primary hover:text-white hover:bg-primary rounded-lg transition-colors inline-flex items-center justify-center"
+                                                class="btn btn-ghost btn-sm inline-flex items-center justify-center"
                                                 aria-label="업로드 파일 다운로드"
                                             >
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,7 +115,7 @@
                                     <td class="px-6 py-4 text-right text-sm text-gray-700">
                                         <button
                                             type="button"
-                                            class="p-2 text-danger hover:text-white hover:bg-danger rounded-lg transition-colors"
+                                            class="btn btn-ghost btn-sm text-danger"
                                             data-delete-upload-log
                                             data-delete-url="{% url 'data_management:performance_sales_upload_log_delete' performance.id log.id %}"
                                             aria-label="업로드 로그 삭제"
@@ -128,10 +131,11 @@
                     </table>
                 </div>
                 {% if not upload_logs %}
-                    <div class="rounded-lg border border-gray-100 bg-gray-50 p-6 text-sm text-gray-600">
+                    <div class="alert alert-info text-sm">
                         업로드된 파일이 없어요.
                     </div>
                 {% endif %}
+                </div>
             </div>
         </div>
     {% endif %}

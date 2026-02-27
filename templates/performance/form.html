@@ -22,7 +22,7 @@
     {% endif %}
     
     <!-- 폼 카드 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8">
+    <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
@@ -107,8 +107,8 @@
                                                     // 드롭다운 내부의 모든 버튼에서 활성화 상태 제거
                                                     const buttons = dropdown.querySelectorAll('button');
                                                     buttons.forEach(function(btn) {
-                                                        btn.classList.remove('bg-primary-100', 'text-primary', 'font-medium');
-                                                        btn.classList.add('text-black', 'hover:bg-gray-50');
+                                                        btn.classList.remove('bg-primary-100', 'text-black', 'font-medium');
+                                                        btn.classList.add('text-black', 'hover:bg-base-200');
                                                     });
                                                     
                                                     // 선택된 항목에 활성화 상태 추가
@@ -118,15 +118,14 @@
                                                             // onclick에서 value 추출 (예: "selectDropdownItem('prefix', 'value', 'text', false)")
                                                             const match = btnValue.match(/selectDropdownItem\([^,]+,\s*['"]([^'"]*)['"]/);
                                                             if (match && match[1] === value) {
-                                                                btn.classList.remove('text-black', 'hover:bg-gray-50');
-                                                                btn.classList.add('bg-primary-100', 'text-primary', 'font-medium');
+                                                                btn.classList.remove('text-black', 'hover:bg-base-200');
+                                                                btn.classList.add('bg-primary-100', 'text-black', 'font-medium');
                                                             }
                                                         }
                                                     });
                                                     
                                                     // 드롭다운 닫기
-                                                    dropdown.classList.remove('max-h-96');
-                                                    dropdown.classList.add('max-h-0');
+                                                    dropdown.classList.add('hidden');
                                                     arrow.classList.remove('rotate-180');
                                                 }
                                                 return; // 원래 함수 호출하지 않음
@@ -168,7 +167,7 @@
                                 <button 
                                     type="button" 
                                     onclick="searchPostcode()"
-                                    class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm whitespace-nowrap"
+                                    class="btn btn-primary"
                                 >
                                     주소 찾기
                                 </button>
@@ -581,7 +580,7 @@
                 <h2 class="text-xl font-semibold text-black mb-6">좌석 배치도</h2>
                 {{ form.seat_map }}
                 {% if object and object.seat_map %}
-                    <p class="mt-2 text-sm text-gray-600">현재 파일: <a href="{{ object.seat_map.url }}" target="_blank" class="text-primary hover:underline">{{ object.seat_map.name }}</a></p>
+                    <p class="mt-2 text-sm text-gray-600">현재 파일: <a href="{{ object.seat_map.url }}" target="_blank" class="text-black hover:underline">{{ object.seat_map.name }}</a></p>
                 {% endif %}
                 {% if form.seat_map.errors %}
                     <p class="mt-2 text-sm text-red-600">{{ form.seat_map.errors|first }}</p>
@@ -590,10 +589,10 @@
             
             <!-- 하단 버튼 -->
             <div class="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                <a href="{% url 'performance:list' %}" class="px-6 py-3 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                <a href="{% url 'performance:list' %}" class="btn btn-ghost">
                     취소
                 </a>
-                <button type="submit" onclick="syncApplicableGradesBeforeSubmit()" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 transition-colors shadow-sm">
+                <button type="submit" onclick="syncApplicableGradesBeforeSubmit()" class="btn btn-primary">
                     저장
                 </button>
             </div>
@@ -687,7 +686,7 @@
             button.type = 'button';
             const isSelected = selectedGrades.includes(grade.name);
             button.className = 'w-full text-left px-4 py-2 text-sm transition-colors ' + 
-                (isSelected ? 'bg-primary-50 text-primary font-medium' : 'text-black hover:bg-gray-50');
+                (isSelected ? 'bg-primary-50 text-black font-medium' : 'text-black hover:bg-gray-50');
             button.textContent = grade.name;
             if (isSelected) {
                 const checkmark = document.createElement('span');
@@ -875,7 +874,7 @@
             grades.forEach(grade => {
                 const button = document.createElement('button');
                 button.type = 'button';
-                button.className = `w-full text-left px-4 py-2 text-sm ${currentValue === grade ? 'bg-primary-100 text-primary font-medium' : 'text-black hover:bg-gray-50'} transition-colors`;
+                button.className = `w-full text-left px-4 py-2 text-sm ${currentValue === grade ? 'bg-primary-100 text-black font-medium' : 'text-black hover:bg-gray-50'} transition-colors`;
                 button.textContent = grade;
                 button.onclick = function() {
                     selectDropdownItem(prefix, grade, grade, false);

@@ -17,14 +17,14 @@
     
     <!-- 요약 카드 섹션 -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-        <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+        <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm">
             <h3 class="text-lg font-semibold text-black mb-6">매출 현황</h3>
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700">총 매출</span>
                     <span class="text-sm font-semibold text-black" id="summary-total-revenue-text">-</span>
                 </div>
-                <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div class="relative w-full h-3 bg-base-200 rounded-full overflow-hidden">
                     <div id="revenue-progress-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width: 0%;"></div>
                     <div id="revenue-bep-marker" class="absolute top-[-2px] bottom-[-2px] w-[2px] bg-danger rounded-full hidden" style="left: 0%;"></div>
                 </div>
@@ -45,14 +45,14 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm">
+        <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm">
             <h3 class="text-lg font-semibold text-black mb-6">판매 매수 현황</h3>
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700">총 판매 매수</span>
                     <span class="text-sm font-semibold text-black" id="summary-total-tickets-text">-</span>
                 </div>
-                <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div class="relative w-full h-3 bg-base-200 rounded-full overflow-hidden">
                     <div id="tickets-progress-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width: 0%;"></div>
                 </div>
                 <div class="flex items-center justify-between mt-1 text-xs text-secondary">
@@ -64,7 +64,7 @@
     </div>
 
     <!-- 일간 그래프 섹션 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
+    <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
         <div class="mb-6">
             <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <h2 class="text-xl font-semibold text-black">일간 그래프</h2>
@@ -73,17 +73,17 @@
                     <input
                         type="date"
                         id="filter-start-date"
-                        class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                        class="input input-bordered input-sm"
                     >
                     <label class="text-sm font-medium text-gray-700 whitespace-nowrap">종료일</label>
                     <input
                         type="date"
                         id="filter-end-date"
-                        class="px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                        class="input input-bordered input-sm"
                     >
                     <button
                         id="filter-apply-btn"
-                        class="px-4 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-900 active:bg-primary-800 hover:shadow-sm transition-all duration-200 shadow-sm whitespace-nowrap"
+                        class="btn btn-primary btn-sm"
                     >
                         적용
                     </button>
@@ -100,7 +100,7 @@
     </div>
 
     <!-- 회차별 판매 테이블 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8 shadow-sm mb-12">
+    <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
         <div class="flex items-center gap-2 mb-6">
             <h2 class="text-xl font-semibold text-black">회차별 판매</h2>
             <div class="relative" id="episode-legend-wrap">
@@ -108,6 +108,7 @@
                     <span class="text-sm font-medium leading-none">?</span>
                 </button>
                 <div id="episode-legend-tooltip" class="absolute left-0 top-full mt-2 z-20 hidden w-72 p-4 bg-white border border-gray-200 text-black text-xs rounded-lg shadow-lg">
+                    <p class="font-semibold mb-2 whitespace-nowrap">합계(입금) % 기준</p>
                     <div class="flex flex-col gap-2">
                         <div class="flex items-center gap-2">
                             <span class="inline-block rounded-full shrink-0 border border-gray-300" style="width: 14px; height: 14px; background-color: #dbeafe;"></span>
@@ -126,8 +127,8 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
+            <table class="table">
+                <thead>
                     <tr>
                         <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">Date</th>
                         <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">Time</th>
@@ -139,7 +140,7 @@
                         <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">비고</th>
                     </tr>
                 </thead>
-                <tbody id="musical-episode-tbody" class="divide-y divide-gray-100">
+                <tbody id="musical-episode-tbody">
                 </tbody>
             </table>
         </div>

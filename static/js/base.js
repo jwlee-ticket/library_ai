@@ -6,13 +6,8 @@
 function toggleGenreDropdown() {
     const dropdown = document.getElementById('genre-dropdown');
     const arrow = document.getElementById('genre-arrow');
-    if (dropdown.classList.contains('max-h-0')) {
-        dropdown.classList.remove('max-h-0');
-        dropdown.classList.add('max-h-96');
-    } else {
-        dropdown.classList.remove('max-h-96');
-        dropdown.classList.add('max-h-0');
-    }
+    if (!dropdown || !arrow) return;
+    dropdown.classList.toggle('hidden');
     arrow.classList.toggle('rotate-180');
 }
 
@@ -22,13 +17,8 @@ function toggleGenreDropdown() {
 function toggleDataDropdown() {
     const dropdown = document.getElementById('data-dropdown');
     const arrow = document.getElementById('data-arrow');
-    if (dropdown.classList.contains('max-h-0')) {
-        dropdown.classList.remove('max-h-0');
-        dropdown.classList.add('max-h-96');
-    } else {
-        dropdown.classList.remove('max-h-96');
-        dropdown.classList.add('max-h-0');
-    }
+    if (!dropdown || !arrow) return;
+    dropdown.classList.toggle('hidden');
     arrow.classList.toggle('rotate-180');
 }
 
@@ -37,13 +27,8 @@ function toggleDataDropdown() {
  */
 function toggleUserDropdown() {
     const dropdown = document.getElementById('user-dropdown');
-    if (dropdown.classList.contains('max-h-0')) {
-        dropdown.classList.remove('max-h-0');
-        dropdown.classList.add('max-h-96');
-    } else {
-        dropdown.classList.remove('max-h-96');
-        dropdown.classList.add('max-h-0');
-    }
+    if (!dropdown) return;
+    dropdown.classList.toggle('hidden');
 }
 
 // 외부 클릭 시 사용자 드롭다운 닫기
@@ -51,9 +36,8 @@ document.addEventListener('click', function(event) {
     const userButton = document.querySelector('button[onclick="toggleUserDropdown()"]');
     const userDropdown = document.getElementById('user-dropdown');
     if (userButton && userDropdown && !userButton.contains(event.target) && !userDropdown.contains(event.target)) {
-        if (!userDropdown.classList.contains('max-h-0')) {
-            userDropdown.classList.remove('max-h-96');
-            userDropdown.classList.add('max-h-0');
+        if (!userDropdown.classList.contains('hidden')) {
+            userDropdown.classList.add('hidden');
         }
     }
 });

@@ -16,10 +16,10 @@
     
     <!-- 공연 리스트 테이블 -->
     {% if performances %}
-        <div class="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8 shadow-sm">
+        <div class="card bg-base-100 border border-base-200 shadow-sm mb-8">
             <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
+                <table class="table">
+                    <thead>
                         <tr>
                             <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">장르</th>
                             <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">공연명</th>
@@ -27,10 +27,10 @@
                             <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">공연 기간</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody>
                         {% for performance in performances %}
                             <tr 
-                                class="hover:bg-gray-50 transition-colors cursor-pointer"
+                                class="hover cursor-pointer"
                                 onclick="window.location.href='{% url 'dashboard:detail' performance.pk %}'"
                             >
                                 <td class="px-6 py-4">
@@ -57,9 +57,11 @@
         <!-- 페이지네이션 -->
         {% include 'components/pagination.html' with page_obj=page_obj %}
     {% else %}
-        <div class="bg-white rounded-xl border border-gray-100 p-12 text-center shadow-sm">
+        <div class="card bg-base-100 border border-base-200 shadow-sm">
+            <div class="card-body p-12 text-center">
             <p class="text-gray-600 text-lg">등록된 공연이 없어요</p>
             <p class="text-sm text-gray-500 mt-2">공연을 먼저 등록해 주세요.</p>
+            </div>
         </div>
     {% endif %}
 {% endblock %}

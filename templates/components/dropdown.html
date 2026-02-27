@@ -25,15 +25,15 @@
     <button 
         type="button"
         onclick="toggleDropdown('{{ prefix }}')"
-        class="w-full flex items-center px-4 py-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
+        class="btn btn-outline w-full justify-start"
     >
         <svg id="{{ prefix }}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
         </svg>
         <span id="{{ prefix }}-text" class="flex-1 text-left">{{ selected_text }}</span>
     </button>
-    <div id="{{ prefix }}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-10 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-        <div class="py-1">
+    <div id="{{ prefix }}-dropdown" class="menu absolute top-full left-0 right-0 mt-1 bg-base-100 rounded-box shadow z-10 hidden">
+        <div class="p-1">
             {% if items_block %}
                 {{ items_block|safe }}
             {% elif items %}
@@ -41,7 +41,7 @@
                     <button 
                         type="button"
                         onclick="selectDropdownItem('{{ prefix }}', '{{ value }}', '{{ text }}', {{ auto_submit|yesno:"true,false" }})"
-                        class="w-full text-left px-4 py-2 text-sm {% if selected_value == value %}bg-primary-100 text-primary font-medium{% else %}text-black hover:bg-gray-50{% endif %} transition-colors"
+                        class="w-full text-left px-4 py-2 text-sm rounded-md {% if selected_value == value %}bg-primary-100 text-black font-medium{% else %}text-black hover:bg-base-200{% endif %} transition-colors"
                     >
                         {{ text }}
                     </button>

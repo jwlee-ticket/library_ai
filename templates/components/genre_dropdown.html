@@ -35,7 +35,7 @@
             <button 
                 type="button"
                 onclick="toggleDropdown('{{ prefix }}')"
-                class="w-full flex items-center px-4 py-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-200 transition-colors"
+                class="btn btn-outline w-full justify-start"
             >
                 <svg id="{{ prefix }}-arrow" class="w-4 h-4 transition-transform duration-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -50,13 +50,13 @@
                     {% endif %}
                 </span>
             </button>
-            <div id="{{ prefix }}-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                <div class="py-1">
+            <div id="{{ prefix }}-dropdown" class="menu absolute top-full left-0 right-0 mt-1 bg-base-100 rounded-box shadow z-50 hidden">
+                <div class="p-1">
                     {% if show_default %}
                         <button 
                             type="button"
                             onclick="selectDropdownItem('{{ prefix }}', '', '{{ default_text }}', {{ auto_submit|yesno:"true,false" }})"
-                            class="w-full text-left px-4 py-2 text-sm {% if not genre_filter %}bg-primary-100 text-primary font-medium{% else %}text-black hover:bg-gray-50{% endif %} transition-colors"
+                            class="w-full text-left px-4 py-2 text-sm rounded-md {% if not genre_filter %}bg-primary-100 text-black font-medium{% else %}text-black hover:bg-base-200{% endif %} transition-colors"
                         >
                             {{ default_text }}
                         </button>
@@ -65,7 +65,7 @@
                         <button 
                             type="button"
                             onclick="selectDropdownItem('{{ prefix }}', '{{ code }}', '{{ name }}', {{ auto_submit|yesno:"true,false" }})"
-                            class="w-full text-left px-4 py-2 text-sm {% if genre_filter == code %}bg-primary-100 text-primary font-medium{% else %}text-black hover:bg-gray-50{% endif %} transition-colors"
+                            class="w-full text-left px-4 py-2 text-sm rounded-md {% if genre_filter == code %}bg-primary-100 text-black font-medium{% else %}text-black hover:bg-base-200{% endif %} transition-colors"
                         >
                             {{ name }}
                         </button>
@@ -84,15 +84,8 @@
             const arrow = document.getElementById(prefix + '-arrow');
             
             if (dropdown && arrow) {
-                if (dropdown.classList.contains('max-h-0')) {
-                    dropdown.classList.remove('max-h-0');
-                    dropdown.classList.add('max-h-96');
-                    arrow.classList.add('rotate-180');
-                } else {
-                    dropdown.classList.remove('max-h-96');
-                    dropdown.classList.add('max-h-0');
-                    arrow.classList.remove('rotate-180');
-                }
+                dropdown.classList.toggle('hidden');
+                arrow.classList.toggle('rotate-180');
             }
         };
     }
@@ -112,8 +105,8 @@
             // 드롭다운 내부의 모든 버튼에서 활성화 상태 제거
             const buttons = dropdown.querySelectorAll('button');
             buttons.forEach(function(btn) {
-                btn.classList.remove('bg-primary-100', 'text-primary', 'font-medium');
-                btn.classList.add('text-black', 'hover:bg-gray-50');
+                btn.classList.remove('bg-primary-100', 'text-black', 'font-medium');
+                btn.classList.add('text-black', 'hover:bg-base-200');
             });
             
             // 선택된 항목에 활성화 상태 추가
@@ -123,15 +116,14 @@
                     // onclick에서 value 추출 (예: "selectDropdownItem('prefix', 'value', 'text', false)")
                     const match = btnValue.match(/selectDropdownItem\([^,]+,\s*['"]([^'"]*)['"]/);
                     if (match && match[1] === value) {
-                        btn.classList.remove('text-black', 'hover:bg-gray-50');
-                        btn.classList.add('bg-primary-100', 'text-primary', 'font-medium');
+                        btn.classList.remove('text-black', 'hover:bg-base-200');
+                        btn.classList.add('bg-primary-100', 'text-black', 'font-medium');
                     }
                 }
             });
             
             // 드롭다운 닫기
-            dropdown.classList.remove('max-h-96');
-            dropdown.classList.add('max-h-0');
+            dropdown.classList.add('hidden');
             arrow.classList.remove('rotate-180');
             
             // 폼 자동 제출
@@ -154,9 +146,8 @@
                 if (parentContainer && !parentContainer.contains(event.target)) {
                     const dropdown = document.getElementById(prefix + '-dropdown');
                     const arrow = document.getElementById(prefix + '-arrow');
-                    if (dropdown && arrow && !dropdown.classList.contains('max-h-0')) {
-                        dropdown.classList.remove('max-h-96');
-                        dropdown.classList.add('max-h-0');
+                    if (dropdown && arrow && !dropdown.classList.contains('hidden')) {
+                        dropdown.classList.add('hidden');
                         arrow.classList.remove('rotate-180');
                     }
                 }

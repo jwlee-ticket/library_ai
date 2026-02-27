@@ -11,19 +11,19 @@
 
 <div class="flex gap-3">
     {% if show_edit != False %}
-        <a href="{% url 'performance:update' object.pk %}" class="px-4 py-2 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+        <a href="{% url 'performance:update' object.pk %}" class="btn btn-outline">
             수정
         </a>
     {% endif %}
     
     {% if show_delete != False %}
-        <a href="{% url 'performance:delete' object.pk %}" class="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 active:bg-red-700 transition-colors shadow-sm">
+        <a href="{% url 'performance:delete' object.pk %}" class="btn btn-error">
             삭제
         </a>
     {% endif %}
     
     {% if show_back != False %}
-        <a href="{% url 'performance:list' %}" class="px-4 py-2 bg-white text-black border-2 border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+        <a href="{% url 'performance:list' %}" class="btn btn-ghost">
             목록으로
         </a>
     {% endif %}
