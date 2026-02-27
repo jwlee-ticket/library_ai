@@ -85,6 +85,254 @@ class MusicalOverviewDashboardView(TemplateView):
     template_name = 'dashboard/musical/overview.html'
 
 
+class OverviewDashboardView(TemplateView):
+    """전체 대시보드 뷰 (콘서트·뮤지컬·연극 통합, 연극은 레이아웃만)"""
+    template_name = 'dashboard/overview.html'
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_overall_aggregated_summary_data(request):
+    """전체 대시보드 요약 API (콘서트 + 뮤지컬 합산, 연극은 0·레이아웃용)"""
+    try:
+        today = datetime.now().date()
+        ignore_booking_sites = ['미', '미지정', '합계', 'TOTAL', '계', '전체', '총계', '유료 계', '초대']
+        concert_date_min = None
+        concert_date_max = None
+        musical_date_min = None
+        musical_date_max = None
+
+        # 콘서트
+        concerts = Performance.objects.filter(genre='concert')
+        concert_revenue = 0
+        concert_tickets = 0
+        concert_today_revenue = 0
+        concert_today_tickets = 0
+        concert_target = 0
+        concert_bep = 0
+        if concerts.exists():
+            all_daily = PerformanceDailySales.objects.filter(
+                performance__genre='concert'
+            ).exclude(booking_site__name__in=ignore_booking_sites)
+            rev = all_daily.aggregate(paid=Sum('paid_revenue'), unpaid=Sum('unpaid_revenue'))
+            tkt = all_daily.aggregate(paid=Sum('paid_ticket_count'), unpaid=Sum('unpaid_ticket_count'))
+            concert_revenue = float(rev['paid'] or 0) + float(rev['unpaid'] or 0)
+            concert_tickets = int(tkt['paid'] or 0) + int(tkt['unpaid'] or 0)
+            today_sales = all_daily.filter(date=today)
+            today_rev = today_sales.aggregate(paid=Sum('paid_revenue'), unpaid=Sum('unpaid_revenue'))
+            today_tkt = today_sales.aggregate(paid=Sum('paid_ticket_count'), unpaid=Sum('unpaid_ticket_count'))
+            concert_today_revenue = float(today_rev['paid'] or 0) + float(today_rev['unpaid'] or 0)
+            concert_today_tickets = int(today_tkt['paid'] or 0) + int(today_tkt['unpaid'] or 0)
+            for c in concerts:
+                if c.target_revenue:
+                    concert_target += float(c.target_revenue)
+                if c.break_even_point:
+                    concert_bep += float(c.break_even_point)
+            dr = all_daily.aggregate(mn=Min('date'), mx=Max('date'))
+            if dr.get('mn') and dr.get('mx'):
+                concert_date_min = dr['mn']
+                concert_date_max = dr['mx']
+        concert_count = concerts.count()
+
+        # 뮤지컬 (공연명별 대표 1건, 최신 업로드, 입금만)
+        musicals = Performance.objects.filter(genre='musical').order_by('id')
+        seen_titles = set()
+        representative_musicals = [p for p in musicals if p.title not in seen_titles and not seen_titles.add(p.title)]
+        musical_revenue = 0
+        musical_tickets = 0
+        musical_target = 0
+        musical_bep = 0
+        for perf in representative_musicals:
+            if perf.target_revenue:
+                musical_target += float(perf.target_revenue)
+            if perf.break_even_point:
+                musical_bep += float(perf.break_even_point)
+            latest_log = (
+                PerformanceSalesUploadLog.objects
+                .filter(performance=perf)
+                .order_by('-uploaded_at', '-id')
+                .first()
+            )
+            if latest_log:
+                qs = MusicalEpisodeSales.objects.filter(performance=perf, upload_log=latest_log)
+                rev = qs.aggregate(total=Sum('paid_revenue'))
+                tkt = qs.aggregate(total=Sum('paid_ticket_count'))
+                musical_revenue += float(rev['total'] or 0)
+                musical_tickets += int(tkt['total'] or 0)
+                dr = qs.aggregate(mn=Min('show_date'), mx=Max('show_date'))
+                if dr.get('mn') and dr.get('mx'):
+                    musical_date_min = min(musical_date_min, dr['mn']) if musical_date_min else dr['mn']
+                    musical_date_max = max(musical_date_max, dr['mx']) if musical_date_max else dr['mx']
+        musical_today_rev = MusicalEpisodeSales.objects.filter(
+            performance__genre='musical',
+            show_date=today,
+        ).aggregate(total=Sum('paid_revenue'))
+        musical_today_tkt = MusicalEpisodeSales.objects.filter(
+            performance__genre='musical',
+            show_date=today,
+        ).aggregate(total=Sum('paid_ticket_count'))
+        musical_today_revenue = float(musical_today_rev['total'] or 0)
+        musical_today_tickets = int(musical_today_tkt['total'] or 0)
+        musical_count = len(representative_musicals)
+
+        # 연극 (구현 전, 0)
+        theater_count = Performance.objects.filter(genre='theater').count()
+        theater_revenue = 0
+        theater_tickets = 0
+        theater_today_revenue = 0
+        theater_today_tickets = 0
+
+        total_revenue = concert_revenue + musical_revenue + theater_revenue
+        total_ticket_count = concert_tickets + musical_tickets + theater_tickets
+        today_revenue = concert_today_revenue + musical_today_revenue + theater_today_revenue
+        today_ticket_count = concert_today_tickets + musical_today_tickets + theater_today_tickets
+        total_target_revenue = concert_target + musical_target
+        total_break_even_point = concert_bep + musical_bep
+        data_start_date = None
+        data_end_date = None
+        if concert_date_min is not None:
+            data_start_date = concert_date_min if data_start_date is None else min(data_start_date, concert_date_min)
+            data_end_date = concert_date_max if data_end_date is None else max(data_end_date, concert_date_max)
+        if musical_date_min is not None:
+            data_start_date = musical_date_min if data_start_date is None else min(data_start_date, musical_date_min)
+            data_end_date = musical_date_max if data_end_date is None else max(data_end_date, musical_date_max)
+
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'total_revenue': total_revenue,
+                'total_ticket_count': total_ticket_count,
+                'today_revenue': today_revenue,
+                'today_ticket_count': today_ticket_count,
+                'total_target_revenue': total_target_revenue,
+                'total_break_even_point': total_break_even_point,
+                'data_start_date': data_start_date.isoformat() if data_start_date else None,
+                'data_end_date': data_end_date.isoformat() if data_end_date else None,
+                'genres': {
+                    'concert': {
+                        'total_revenue': concert_revenue,
+                        'total_ticket_count': concert_tickets,
+                        'today_revenue': concert_today_revenue,
+                        'today_ticket_count': concert_today_tickets,
+                        'performance_count': concert_count,
+                    },
+                    'musical': {
+                        'total_revenue': musical_revenue,
+                        'total_ticket_count': musical_tickets,
+                        'today_revenue': musical_today_revenue,
+                        'today_ticket_count': musical_today_tickets,
+                        'performance_count': musical_count,
+                    },
+                    'theater': {
+                        'total_revenue': theater_revenue,
+                        'total_ticket_count': theater_tickets,
+                        'today_revenue': theater_today_revenue,
+                        'today_ticket_count': theater_today_tickets,
+                        'performance_count': theater_count,
+                    },
+                },
+            },
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_overall_period_revenue_data(request):
+    """전체 대시보드 기간별 매출 API (콘서트+뮤지컬 합계, 일/주/월)"""
+    try:
+        period_type = request.GET.get('period_type', 'daily')
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        today = datetime.now().date()
+        if not start_date_str or not end_date_str:
+            if period_type == 'daily':
+                end_date = today
+                start_date = end_date - timedelta(days=29)
+            elif period_type == 'weekly':
+                end_date = today
+                start_date = end_date - timedelta(weeks=3, days=end_date.weekday())
+            else:
+                end_date = today
+                if today.month >= 3:
+                    start_date = today.replace(month=today.month - 2, day=1)
+                else:
+                    start_date = today.replace(year=today.year - 1, month=12 + today.month - 2, day=1)
+        else:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'success': False, 'error': '올바른 날짜 형식이 아니에요'}, status=400)
+
+        ignore_booking_sites = ['미', '미지정', '합계', 'TOTAL', '계', '전체', '총계', '유료 계', '초대']
+
+        # 콘서트 기간별 합계
+        concert_by_period = defaultdict(float)
+        daily_sales = PerformanceDailySales.objects.filter(
+            performance__genre='concert',
+            date__gte=start_date,
+            date__lte=end_date,
+        ).exclude(booking_site__name__in=ignore_booking_sites)
+        for sale in daily_sales:
+            d = sale.date
+            rev = float(sale.paid_revenue or 0) + float(sale.unpaid_revenue or 0)
+            if period_type == 'daily':
+                key = d.strftime('%Y-%m-%d')
+            elif period_type == 'weekly':
+                key = (d - timedelta(days=d.weekday())).strftime('%Y-%m-%d')
+            else:
+                key = d.strftime('%Y-%m')
+            concert_by_period[key] += rev
+
+        # 뮤지컬 기간별 합계 (최신 업로드, 입금만)
+        musical_by_period = defaultdict(float)
+        musicals = Performance.objects.filter(genre='musical').order_by('id')
+        seen_titles = set()
+        representative_musicals = [p for p in musicals if p.title not in seen_titles and not seen_titles.add(p.title)]
+        latest_log_subq = (
+            PerformanceSalesUploadLog.objects
+            .filter(performance=OuterRef('performance'))
+            .order_by('-uploaded_at', '-id')
+        )
+        episodes = MusicalEpisodeSales.objects.filter(
+            performance__genre='musical',
+            show_date__gte=start_date,
+            show_date__lte=end_date,
+            upload_log=Subquery(latest_log_subq.values('id')[:1]),
+        )
+        for ep in episodes:
+            d = ep.show_date
+            rev = float(ep.paid_revenue or 0)
+            if period_type == 'daily':
+                key = d.strftime('%Y-%m-%d')
+            elif period_type == 'weekly':
+                key = (d - timedelta(days=d.weekday())).strftime('%Y-%m-%d')
+            else:
+                key = d.strftime('%Y-%m')
+            musical_by_period[key] += rev
+
+        all_periods = sorted(set(concert_by_period.keys()) | set(musical_by_period.keys()))
+        period_totals = {k: concert_by_period[k] + musical_by_period[k] for k in all_periods}
+
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'periods': all_periods,
+                'data': period_totals,
+            },
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+        }, status=500)
+
+
 @login_required
 @require_http_methods(["GET"])
 def get_concert_aggregated_summary_data(request):
