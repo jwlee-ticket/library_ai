@@ -610,7 +610,7 @@ def get_musical_dashboard_data(request, pk):
             end_date = performance.performance_end
         else:
             end_date = today
-        start_date = end_date - timedelta(days=6)
+        start_date = end_date - timedelta(days=11)
     else:
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()

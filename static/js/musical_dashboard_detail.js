@@ -2,10 +2,10 @@ let performanceId = null;
 let dataUrl = null;
 let currentData = null;
 let chartData = null;
-let revenueChart = null;
-let ticketChart = null;
+let dailyChart = null;
 const chartYAxisWidth = 84;
 const NOL_TICKET_COLOR = '#4154FF';
+const TICKET_LINE_COLOR = '#16a34a';  /* success - 판매 매수 라인 */
 
 function parseJsonSafely(jsonString) {
     if (!jsonString || jsonString.trim() === '') return null;
@@ -136,50 +136,63 @@ function getSeries(dataMap, dates) {
     });
 }
 
-function renderRevenueChart() {
+function renderDailyChart() {
     if (!chartData) return;
     const dates = chartData.dates || [];
     const labels = dates.map(formatDate);
-    const values = getSeries(chartData.daily_revenue || {}, dates);
+    const revenueValues = getSeries(chartData.daily_revenue || {}, dates);
+    const ticketValues = getSeries(chartData.daily_tickets || {}, dates);
 
-    const canvas = document.getElementById('revenue-chart');
+    const canvas = document.getElementById('daily-chart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    if (revenueChart) revenueChart.destroy();
-    revenueChart = new Chart(ctx, {
+    const revenueMax = Math.max(1, ...revenueValues);
+    const ticketMax = Math.max(1, ...ticketValues);
+
+    if (dailyChart) dailyChart.destroy();
+    dailyChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels,
-            datasets: [{
-                label: '매출',
-                data: values,
-                backgroundColor: NOL_TICKET_COLOR,
-                borderRadius: 4,
-            }]
+            datasets: [
+                {
+                    label: '매출',
+                    data: revenueValues,
+                    backgroundColor: NOL_TICKET_COLOR,
+                    borderRadius: 4,
+                    yAxisID: 'y',
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
             plugins: {
                 legend: {
-                    display: true,
-                    position: 'top',
+                    display: false,
                 },
                 tooltip: {
                     callbacks: {
+                        title: (items) => items[0] ? labels[items[0].dataIndex] : '',
                         label: (context) => {
-                            const label = context.dataset.label || '';
-                            const value = context.parsed.y;
-                            return `${label}: ${formatNumber(Math.round(value))}원`;
+                            const i = context.dataIndex;
+                            return `매출: ${formatNumber(Math.round(revenueValues[i]))}원  |  판매 매수: ${formatNumber(ticketValues[i])}매`;
                         },
                     },
                 },
             },
             scales: {
                 y: {
+                    type: 'linear',
+                    position: 'left',
                     beginAtZero: true,
+                    suggestedMax: revenueMax,
                     afterFit: (scale) => { scale.width = chartYAxisWidth; },
                     ticks: {
                         callback: (value) => formatNumber(Math.round(value)),
@@ -187,67 +200,26 @@ function renderRevenueChart() {
                     grid: {
                         display: false,
                     },
-                },
-                x: {
-                    grid: {
-                        display: false,
+                    title: {
+                        display: true,
+                        text: '매출 (원)',
                     },
                 },
-            },
-        },
-    });
-}
-
-function renderTicketChart() {
-    if (!chartData) return;
-    const dates = chartData.dates || [];
-    const labels = dates.map(formatDate);
-    const values = getSeries(chartData.daily_tickets || {}, dates);
-
-    const canvas = document.getElementById('ticket-chart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if (ticketChart) ticketChart.destroy();
-    ticketChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: '판매 매수',
-                data: values,
-                backgroundColor: NOL_TICKET_COLOR,
-                borderRadius: 4,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => {
-                            const label = context.dataset.label || '';
-                            const value = context.parsed.y;
-                            return `${label}: ${formatNumber(value)}매`;
-                        },
-                    },
-                },
-            },
-            scales: {
-                y: {
+                y1: {
+                    type: 'linear',
+                    position: 'right',
                     beginAtZero: true,
+                    suggestedMax: ticketMax,
                     afterFit: (scale) => { scale.width = chartYAxisWidth; },
                     ticks: {
                         callback: (value) => formatNumber(Math.round(value)),
                     },
                     grid: {
-                        display: false,
+                        drawOnChartArea: false,
+                    },
+                    title: {
+                        display: true,
+                        text: '판매 매수',
                     },
                 },
                 x: {
@@ -261,8 +233,7 @@ function renderTicketChart() {
 }
 
 function renderCharts() {
-    renderRevenueChart();
-    renderTicketChart();
+    renderDailyChart();
 }
 
 function renderEpisodeTable() {

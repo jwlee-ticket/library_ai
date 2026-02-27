@@ -13,6 +13,8 @@ django-tailwind==4.4.1
 # Data Processing
 pandas==2.3.3
 openpyxl==3.1.5
+msoffcrypto-tool  # 비밀번호 걸린 엑셀 업로드 시 필요
+pyxlsb  # .xlsb (엑셀 바이너리) 파일 업로드 시 필요
 
 # Image Processing
 Pillow==11.0.0
