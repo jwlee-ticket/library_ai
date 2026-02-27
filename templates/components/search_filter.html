@@ -7,7 +7,7 @@
 
 <div class="card bg-white border border-gray-200 rounded-xl shadow-sm mb-10">
     <div class="card-body p-6">
-    <form method="get" class="flex flex-col lg:flex-row lg:flex-nowrap lg:items-end gap-4 lg:gap-5">
+    <form method="get" action="{{ request.path }}" class="flex flex-col lg:flex-row lg:flex-nowrap lg:items-end gap-4 lg:gap-5">
         <!-- 검색 입력 -->
         <div class="flex-1">
             <input
@@ -21,7 +21,7 @@
         </div>
         
         <!-- 장르 필터 -->
-        {% include 'components/genre_dropdown.html' with genre_filter=genre_filter genre_choices=genre_choices prefix="genre-filter" auto_submit=True width_class="w-full lg:w-52" %}
+        {% include 'components/genre_dropdown.html' with genre_filter=genre_filter genre_choices=genre_choices prefix="genre-filter" auto_submit=True width_class="w-full lg:w-52" name="genre" %}
         
         <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:ml-auto">
             <button 

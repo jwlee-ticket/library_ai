@@ -12,7 +12,7 @@
 - width_class: 너비 클래스 (기본값: 'md:w-48')
 {% endcomment %}
 
-{% with prefix=prefix|default:"genre" auto_submit=auto_submit|default:True width_class=width_class|default:"md:w-48" default_text=default_text|default:"전체 장르" show_default=show_default|default:True %}
+{% with prefix=prefix|default:"genre" auto_submit=auto_submit|default:True width_class=width_class|default:"md:w-48" default_text=default_text|default:"전체 장르" show_default=show_default|default:True input_name=name|default:"genre" %}
     {% comment %}선택된 텍스트 찾기{% endcomment %}
     {% with selected_text="" %}
         {% if genre_filter %}
@@ -31,7 +31,7 @@
         {% endfor %}
         
         <div class="{{ width_class }} relative">
-            <input type="hidden"{% if name %} name="{{ name }}"{% endif %} id="{{ prefix }}-input" value="{{ genre_filter|default:'' }}">
+            <input type="hidden" name="{{ input_name }}" id="{{ prefix }}-input" value="{{ genre_filter|default:'' }}">
             <button 
                 type="button"
                 onclick="toggleDropdown('{{ prefix }}')"
