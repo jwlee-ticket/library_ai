@@ -85,6 +85,11 @@ class MusicalOverviewDashboardView(TemplateView):
     template_name = 'dashboard/musical/overview.html'
 
 
+class TheaterOverviewDashboardView(TemplateView):
+    """연극 통합 대시보드 뷰"""
+    template_name = 'dashboard/theater/overview.html'
+
+
 class OverviewDashboardView(TemplateView):
     """전체 대시보드 뷰 (콘서트·뮤지컬·연극 통합, 연극은 레이아웃만)"""
     template_name = 'dashboard/main.html'
@@ -215,6 +220,8 @@ def get_overall_aggregated_summary_data(request):
                         'today_revenue': concert_today_revenue,
                         'today_ticket_count': concert_today_tickets,
                         'performance_count': concert_count,
+                        'target_revenue': concert_target,
+                        'break_even_point': concert_bep,
                     },
                     'musical': {
                         'total_revenue': musical_revenue,
@@ -222,6 +229,8 @@ def get_overall_aggregated_summary_data(request):
                         'today_revenue': musical_today_revenue,
                         'today_ticket_count': musical_today_tickets,
                         'performance_count': musical_count,
+                        'target_revenue': musical_target,
+                        'break_even_point': musical_bep,
                     },
                     'theater': {
                         'total_revenue': theater_revenue,
@@ -229,6 +238,8 @@ def get_overall_aggregated_summary_data(request):
                         'today_revenue': theater_today_revenue,
                         'today_ticket_count': theater_today_tickets,
                         'performance_count': theater_count,
+                        'target_revenue': 0,
+                        'break_even_point': 0,
                     },
                 },
             },
@@ -767,7 +778,7 @@ def get_concert_dashboard_data(request, pk):
             end_date = performance.performance_end
         else:
             end_date = today
-        start_date = end_date - timedelta(days=6)
+        start_date = end_date - timedelta(days=13)
 
         has_sales_in_range = PerformanceDailySales.objects.filter(
             performance=performance,
@@ -785,7 +796,7 @@ def get_concert_dashboard_data(request, pk):
             ).aggregate(max_date=Max('date'))['max_date']
             if latest_sale_date:
                 end_date = latest_sale_date
-                start_date = end_date - timedelta(days=6)
+                start_date = end_date - timedelta(days=13)
     else:
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
@@ -1065,7 +1076,7 @@ def get_musical_dashboard_data(request, pk):
             end_date = performance.performance_end
         else:
             end_date = today
-        start_date = end_date - timedelta(days=11)
+        start_date = end_date - timedelta(days=13)
     else:
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()

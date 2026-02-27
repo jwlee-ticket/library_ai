@@ -6,6 +6,9 @@
 {% endcomment %}
 
 {% if page_obj.has_other_pages %}
+    <p class="text-center text-xs text-gray-500 mb-3">
+        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 페이지
+    </p>
     <div class="join flex justify-center mt-10">
         <!-- 이전 페이지 -->
         {% if page_obj.has_previous %}

@@ -82,6 +82,22 @@ function updateGoalSection(data) {
     }
 }
 
+function updateGenreGoal(genre, data) {
+    const revenue = data.total_revenue ?? 0;
+    const target = data.target_revenue ?? 0;
+    const barEl = document.getElementById('genre-' + genre + '-goal-bar');
+    const rateEl = document.getElementById('genre-' + genre + '-goal-rate');
+    if (!barEl || !rateEl) return;
+    if (target > 0) {
+        const rate = Math.min(100, (revenue / target) * 100);
+        barEl.style.width = rate + '%';
+        rateEl.textContent = rate.toFixed(1) + '%';
+    } else {
+        barEl.style.width = '0%';
+        rateEl.textContent = '목표 미설정';
+    }
+}
+
 function renderGenreChart(genres) {
     const canvas = document.getElementById('overview-genre-chart');
     const legendEl = document.getElementById('overview-genre-legend');
@@ -338,6 +354,9 @@ function updateOverview(data) {
 
     const elTc = document.getElementById('genre-theater-count');
     if (elTc) elTc.textContent = (theater.performance_count ?? 0) + '건';
+
+    updateGenreGoal('concert', concert);
+    updateGenreGoal('musical', musical);
 
     renderGenreChart(g);
 

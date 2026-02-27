@@ -9,32 +9,36 @@
 {% endblock %}
 
 {% block content %}
-    <!-- 페이지 제목 -->
-    <div class="mb-8">
+    <div class="mb-14">
         <h1 class="text-3xl font-semibold text-black">{{ performance.title }}</h1>
     </div>
-    
-    <!-- KPI 카드 영역 -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
-            <p class="text-sm text-gray-600">총 매출</p>
-            <p class="text-3xl font-bold text-black mt-2" id="summary-total-revenue">-</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="card-body p-6">
+                <p class="text-sm text-gray-600">총 매출</p>
+                <p class="text-3xl font-bold text-black mt-2" id="summary-total-revenue">-</p>
+            </div>
         </div>
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
-            <p class="text-sm text-gray-600">총 판매 매수</p>
-            <p class="text-3xl font-bold text-black mt-2" id="summary-total-tickets">-</p>
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="card-body p-6">
+                <p class="text-sm text-gray-600">총 판매 매수</p>
+                <p class="text-3xl font-bold text-black mt-2" id="summary-total-tickets">-</p>
+            </div>
         </div>
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
-            <p class="text-sm text-gray-600">기간</p>
-            <p class="text-lg font-semibold text-black mt-2">
-                {{ performance.performance_start|date:"Y.m.d" }} ~ {{ performance.performance_end|date:"Y.m.d" }}
-            </p>
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="card-body p-6">
+                <p class="text-sm text-gray-600">기간</p>
+                <p class="text-lg font-semibold text-black mt-2">
+                    {{ performance.performance_start|date:"Y.m.d" }} ~ {{ performance.performance_end|date:"Y.m.d" }}
+                </p>
+            </div>
         </div>
     </div>
-    
-    <!-- 차트 섹션 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="card-body p-6">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold text-black">매출 추이</h2>
                 <span class="text-xs text-gray-600">일별</span>
@@ -42,8 +46,10 @@
             <div class="relative h-56 rounded-lg bg-gray-50 border border-gray-100">
                 <canvas id="revenue-chart"></canvas>
             </div>
+            </div>
         </div>
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="card-body p-6">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold text-black">판매 매수 추이</h2>
                 <span class="text-xs text-gray-600">일별</span>
@@ -51,25 +57,26 @@
             <div class="relative h-56 rounded-lg bg-gray-50 border border-gray-100">
                 <canvas id="ticket-chart"></canvas>
             </div>
+            </div>
         </div>
     </div>
-    
-    <!-- 세부 섹션 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="card-body p-6">
             <h2 class="text-xl font-semibold text-black mb-4">등급별 판매 현황</h2>
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div class="lg:col-span-3 overflow-x-auto">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">등급</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수(유료)</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수(무료)</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">금액</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">유료 점유율</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">객석 점유율</th>
-                                <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">총 판매 좌석</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">등급</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매수(유료)</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매수(무료)</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">금액</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">유료 점유율</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">객석 점유율</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">총 판매 좌석</th>
                             </tr>
                         </thead>
                         <tbody id="grade-sales-tbody"></tbody>
@@ -81,20 +88,23 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="card-body p-6">
             <h2 class="text-xl font-semibold text-black mb-4">예매처별 비중</h2>
             <div class="overflow-x-auto">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">예매처</th>
-                            <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매출</th>
-                            <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">예매처</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매출</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매수</th>
                         </tr>
                     </thead>
                     <tbody id="booking-site-tbody"></tbody>
                 </table>
+            </div>
             </div>
         </div>
     </div>

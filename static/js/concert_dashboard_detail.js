@@ -4,8 +4,7 @@
 // 전역 변수
 let performanceId = null;
 let dataUrl = null;
-let revenueChart = null;
-let ticketChart = null;
+let dailyChart = null;
 let ageGenderChart = null;
 let salesChannelChart = null;
 let regionChart = null;
@@ -335,14 +334,14 @@ function updateBookingSiteFilters() {
     
     currentData.booking_sites.forEach((site, index) => {
         const label = document.createElement('label');
-        label.className = 'flex items-center gap-2 cursor-pointer';
+        label.className = 'flex items-center gap-2 cursor-pointer hover:text-primary transition-colors duration-200';
         
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = `filter-site-${index}`;
         checkbox.dataset.site = site;
         checkbox.checked = true;
-        checkbox.className = 'w-4 h-4 text-black border-gray-300 rounded focus:ring-primary-200 focus:ring-2';
+        checkbox.className = 'checkbox checkbox-primary checkbox-sm';
         
         const span = document.createElement('span');
         span.className = 'text-sm text-black';
@@ -359,9 +358,8 @@ function updateBookingSiteFilters() {
  */
 function renderCharts() {
     if (!chartData) return;
-    
-    renderRevenueChart();
-    renderTicketChart();
+
+    renderDailyChart();
 }
 
 /**
@@ -467,176 +465,131 @@ function renderAgeGenderChart() {
 /**
  * 매출 차트 렌더링
  */
-function renderRevenueChart() {
-    const ctx = document.getElementById('revenue-chart');
+function renderDailyChart() {
+    const ctx = document.getElementById('daily-chart');
     if (!ctx) return;
-    
-    // 기존 차트 제거
-    if (revenueChart) {
-        revenueChart.destroy();
+
+    if (dailyChart) {
+        dailyChart.destroy();
     }
-    
+
     const data = chartData || currentData;
     if (!data) return;
     const dates = data.dates;
-    const bookingSites = data.booking_sites;
     const dailyRevenue = data.daily_revenue;
-    
-    // 선택된 예매처와 입금 상태 확인
+    const dailyTickets = data.daily_tickets;
     const selectedSites = getSelectedBookingSites();
     const paidCheckbox = document.getElementById('filter-paid');
     const showPaid = paidCheckbox ? paidCheckbox.checked : true;
-    
-    // 데이터셋 생성 (예매처별로 그룹화)
-    const datasets = [];
-    
-    selectedSites.forEach((site, siteIndex) => {
-        const siteColor = getBookingSiteColor(site, siteIndex);
-        
-        // 입금 데이터셋 (막대 차트)
-        if (showPaid) {
-            datasets.push({
-                type: 'bar',
-                label: `${site} (입금)`,
-                data: dates.map(date => dailyRevenue[date]?.[site]?.paid || 0),
-                backgroundColor: siteColor,
-                borderColor: siteColor,
-                borderWidth: 1,
-                order: 2, // 막대 차트는 아래에 그리기
-            });
-        }
-        
-        // 미입금 데이터셋은 숨김 처리
+
+    const revenueTotals = dates.map(date => {
+        let total = 0;
+        selectedSites.forEach(site => {
+            total += dailyRevenue[date]?.[site]?.paid || 0;
+            if (!showPaid) {
+                total += dailyRevenue[date]?.[site]?.unpaid || 0;
+            }
+        });
+        return total;
     });
-    
-    revenueChart = new Chart(ctx, {
+
+    const ticketTotals = dates.map(date => {
+        let total = 0;
+        selectedSites.forEach(site => {
+            total += dailyTickets[date]?.[site]?.paid || 0;
+            if (!showPaid) {
+                total += dailyTickets[date]?.[site]?.unpaid || 0;
+            }
+        });
+        return total;
+    });
+    const revenueMax = Math.max(1, ...revenueTotals);
+    const ticketMax = Math.max(1, ...ticketTotals);
+
+    dailyChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: dates.map(formatDate),
-            datasets: datasets,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: '매출',
+                    data: revenueTotals,
+                    yAxisID: 'yRevenue',
+                    backgroundColor: '#6366f1',
+                    borderColor: '#4f46e5',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                },
+            ],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
             plugins: {
                 legend: {
-                    display: true,
-                    position: 'top',
+                    display: false,
                 },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            const label = context.dataset.label || '';
-                            const value = context.parsed.y;
-                            return label + ': ' + formatNumber(Math.round(value)) + '원';
+                            const revenue = context.parsed.y || 0;
+                            const idx = context.dataIndex;
+                            const tickets = ticketTotals[idx] || 0;
+                            return [
+                                '매출: ' + formatNumber(Math.round(revenue)) + '원',
+                                '판매 매수: ' + formatNumber(Math.round(tickets)) + '매',
+                            ];
                         },
                     },
                 },
             },
             scales: {
-                y: {
+                yRevenue: {
+                    type: 'linear',
+                    position: 'left',
                     beginAtZero: true,
+                    suggestedMax: revenueMax,
                     afterFit: function(scale) {
                         scale.width = chartYAxisWidth;
                     },
                     ticks: {
                         callback: function(value) {
-                            return formatNumber(value);
+                            return formatNumber(Math.round(value));
                         },
                     },
                     grid: {
                         display: false,
                     },
-                },
-                x: {
-                    grid: {
-                        display: false,
+                    title: {
+                        display: true,
+                        text: '매출 (원)',
                     },
                 },
-            },
-        },
-    });
-}
-
-/**
- * 판매 매수 차트 렌더링
- */
-function renderTicketChart() {
-    const ctx = document.getElementById('ticket-chart');
-    if (!ctx) return;
-    
-    // 기존 차트 제거
-    if (ticketChart) {
-        ticketChart.destroy();
-    }
-    
-    const data = chartData || currentData;
-    if (!data) return;
-    const dates = data.dates;
-    const bookingSites = data.booking_sites;
-    const dailyTickets = data.daily_tickets;
-    
-    // 선택된 예매처와 입금 상태 확인
-    const selectedSites = getSelectedBookingSites();
-    const paidCheckbox = document.getElementById('filter-paid');
-    const showPaid = paidCheckbox ? paidCheckbox.checked : true;
-    
-    // 데이터셋 생성 (예매처별로 그룹화)
-    const datasets = [];
-    
-    selectedSites.forEach((site, siteIndex) => {
-        const siteColor = getBookingSiteColor(site, siteIndex);
-        
-        // 입금 데이터셋 (막대 차트)
-        if (showPaid) {
-            datasets.push({
-                type: 'bar',
-                label: `${site} (입금)`,
-                data: dates.map(date => dailyTickets[date]?.[site]?.paid || 0),
-                backgroundColor: siteColor,
-                borderColor: siteColor,
-                borderWidth: 1,
-                order: 2, // 막대 차트는 아래에 그리기
-            });
-        }
-        
-        // 미입금 데이터셋은 숨김 처리
-    });
-    
-    ticketChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: dates.map(formatDate),
-            datasets: datasets,
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
+                yTickets: {
+                    type: 'linear',
+                    position: 'right',
                     display: true,
-                    position: 'top',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.dataset.label || '';
-                            const value = context.parsed.y;
-                            return label + ': ' + formatNumber(value) + '매';
-                        },
-                    },
-                },
-            },
-            scales: {
-                y: {
                     beginAtZero: true,
+                    suggestedMax: ticketMax,
+                    afterFit: function(scale) {
+                        scale.width = chartYAxisWidth;
+                    },
                     ticks: {
                         callback: function(value) {
-                            return formatNumber(value);
+                            return formatNumber(Math.round(value));
                         },
                     },
                     grid: {
-                        display: false,
+                        drawOnChartArea: false,
+                    },
+                    title: {
+                        display: true,
+                        text: '판매 매수',
                     },
                 },
                 x: {
@@ -1247,7 +1200,7 @@ function renderRegionSales() {
         const title = group.title || '지역별';
         const rows = group.rows || [];
         const card = document.createElement('div');
-        card.className = 'rounded-xl border border-gray-100 shadow-sm bg-white p-4';
+        card.className = 'rounded-xl border border-gray-200 shadow-sm bg-white p-4';
         card.innerHTML = `
             <div class="text-sm font-semibold text-black mb-3">${title}</div>
             <div class="relative mb-4" style="height: 240px;">
@@ -1255,7 +1208,7 @@ function renderRegionSales() {
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
+                    <thead class="bg-surface border-b border-gray-200">
                         <tr>
                             <th class="px-4 py-2 text-left text-sm font-semibold text-black">지역</th>
                             <th class="px-4 py-2 text-right text-sm font-semibold text-black">판매 매수</th>

@@ -9,30 +9,39 @@
 
 {% block content %}
     <!-- 페이지 제목 -->
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex justify-between items-center mb-14">
         <h1 class="text-3xl font-semibold text-black">공연 매출 관리</h1>
     </div>
     
     <!-- 검색/필터 컴포넌트 -->
     {% include 'components/search_filter.html' with genre_filter=genre_filter search_query=search_query genre_choices=genre_choices %}
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4 px-1">
+        <p class="text-sm text-gray-600">
+            총 <span class="font-semibold text-black">{{ page_obj.paginator.count }}</span>건
+        </p>
+        {% if search_query or genre_filter %}
+            <p class="text-xs text-gray-500">현재 필터 적용됨</p>
+        {% endif %}
+    </div>
     
     <!-- 공연 리스트 테이블 -->
     {% if performances %}
-        <div class="card bg-base-100 border border-base-200 shadow-sm mb-8">
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm mb-12">
             <div class="overflow-x-auto">
-                <table class="table">
+                <table class="table min-w-[920px]">
                     <thead>
                         <tr>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">장르</th>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연명</th>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연장</th>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">공연 기간</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">장르</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">공연명</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">공연장</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">공연 기간</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for performance in performances %}
                             {% url 'data_management:performance_sales_detail' performance.id as sales_url %}
-                            <tr class="hover cursor-pointer" data-href="{{ sales_url }}">
+                            <tr class="cursor-pointer hover:bg-gray-50 transition-colors duration-200" data-href="{{ sales_url }}">
                                 <td class="px-6 py-4">
                                     {{ performance.genre|genre_badge }}
                                 </td>
@@ -57,9 +66,9 @@
         <!-- 페이지네이션 -->
         {% include 'components/pagination.html' with page_obj=page_obj %}
     {% else %}
-        <div class="card bg-base-100 border border-base-200 shadow-sm">
+        <div class="card bg-white border border-gray-200 rounded-xl shadow-sm">
             <div class="card-body p-12 text-center">
-            <p class="text-gray-600 text-lg">등록된 공연이 없어요</p>
+                <p class="text-gray-700 text-lg font-medium">등록된 공연이 없어요</p>
             </div>
         </div>
     {% endif %}

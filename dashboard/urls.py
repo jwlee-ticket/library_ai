@@ -16,6 +16,7 @@ urlpatterns = [
     path('concert-overview/summary/', views.get_concert_aggregated_summary_data, name='concert_aggregated_summary'),
     path('concert-overview/period-revenue/', views.get_concert_period_revenue_data, name='concert_period_revenue'),
     path('musical-overview/', views.MusicalOverviewDashboardView.as_view(), name='musical_overview'),
+    path('theater-overview/', views.TheaterOverviewDashboardView.as_view(), name='theater_overview'),
     path('musical-overview/summary/', views.get_musical_aggregated_summary_data, name='musical_aggregated_summary'),
     path('musical-overview/period-revenue/', views.get_musical_period_revenue_data, name='musical_period_revenue'),
 ]

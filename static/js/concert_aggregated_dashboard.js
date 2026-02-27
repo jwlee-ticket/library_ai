@@ -172,13 +172,13 @@ function updateSummaryCards(data) {
     }
     
     // 개별 콘서트 리스트 테이블 렌더링
-    renderConcertList(data.concert_list || []);
+    renderConcertList(data.concert_list || [], data.total_revenue || 0, data.total_target_revenue || 0);
 }
 
 /**
  * 개별 콘서트 리스트 테이블 렌더링
  */
-function renderConcertList(concertList) {
+function renderConcertList(concertList, totalRevenue, totalTargetRevenue) {
     const tbody = document.getElementById('concert-list-tbody');
     if (!tbody) return;
     
@@ -194,11 +194,10 @@ function renderConcertList(concertList) {
         row.className = 'hover:bg-gray-50 transition-colors';
         
         const title = concert.title || '-';
-        const totalRevenue = concert.total_revenue || 0;
+        const rev = concert.total_revenue || 0;
         const targetRevenue = concert.target_revenue || 0;
         const achievementRate = concert.achievement_rate || 0;
         
-        // 프로그래스 바 너비 계산
         const progressWidth = targetRevenue > 0 ? Math.min(100, achievementRate) : 0;
         
         row.innerHTML = `
@@ -206,7 +205,7 @@ function renderConcertList(concertList) {
                 <span class="text-base font-medium text-black">${title}</span>
             </td>
             <td class="px-6 py-4 text-right">
-                <span class="text-sm text-black">${formatNumber(Math.round(totalRevenue))}원</span>
+                <span class="text-sm text-black">${formatNumber(Math.round(rev))}원</span>
             </td>
             <td class="px-6 py-4 text-right">
                 <span class="text-sm text-black">${targetRevenue > 0 ? formatNumber(Math.round(targetRevenue)) + '원' : '-'}</span>
@@ -228,6 +227,18 @@ function renderConcertList(concertList) {
         
         tbody.appendChild(row);
     });
+
+    const totalRev = totalRevenue != null ? totalRevenue : concertList.reduce((s, c) => s + (c.total_revenue || 0), 0);
+    const totalTgt = totalTargetRevenue != null ? totalTargetRevenue : concertList.reduce((s, c) => s + (c.target_revenue || 0), 0);
+    const sumRow = document.createElement('tr');
+    sumRow.className = 'border-t-2 border-gray-200 font-semibold';
+    sumRow.innerHTML = `
+        <td class="px-6 py-4 text-sm text-black">합계</td>
+        <td class="px-6 py-4 text-right text-sm text-black">${formatNumber(Math.round(totalRev))}원</td>
+        <td class="px-6 py-4 text-right text-sm text-black">${totalTgt > 0 ? formatNumber(Math.round(totalTgt)) + '원' : '-'}</td>
+        <td class="px-6 py-4"></td>
+    `;
+    tbody.appendChild(sumRow);
 }
 
 /**

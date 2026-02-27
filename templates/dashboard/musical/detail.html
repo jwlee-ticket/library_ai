@@ -10,21 +10,21 @@
 {% endblock %}
 
 {% block content %}
-    <!-- 페이지 제목 -->
-    <div class="mb-8">
+    <div class="mb-14">
         <h1 class="text-3xl font-semibold text-black">{{ performance.title }}</h1>
     </div>
     
     <!-- 요약 카드 섹션 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-        <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+        <div class="card bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="card-body p-8">
             <h3 class="text-lg font-semibold text-black mb-6">매출 현황</h3>
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700">총 매출</span>
                     <span class="text-sm font-semibold text-black" id="summary-total-revenue-text">-</span>
                 </div>
-                <div class="relative w-full h-3 bg-base-200 rounded-full overflow-hidden">
+                <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                     <div id="revenue-progress-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width: 0%;"></div>
                     <div id="revenue-bep-marker" class="absolute top-[-2px] bottom-[-2px] w-[2px] bg-danger rounded-full hidden" style="left: 0%;"></div>
                 </div>
@@ -43,16 +43,18 @@
                     <span class="text-xs font-semibold text-danger" id="summary-break-even-text">-</span>
                 </div>
             </div>
+            </div>
         </div>
 
-        <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm">
+        <div class="card bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="card-body p-8">
             <h3 class="text-lg font-semibold text-black mb-6">판매 매수 현황</h3>
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700">총 판매 매수</span>
                     <span class="text-sm font-semibold text-black" id="summary-total-tickets-text">-</span>
                 </div>
-                <div class="relative w-full h-3 bg-base-200 rounded-full overflow-hidden">
+                <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                     <div id="tickets-progress-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width: 0%;"></div>
                 </div>
                 <div class="flex items-center justify-between mt-1 text-xs text-secondary">
@@ -60,47 +62,53 @@
                     <span id="summary-total-seats-text">-</span>
                 </div>
             </div>
+            </div>
         </div>
     </div>
 
     <!-- 일간 그래프 섹션 -->
-    <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
+    <div class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-16">
+        <div class="card-body p-8">
         <div class="mb-6">
-            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                <h2 class="text-xl font-semibold text-black">일간 그래프</h2>
-                <div class="flex items-center gap-4">
-                    <label class="text-sm font-medium text-gray-700 whitespace-nowrap">시작일</label>
-                    <input
-                        type="date"
-                        id="filter-start-date"
-                        class="input input-bordered input-sm"
-                    >
-                    <label class="text-sm font-medium text-gray-700 whitespace-nowrap">종료일</label>
-                    <input
-                        type="date"
-                        id="filter-end-date"
-                        class="input input-bordered input-sm"
-                    >
-                    <button
-                        id="filter-apply-btn"
-                        class="btn btn-primary btn-sm"
-                    >
-                        적용
-                    </button>
-                </div>
-            </div>
+            <h2 class="text-xl font-semibold text-black">일간 그래프</h2>
         </div>
+        <fieldset class="fieldset bg-white border border-gray-100 rounded-xl p-4 mb-6 w-full">
+            <div class="flex flex-wrap items-center justify-end gap-3">
+                <label class="text-sm font-medium text-gray-700 whitespace-nowrap">시작일</label>
+                <input
+                    type="date"
+                    id="filter-start-date"
+                    class="input input-bordered input-sm"
+                >
+                <label class="text-sm font-medium text-gray-700 whitespace-nowrap">종료일</label>
+                <input
+                    type="date"
+                    id="filter-end-date"
+                    class="input input-bordered input-sm"
+                >
+                <button
+                    id="filter-apply-btn"
+                    class="btn btn-primary btn-sm"
+                >
+                    적용
+                </button>
+            </div>
+        </fieldset>
 
         <div>
             <h3 class="text-lg font-semibold text-black mb-6">매출 &amp; 판매 매수</h3>
-            <div class="relative" style="height: 400px;">
-                <canvas id="daily-chart"></canvas>
+            <div class="rounded-xl border border-gray-100 p-4">
+                <div class="relative" style="height: 400px;">
+                    <canvas id="daily-chart"></canvas>
+                </div>
             </div>
+        </div>
         </div>
     </div>
 
     <!-- 회차별 판매 테이블 -->
-    <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
+    <div class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-16">
+        <div class="card-body p-8">
         <div class="flex items-center gap-2 mb-6">
             <h2 class="text-xl font-semibold text-black">회차별 판매</h2>
             <div class="relative" id="episode-legend-wrap">
@@ -126,23 +134,24 @@
                 </div>
             </div>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
             <table class="table">
                 <thead>
                     <tr>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">Date</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">Time</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">CAST</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black whitespace-nowrap">유료 계(입금)</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black whitespace-nowrap">유료 계(미입금)</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black whitespace-nowrap">초대</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black whitespace-nowrap">합계(입금)</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-black whitespace-nowrap">비고</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface whitespace-nowrap">Date</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface whitespace-nowrap">Time</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface whitespace-nowrap">CAST</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface whitespace-nowrap">유료 계(입금)</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface whitespace-nowrap">유료 계(미입금)</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface whitespace-nowrap">초대</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface whitespace-nowrap">합계(입금)</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface whitespace-nowrap">비고</th>
                     </tr>
                 </thead>
                 <tbody id="musical-episode-tbody">
                 </tbody>
             </table>
+        </div>
         </div>
     </div>
 

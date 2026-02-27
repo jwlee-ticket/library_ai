@@ -9,15 +9,16 @@
 
 {% block content %}
     <!-- 상단 액션 바 -->
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-14">
         <h1 class="text-3xl font-semibold text-black">{{ performance.title }}</h1>
         {% include 'components/action_buttons.html' with object=performance show_back=False %}
     </div>
     
     <!-- 공연 정보 카드 -->
-    <div class="bg-white rounded-xl border border-gray-100 p-8">
+    <div class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-16">
+        <div class="card-body p-8">
         <!-- 기본 정보 -->
-        <div class="mb-8 pb-8 border-b border-gray-100">
+        <div class="mb-10 pb-10 border-b border-gray-100">
             <h2 class="text-xl font-semibold text-black mb-6">기본 정보</h2>
             <div class="space-y-6">
                 <!-- 공연명, 공연명(영문), 장르 - 한 행에 배치 -->
@@ -51,8 +52,8 @@
         </div>
         
         <!-- 공연 일정 -->
-        <div class="mb-8 pb-8 border-b border-gray-100">
-            <h2 class="text-xl font-semibold text-black mb-4">공연 일정</h2>
+        <div class="mb-10 pb-10 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-6">공연 일정</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">공연 기간</label>
@@ -66,8 +67,8 @@
         </div>
         
         <!-- 상세 정보 -->
-        <div class="mb-8 pb-8 border-b border-gray-100">
-            <h2 class="text-xl font-semibold text-black mb-4">상세 정보</h2>
+        <div class="mb-10 pb-10 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-6">상세 정보</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">관람 연령</label>
@@ -85,8 +86,8 @@
         </div>
         
         <!-- 제작 정보 -->
-        <div class="mb-8 pb-8 border-b border-gray-100">
-            <h2 class="text-xl font-semibold text-black mb-4">제작 정보</h2>
+        <div class="mb-10 pb-10 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-6">제작 정보</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">제작/주최</label>
@@ -100,8 +101,8 @@
         </div>
         
         <!-- 수익 목표 -->
-        <div class="mb-8 pb-8 border-b border-gray-100">
-            <h2 class="text-xl font-semibold text-black mb-4">수익 목표</h2>
+        <div class="mb-10 pb-10 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-6">수익 목표</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">목표 금액</label>
@@ -119,21 +120,21 @@
         </div>
         
         <!-- 좌석 및 가격 -->
-        <div class="mb-8 pb-8 border-b border-gray-100">
-            <h2 class="text-xl font-semibold text-black mb-4">좌석 및 가격</h2>
+        <div class="mb-10 pb-10 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-6">좌석 및 가격</h2>
             {% if performance.seat_grades.all %}
                 <div class="overflow-x-auto">
-                    <table class="w-full border-collapse">
+                    <table class="table min-w-[640px]">
                         <thead>
-                            <tr class="border-b border-gray-200">
-                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">등급명</th>
-                                <th class="text-right py-3 px-4 text-sm font-medium text-gray-700">티켓 가격</th>
-                                <th class="text-right py-3 px-4 text-sm font-medium text-gray-700">좌석 수</th>
+                            <tr>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-black bg-surface">등급명</th>
+                                <th class="text-right py-3 px-4 text-sm font-semibold text-black bg-surface">티켓 가격</th>
+                                <th class="text-right py-3 px-4 text-sm font-semibold text-black bg-surface">좌석 수</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for seat_grade in performance.seat_grades.all %}
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200">
                                     <td class="py-3 px-4 text-base text-black">{{ seat_grade.name }}</td>
                                     <td class="py-3 px-4 text-base text-black text-right">{{ seat_grade.price|intcomma }}원</td>
                                     <td class="py-3 px-4 text-base text-black text-right">{{ seat_grade.seat_count|intcomma }}석</td>
@@ -148,12 +149,12 @@
         </div>
         
         <!-- 할인 정보 -->
-        <div class="mb-8 pb-8 border-b border-gray-100">
-            <h2 class="text-xl font-semibold text-black mb-4">할인 정보</h2>
+        <div class="mb-10 pb-10 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-black mb-6">할인 정보</h2>
             {% if performance.discount_types.all %}
                 <div class="space-y-3">
                     {% for discount_type in performance.discount_types.all %}
-                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="p-4 bg-white rounded-lg border border-gray-200">
                             <div class="flex items-start justify-between">
                                 <div class="flex-1">
                                     <h3 class="text-base font-medium text-black mb-2">{{ discount_type.name }}</h3>
@@ -163,7 +164,7 @@
                                         {% if discount_type.applicable_grades.all %}
                                             <p>적용 가능한 등급: 
                                                 {% for grade in discount_type.applicable_grades.all %}
-                                                    <span class="px-2 py-1 bg-gray-200 rounded text-xs">{{ grade.name }}</span>
+                                                    <span class="px-2 py-1 bg-surface rounded text-xs text-black">{{ grade.name }}</span>
                                                 {% endfor %}
                                             </p>
                                         {% endif %}
@@ -180,7 +181,7 @@
         
         <!-- 예매 및 기타 -->
         <div>
-            <h2 class="text-xl font-semibold text-black mb-4">예매 및 기타</h2>
+            <h2 class="text-xl font-semibold text-black mb-6">예매 및 기타</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-2">예매처</label>
@@ -207,6 +208,7 @@
                     {% endif %}
                 </div>
             </div>
+        </div>
         </div>
     </div>
 {% endblock %}

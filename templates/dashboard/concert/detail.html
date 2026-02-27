@@ -10,23 +10,22 @@
 {% endblock %}
 
 {% block content %}
-    <!-- 페이지 제목 -->
-    <div class="mb-8">
+    <div class="mb-14">
         <h1 class="text-3xl font-semibold text-black">{{ performance.title }}</h1>
     </div>
     
     <!-- 요약 카드 섹션 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
         <!-- 매출 관련 카드 -->
-        <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm">
-            <h3 class="text-lg font-semibold text-black mb-6">매출 현황</h3>
-            <!-- 매출 프로그래스 바 -->
-            <div>
+        <div class="card bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="card-body p-8">
+                <h3 class="text-lg font-semibold text-black mb-6">매출 현황</h3>
+                <div>
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700">총 매출</span>
                     <span class="text-sm font-semibold text-black" id="summary-total-revenue-text">-</span>
                 </div>
-                <div class="relative w-full h-3 bg-base-200 rounded-full overflow-hidden">
+                <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                     <div
                         id="revenue-progress-bar"
                         class="h-full bg-primary rounded-full transition-all duration-500"
@@ -54,18 +53,19 @@
                     <span class="text-xs font-semibold text-danger" id="summary-break-even-text">-</span>
                 </div>
             </div>
+            </div>
         </div>
         
         <!-- 판매 매수 관련 카드 -->
-        <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm">
-            <h3 class="text-lg font-semibold text-black mb-6">판매 매수 현황</h3>
-            <!-- 판매 매수 프로그래스 바 -->
-            <div>
+        <div class="card bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="card-body p-8">
+                <h3 class="text-lg font-semibold text-black mb-6">판매 매수 현황</h3>
+                <div>
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700">총 판매 매수</span>
                     <span class="text-sm font-semibold text-black" id="summary-total-tickets-text">-</span>
                 </div>
-                <div class="relative w-full h-3 bg-base-200 rounded-full overflow-hidden">
+                <div class="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                     <div
                         id="tickets-progress-bar"
                         class="h-full bg-primary rounded-full transition-all duration-500"
@@ -77,20 +77,20 @@
                     <span id="summary-total-seats-text">-</span>
                 </div>
             </div>
+            </div>
         </div>
     </div>
     
     <!-- 일간 그래프 섹션 -->
-    <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
-        <!-- 타이틀과 필터를 같은 행에 배치 -->
+    <div class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-16">
+        <div class="card-body p-8">
         <div class="mb-6">
-            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                <h2 class="text-xl font-semibold text-black">일간 그래프</h2>
-                
-                <!-- 필터 섹션 - 각각 다른 행에 배치, 오른쪽 정렬 -->
-                <div class="flex flex-col items-end gap-4">
+            <h2 class="text-xl font-semibold text-black">일간 그래프</h2>
+        </div>
+        <fieldset class="fieldset bg-white border border-gray-100 rounded-xl p-4 mb-6 w-full">
+            <div class="flex flex-col gap-4">
                     <!-- 기간 필터 -->
-                    <div class="flex items-center gap-4">
+                    <div class="flex flex-wrap items-center justify-end gap-3">
                         <label class="text-sm font-medium text-gray-700 whitespace-nowrap">시작일</label>
                         <input 
                             type="date" 
@@ -111,8 +111,8 @@
                         </button>
                     </div>
                     
-                    <!-- 예매처와 입금 상태 필터 - 같은 행에 배치 -->
-                    <div class="flex items-center gap-4">
+                    <!-- 예매처와 입금 상태 필터 -->
+                    <div class="flex flex-wrap items-center justify-end gap-4">
                         <!-- 예매처 필터 -->
                         <div class="flex items-center gap-2">
                             <label class="text-sm font-medium text-gray-700 whitespace-nowrap">예매처</label>
@@ -140,46 +140,37 @@
                             </div>
                         </div>
                     </div>
-                </div>
             </div>
-        </div>
+        </fieldset>
         
-        <!-- 매출 그래프 -->
-        <div class="mb-8">
-            <h3 class="text-lg font-semibold text-black mb-6">매출</h3>
-            <div class="relative" style="height: 400px;">
-                <canvas id="revenue-chart"></canvas>
-            </div>
+        <div class="relative" style="height: 520px;">
+            <canvas id="daily-chart"></canvas>
         </div>
-        
-        <!-- 판매 매수 그래프 -->
-        <div>
-            <h3 class="text-lg font-semibold text-black mb-6">판매 매수</h3>
-            <div class="relative" style="height: 400px;">
-                <canvas id="ticket-chart"></canvas>
-            </div>
         </div>
     </div>
     
     <!-- 예매처별 비중 -->
-    <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
+    <div class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-16">
+        <div class="card-body p-8">
         <h2 class="text-xl font-semibold text-black mb-6">예매처별 비중</h2>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
             <table class="table">
                 <thead>
                     <tr>
-                        <th class="px-6 py-4 text-left text-sm font-medium text-gray-600">예매처</th>
-                        <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매출</th>
-                        <th class="px-6 py-4 text-right text-sm font-medium text-gray-600">매수</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">예매처</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매출</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매수</th>
                     </tr>
                 </thead>
                 <tbody id="booking-site-tbody"></tbody>
             </table>
         </div>
+        </div>
     </div>
     
     <!-- 등급별 판매현황 -->
-    <div class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
+    <div class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-16">
+        <div class="card-body p-8">
         <h2 class="text-xl font-semibold text-black mb-6">등급별 판매현황</h2>
         
         <!-- 테이블과 차트를 같은 행에 배치 (7:3 비율) -->
@@ -190,12 +181,12 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th class="px-6 py-4 text-left text-sm font-semibold text-black">등급</th>
-                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">매수(유료)</th>
-                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">매수(무료)</th>
-                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">유료 점유율</th>
-                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">객석 점유율</th>
-                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">총 판매 좌석</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">등급</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매수(유료)</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매수(무료)</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">유료 점유율</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">객석 점유율</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">총 판매 좌석</th>
                             </tr>
                         </thead>
                         <tbody id="grade-sales-tbody">
@@ -207,24 +198,28 @@
             
             <!-- 파이 차트 -->
             <div class="lg:col-span-3">
-                <div class="relative" style="height: 400px;">
-                    <canvas id="grade-chart"></canvas>
+                <div class="rounded-xl border border-gray-100 p-4">
+                    <div class="relative" style="height: 400px;">
+                        <canvas id="grade-chart"></canvas>
+                    </div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
     
     <!-- 할인권종별 판매현황 -->
-    <div id="section-discount-sales" class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
+    <div id="section-discount-sales" class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-16">
+        <div class="card-body p-8">
         <h2 class="text-xl font-semibold text-black mb-6">할인권종별 판매현황</h2>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
             <table class="table">
                 <thead>
                     <tr>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-black">예매처</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-black">할인권종</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">판매 매수</th>
-                        <th class="px-6 py-4 text-right text-sm font-semibold text-black">매출액</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">예매처</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">할인권종</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">판매 매수</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매출액</th>
                     </tr>
                 </thead>
                 <tbody id="discount-sales-tbody">
@@ -232,28 +227,34 @@
                 </tbody>
             </table>
         </div>
+        </div>
     </div>
     
     <!-- 성별, 연령대별 판매현황 -->
-    <div id="section-age-gender-sales" class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-6">
+    <div id="section-age-gender-sales" class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-8">
+        <div class="card-body p-8">
         <h2 class="text-xl font-semibold text-black mb-6">성별, 연령대별 판매현황</h2>
-        <div class="relative" style="height: 400px;">
-            <canvas id="age-gender-chart"></canvas>
+        <div class="rounded-xl border border-gray-100 p-4">
+            <div class="relative" style="height: 400px;">
+                <canvas id="age-gender-chart"></canvas>
+            </div>
+        </div>
         </div>
     </div>
     
     <!-- 결제수단별 판매현황, 카드별 매출집계 -->
-    <div id="section-payment-card-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+    <div id="section-payment-card-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
         <!-- 결제수단별 판매현황 -->
-        <div id="section-payment-method-sales" class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm">
+        <div id="section-payment-method-sales" class="card bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="card-body p-8">
             <h2 class="text-xl font-semibold text-black mb-6">결제수단별 판매현황</h2>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto rounded-xl border border-gray-100">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">결제수단</th>
-                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">판매 매수</th>
-                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">매출액</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">결제수단</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">판매 매수</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매출액</th>
                         </tr>
                     </thead>
                     <tbody id="payment-method-sales-tbody">
@@ -261,18 +262,20 @@
                     </tbody>
                 </table>
             </div>
+            </div>
         </div>
         
         <!-- 카드별 매출집계 -->
-        <div id="section-card-sales" class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm">
+        <div id="section-card-sales" class="card bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="card-body p-8">
             <h2 class="text-xl font-semibold text-black mb-6">카드별 매출집계</h2>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto rounded-xl border border-gray-100">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-black">카드 종류</th>
-                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">판매 매수</th>
-                            <th class="px-6 py-4 text-right text-sm font-semibold text-black">매출액</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">카드 종류</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">판매 매수</th>
+                            <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매출액</th>
                         </tr>
                     </thead>
                     <tbody id="card-sales-tbody">
@@ -280,24 +283,26 @@
                     </tbody>
                 </table>
             </div>
+            </div>
         </div>
     </div>
     
     <!-- 판매경로별 판매현황 -->
-    <div id="section-sales-channel-sales" class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
+    <div id="section-sales-channel-sales" class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-16">
+        <div class="card-body p-8">
         <h2 class="text-xl font-semibold text-black mb-6">판매경로별 판매현황</h2>
         
         <!-- 테이블과 차트를 같은 행에 배치 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- 테이블 -->
             <div>
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto rounded-xl border border-gray-100">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th class="px-6 py-4 text-left text-sm font-semibold text-black">판매경로</th>
-                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">판매 매수</th>
-                                <th class="px-6 py-4 text-right text-sm font-semibold text-black">매출액</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">판매경로</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">판매 매수</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-black bg-surface">매출액</th>
                             </tr>
                         </thead>
                         <tbody id="sales-channel-sales-tbody">
@@ -309,18 +314,23 @@
             
             <!-- 차트 -->
             <div>
-                <div class="relative" style="height: 400px;">
-                    <canvas id="sales-channel-chart"></canvas>
+                <div class="rounded-xl border border-gray-100 p-4">
+                    <div class="relative" style="height: 400px;">
+                        <canvas id="sales-channel-chart"></canvas>
+                    </div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
     
     <!-- 지역별 판매현황 -->
-    <div id="section-region-sales" class="card bg-base-100 rounded-xl border border-base-200 p-8 shadow-sm mb-12">
+    <div id="section-region-sales" class="card bg-white rounded-xl border border-gray-200 shadow-sm mb-16">
+        <div class="card-body p-8">
         <h2 class="text-xl font-semibold text-black mb-6">지역별 판매현황</h2>
         <div id="region-sales-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             <!-- JavaScript로 동적 생성 -->
+        </div>
         </div>
     </div>
     

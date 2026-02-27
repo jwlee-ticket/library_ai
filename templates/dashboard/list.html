@@ -12,12 +12,23 @@
     
     <!-- 검색/필터 컴포넌트 -->
     {% include 'components/search_filter.html' with genre_filter=genre_filter search_query=search_query genre_choices=genre_choices %}
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4 px-1">
+        <p class="text-sm text-gray-600">
+            총 <span class="font-semibold text-black">{{ page_obj.paginator.count }}</span>건
+        </p>
+        {% if search_query or genre_filter %}
+            <p class="text-xs text-gray-500">
+                현재 필터 적용됨
+            </p>
+        {% endif %}
+    </div>
     
     <!-- 공연 리스트 테이블 -->
     {% if performances %}
         <div class="card bg-white border border-gray-200 rounded-xl shadow-sm mb-12">
             <div class="overflow-x-auto">
-                <table class="table">
+                <table class="table min-w-[920px]">
                     <thead>
                         <tr>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-black bg-surface">장르</th>
