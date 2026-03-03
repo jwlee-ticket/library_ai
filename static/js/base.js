@@ -11,7 +11,7 @@ function toggleUserDropdown() {
 
 // 외부 클릭 시 사용자 드롭다운 닫기
 document.addEventListener('click', function(event) {
-    const userButton = document.querySelector('button[onclick="toggleUserDropdown()"]');
+    const userButton = document.getElementById('user-menu-button');
     const userDropdown = document.getElementById('user-dropdown');
     if (userButton && userDropdown && !userButton.contains(event.target) && !userDropdown.contains(event.target)) {
         if (!userDropdown.classList.contains('hidden')) {
