@@ -966,11 +966,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-CSRFToken': csrfToken
                 }
             })
-            .then(response => response.json().then(data => ({
-                ok: response.ok,
-                status: response.status,
-                data
-            })))
+            .then(async response => {
+                if (response.status === 413) {
+                    throw new Error('업로드 파일 용량이 서버 제한(5MB)을 초과했어요.');
+                }
+
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    const text = await response.text();
+                    if (response.redirected || text.includes('<html')) {
+                        throw new Error('서버에서 HTML 응답을 반환했어요. 로그인 상태 또는 Nginx 업로드 제한을 확인해주세요.');
+                    }
+                    throw new Error('예상하지 못한 서버 응답 형식입니다.');
+                }
+
+                const data = await response.json();
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    data
+                };
+            })
             .then(({ ok, data }) => {
                 if (ok && data.success) {
                     let details = `날짜 ${data.date_count || 0}건, 일별 ${data.daily_sales_count || 0}건, 등급 ${data.grade_sales_count || 0}건 저장`;
@@ -1025,10 +1041,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({})
             })
-            .then(response => response.json().then(data => ({
-                ok: response.ok,
-                data
-            })))
+            .then(async response => {
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    const text = await response.text();
+                    if (response.redirected || text.includes('<html')) {
+                        throw new Error('서버에서 HTML 응답을 반환했어요. 로그인 상태를 확인해주세요.');
+                    }
+                    throw new Error('예상하지 못한 서버 응답 형식입니다.');
+                }
+                const data = await response.json();
+                return {
+                    ok: response.ok,
+                    data
+                };
+            })
             .then(({ ok, data }) => {
                 if (ok && data.success) {
                     const row = button.closest('tr');
