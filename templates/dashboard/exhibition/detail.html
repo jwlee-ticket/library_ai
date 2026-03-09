@@ -16,15 +16,15 @@
     
     <!-- KPI 카드 영역 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+        <div class="card bg-white border border-gray-200 p-6 shadow-sm">
             <p class="text-sm text-gray-600">총 매출</p>
             <p class="text-3xl font-bold text-black mt-2" id="summary-total-revenue">-</p>
         </div>
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+        <div class="card bg-white border border-gray-200 p-6 shadow-sm">
             <p class="text-sm text-gray-600">총 판매 매수</p>
             <p class="text-3xl font-bold text-black mt-2" id="summary-total-tickets">-</p>
         </div>
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+        <div class="card bg-white border border-gray-200 p-6 shadow-sm">
             <p class="text-sm text-gray-600">기간</p>
             <p class="text-lg font-semibold text-black mt-2">
                 {{ performance.performance_start|date:"Y.m.d" }} ~ {{ performance.performance_end|date:"Y.m.d" }}
@@ -34,7 +34,7 @@
     
     <!-- 차트 섹션 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+        <div class="card bg-white border border-gray-200 p-6 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold text-black">매출 추이</h2>
                 <span class="text-xs text-gray-600">일별</span>
@@ -43,7 +43,7 @@
                 <canvas id="revenue-chart"></canvas>
             </div>
         </div>
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+        <div class="card bg-white border border-gray-200 p-6 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold text-black">판매 매수 추이</h2>
                 <span class="text-xs text-gray-600">일별</span>
@@ -82,7 +82,7 @@
                 </div>
             </div>
         </div>
-        <div class="card bg-base-100 border border-base-200 p-6 shadow-sm">
+        <div class="card bg-white border border-gray-200 p-6 shadow-sm">
             <h2 class="text-xl font-semibold text-black mb-4">예매처별 비중</h2>
             <div class="overflow-x-auto">
                 <table class="table">

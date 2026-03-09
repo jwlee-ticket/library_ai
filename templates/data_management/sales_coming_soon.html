@@ -15,7 +15,7 @@
             <a href="{% url 'data_management:performance_list' %}" class="link link-hover text-sm text-gray-600 mb-2 inline-block">
                 ← 공연 매출 관리로 돌아가기
             </a>
-            <div class="card bg-base-100 border border-base-200 p-4 mt-2">
+            <div class="card bg-white border border-gray-200 p-4 mt-2">
                 <h2 class="text-xl font-semibold text-black mb-2">{{ performance.title }}</h2>
                 <div class="flex gap-4 text-sm text-gray-600">
                     <span>{{ performance.venue }}</span>
@@ -26,7 +26,7 @@
     {% endif %}
     
     <!-- 준비 중 메시지 -->
-    <div class="hero bg-base-100 rounded-xl border border-base-200 p-12 text-center">
+    <div class="hero bg-white rounded-xl border border-gray-200 p-12 text-center">
         <div class="mb-6">
             <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
