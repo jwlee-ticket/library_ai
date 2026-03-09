@@ -68,6 +68,11 @@
   --color-chart-unpaid-opacity: 0.6;
 }
 
+/* Prevent UA dark color adjustments across browsers. */
+:root {
+  color-scheme: light;
+}
+
 body {
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
 }
