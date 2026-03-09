@@ -1109,6 +1109,43 @@ def get_musical_dashboard_data(request, pk):
     for seat_grade in performance.seat_grades.all():
         total_seats += seat_grade.seat_count
 
+    final_sales = PerformanceFinalSales.objects.filter(
+        performance=performance,
+        booking_site__isnull=True
+    ).order_by('-updated_at').first()
+    raw_grade_sales = final_sales.grade_sales_summary if final_sales else {}
+    seat_count_map = {sg.name: int(sg.seat_count or 0) for sg in performance.seat_grades.all()}
+
+    grade_sales = {}
+    for grade_name, values in raw_grade_sales.items():
+        paid_count = int(values.get('paid_count', 0) or 0)
+        unpaid_count = int(values.get('unpaid_count', 0) or 0)
+        free_count = int(values.get('free_count', 0) or 0)
+        total_count = int(values.get('total_count', 0) or 0)
+        if total_count == 0 and (paid_count > 0 or unpaid_count > 0 or free_count > 0):
+            total_count = paid_count + unpaid_count + free_count
+
+        seat_count = int(seat_count_map.get(grade_name, 0) or 0)
+        paid_occupancy_rate = values.get('paid_occupancy_rate')
+        total_occupancy_rate = values.get('total_occupancy_rate')
+        if paid_occupancy_rate is None:
+            paid_occupancy_rate = (paid_count / seat_count) if seat_count > 0 else 0
+        if total_occupancy_rate is None:
+            total_occupancy_rate = (total_count / seat_count) if seat_count > 0 else 0
+
+        grade_sales[grade_name] = {
+            'seat_count': seat_count,
+            'paid_count': paid_count,
+            'unpaid_count': unpaid_count,
+            'free_count': free_count,
+            'paid_occupancy_rate': float(paid_occupancy_rate),
+            'total_occupancy_rate': float(total_occupancy_rate),
+            'total_count': total_count,
+        }
+
+    if grade_sales:
+        total_ticket_count = sum(item.get('total_count', 0) for item in grade_sales.values())
+
     date_list = []
     current_date = start_date
     while current_date <= end_date:
@@ -1170,6 +1207,7 @@ def get_musical_dashboard_data(request, pk):
             'total_seats': total_seats,
             'total_revenue': total_revenue,
             'total_ticket_count': total_ticket_count,
+            'grade_sales': grade_sales,
             'episode_rows': table_rows,
         }
     })

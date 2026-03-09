@@ -3,9 +3,11 @@ let dataUrl = null;
 let currentData = null;
 let chartData = null;
 let dailyChart = null;
+let gradeChart = null;
 const chartYAxisWidth = 84;
 const NOL_TICKET_COLOR = '#4154FF';
 const TICKET_LINE_COLOR = '#16a34a';  /* success - 판매 매수 라인 */
+const dynamicColors = ['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6'];
 
 /** 합계(입금) %에 따른 행 배경색 (design-system 기준) */
 function getTotalPaidRateCellStyle(rate) {
@@ -75,6 +77,7 @@ async function loadDashboardData(startDate, endDate) {
 
         if (!isFiltered) {
             updateSummaryCards();
+            renderGradeSales();
             renderEpisodeTable();
         }
         renderCharts();
@@ -124,7 +127,8 @@ function updateSummaryCards() {
     }
 
     if (totalTicketsText) {
-        totalTicketsText.textContent = `${formatNumber(totalTickets)}매`;
+        const openSeatsText = totalSeats > 0 ? `${formatNumber(totalSeats)}매` : '-';
+        totalTicketsText.textContent = `${formatNumber(totalTickets)}매/${openSeatsText}`;
     }
     if (totalSeatsText) {
         totalSeatsText.textContent = totalSeats > 0 ? `${formatNumber(totalSeats)}매` : '-';
@@ -243,6 +247,100 @@ function renderDailyChart() {
 
 function renderCharts() {
     renderDailyChart();
+    renderGradeChart();
+}
+
+function renderGradeSales() {
+    if (!currentData || !currentData.grade_sales) return;
+    const tbody = document.getElementById('grade-sales-tbody');
+    if (!tbody) return;
+
+    const gradeSales = currentData.grade_sales;
+    const grades = Object.keys(gradeSales).sort();
+    if (grades.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-600">등급별 판매 데이터가 없습니다</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    grades.forEach((grade) => {
+        const data = gradeSales[grade];
+        const paidCount = data.paid_count || 0;
+        const freeCount = data.free_count || 0;
+        const totalCount = data.total_count || 0;
+        const seatCount = data.seat_count || 0;
+        const paidOccupancyRate = (data.paid_occupancy_rate || 0) * 100;
+        const totalOccupancyRate = (data.total_occupancy_rate || 0) * 100;
+        const openSeatText = seatCount > 0 ? formatNumber(seatCount) : '-';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 transition-colors';
+        tr.innerHTML = `
+            <td class="px-6 py-4"><span class="text-base font-medium text-black">${grade}</span></td>
+            <td class="px-6 py-4 text-right"><span class="text-sm text-black">${formatNumber(paidCount)}</span></td>
+            <td class="px-6 py-4 text-right"><span class="text-sm text-black">${formatNumber(freeCount)}</span></td>
+            <td class="px-6 py-4 text-right"><span class="text-sm text-black">${paidOccupancyRate.toFixed(1)}%</span></td>
+            <td class="px-6 py-4 text-right"><span class="text-sm text-black">${totalOccupancyRate.toFixed(1)}%</span></td>
+            <td class="px-6 py-4 text-right"><span class="text-sm text-black">${formatNumber(totalCount)}/${openSeatText}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderGradeChart() {
+    const canvas = document.getElementById('grade-chart');
+    if (!canvas) return;
+    if (gradeChart) {
+        gradeChart.destroy();
+    }
+    if (!currentData || !currentData.grade_sales) return;
+
+    const gradeSales = currentData.grade_sales;
+    const grades = Object.keys(gradeSales).sort();
+    if (!grades.length) return;
+
+    const paidCounts = grades.map((grade) => gradeSales[grade].paid_count || 0);
+    const totalPaid = paidCounts.reduce((acc, value) => acc + value, 0);
+    gradeChart = new Chart(canvas, {
+        type: 'pie',
+        data: {
+            labels: grades,
+            datasets: [
+                {
+                    label: '매수(유료)',
+                    data: paidCounts,
+                    backgroundColor: grades.map((_, idx) => dynamicColors[idx % dynamicColors.length]),
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: { size: 12 },
+                        usePointStyle: true,
+                    },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const percentage = totalPaid > 0 ? ((value / totalPaid) * 100).toFixed(1) : '0.0';
+                            return `${label}: ${formatNumber(value)}매 (${percentage}%)`;
+                        }
+                    }
+                },
+            },
+        },
+    });
 }
 
 function renderEpisodeTable() {

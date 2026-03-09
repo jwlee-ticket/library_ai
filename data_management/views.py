@@ -1061,6 +1061,109 @@ def _parse_musical_episode_sheet(xls, sheet_name):
     return rows, {'max_no': max_no, 'sheet_name': sheet_name}
 
 
+def _build_group_columns_until_tot(group_labels, header_labels, target_group):
+    columns = []
+    for col_idx, group_label in enumerate(group_labels):
+        if _normalize_text(group_label) != target_group:
+            continue
+        sub_label = _normalize_text(header_labels[col_idx]) if col_idx < len(header_labels) else ''
+        if not sub_label:
+            continue
+        if sub_label in ['Tot', 'TOTAL', '합계']:
+            break
+        columns.append((sub_label, col_idx))
+    return columns
+
+
+def _find_total_row(df, header_row_idx):
+    for row_idx in range(header_row_idx + 1, len(df)):
+        row = df.iloc[row_idx].tolist()
+        row_text = ' '.join(_normalize_text(value) for value in row if _normalize_text(value))
+        if 'TOTAL' in row_text:
+            return row_idx
+    return None
+
+
+def _parse_musical_seat_details_total(xls):
+    seat_details_candidates = ['Seat details', 'Seat Details']
+    seat_details_sheet = next((name for name in seat_details_candidates if name in xls.sheet_names), None)
+    if not seat_details_sheet:
+        raise ValueError('Seat details 시트를 찾을 수 없어요')
+
+    df = pd.read_excel(xls, sheet_name=seat_details_sheet, header=None)
+    header_row_idx = None
+    for idx in range(min(20, len(df))):
+        row = df.iloc[idx].tolist()
+        if _normalize_text(row[0]) == 'No.' and _normalize_text(row[1]) == 'Date':
+            header_row_idx = idx
+            break
+    if header_row_idx is None:
+        raise ValueError('Seat details 시트에서 No./Date 헤더를 찾을 수 없어요')
+
+    group_row_raw = df.iloc[header_row_idx - 1].tolist() if header_row_idx > 0 else []
+    header_labels = [_normalize_text(df.iloc[header_row_idx, col]) for col in range(len(df.columns))]
+
+    group_labels = []
+    last_label = ''
+    for value in group_row_raw:
+        label = _normalize_text(value)
+        if label:
+            last_label = label
+        group_labels.append(last_label)
+
+    total_row_idx = _find_total_row(df, header_row_idx)
+    if total_row_idx is None:
+        raise ValueError('Seat details 시트에서 TOTAL 행을 찾을 수 없어요')
+    total_row = df.iloc[total_row_idx].tolist()
+
+    paid_cols = _build_group_columns_until_tot(group_labels, header_labels, '유료 계')
+    free_cols = _build_group_columns_until_tot(group_labels, header_labels, '초대')
+    total_cols = _build_group_columns_until_tot(group_labels, header_labels, '합계')
+    paid_rate_cols = _build_group_columns_until_tot(group_labels, header_labels, '석별 유료 점유율')
+    total_rate_cols = _build_group_columns_until_tot(group_labels, header_labels, '석별 객석 점유율')
+
+    grade_names = []
+    for grade_name, _ in paid_cols:
+        if grade_name not in grade_names:
+            grade_names.append(grade_name)
+    for grade_name, _ in free_cols:
+        if grade_name not in grade_names:
+            grade_names.append(grade_name)
+    for grade_name, _ in total_cols:
+        if grade_name not in grade_names:
+            grade_names.append(grade_name)
+
+    paid_map = {grade_name: _safe_int(total_row[col_idx] if col_idx < len(total_row) else 0) for grade_name, col_idx in paid_cols}
+    free_map = {grade_name: _safe_int(total_row[col_idx] if col_idx < len(total_row) else 0) for grade_name, col_idx in free_cols}
+    total_map = {grade_name: _safe_int(total_row[col_idx] if col_idx < len(total_row) else 0) for grade_name, col_idx in total_cols}
+    paid_rate_map = {grade_name: _safe_rate(total_row[col_idx] if col_idx < len(total_row) else None) for grade_name, col_idx in paid_rate_cols}
+    total_rate_map = {grade_name: _safe_rate(total_row[col_idx] if col_idx < len(total_row) else None) for grade_name, col_idx in total_rate_cols}
+
+    grade_sales = {}
+    for grade_name in grade_names:
+        paid_count = paid_map.get(grade_name, 0)
+        free_count = free_map.get(grade_name, 0)
+        total_count = total_map.get(grade_name, 0)
+        if total_count == 0 and (paid_count > 0 or free_count > 0):
+            total_count = paid_count + free_count
+        unpaid_count = max(total_count - paid_count - free_count, 0)
+
+        grade_sales[grade_name] = {
+            'paid_count': paid_count,
+            'unpaid_count': unpaid_count,
+            'free_count': free_count,
+            'paid_occupancy_rate': paid_rate_map.get(grade_name),
+            'total_occupancy_rate': total_rate_map.get(grade_name),
+            'total_count': total_count,
+        }
+
+    return {
+        'grade_sales': grade_sales,
+        'seat_grade_names': grade_names,
+        'sheet_name': seat_details_sheet,
+    }
+
+
 def _save_musical_episode_rows(performance, upload_log, rows, max_no):
     MusicalEpisodeSales.objects.filter(
         performance=performance,
@@ -1394,6 +1497,12 @@ def upload_sales_excel(request, performance_id):
             sheet_name = meta.get('sheet_name', musical_sheet)
             date_start = min(row['show_date'] for row in rows) if rows else None
             date_end = max(row['show_date'] for row in rows) if rows else None
+            seat_details_data = None
+            seat_details_warning = ''
+            try:
+                seat_details_data = _parse_musical_seat_details_total(xls)
+            except ValueError as exc:
+                seat_details_warning = str(exc)
 
             with transaction.atomic():
                 excel_file.seek(0)
@@ -1411,6 +1520,60 @@ def upload_sales_excel(request, performance_id):
                 )
                 _create_sales_upload_action_log('upload', performance, upload_log, request.user)
                 result = _save_musical_episode_rows(performance, upload_log, rows, max_no)
+                grade_sales_count = 0
+                seat_grade_names = []
+
+                if seat_details_data:
+                    seat_grade_names = seat_details_data.get('seat_grade_names', [])
+                    grade_sales_data = seat_details_data.get('grade_sales', {})
+                    seat_grade_order = SeatGrade.objects.filter(performance=performance).count()
+                    missing_open_seats = []
+                    for grade_name in seat_grade_names:
+                        seat_grade, created = SeatGrade.objects.get_or_create(
+                            performance=performance,
+                            name=grade_name,
+                            defaults={
+                                'price': 0,
+                                'seat_count': 0,
+                                'order': seat_grade_order
+                            }
+                        )
+                        if created:
+                            seat_grade_order += 1
+                        if (seat_grade.seat_count or 0) == 0:
+                            missing_open_seats.append(grade_name)
+
+                    final_sales = PerformanceFinalSales.objects.filter(
+                        performance=performance,
+                        booking_site__isnull=True
+                    ).order_by('-updated_at').first()
+                    if not final_sales:
+                        final_sales = PerformanceFinalSales.objects.create(
+                            performance=performance,
+                            booking_site=None,
+                            paid_revenue=Decimal(0),
+                            paid_ticket_count=0,
+                            unpaid_revenue=Decimal(0),
+                            unpaid_ticket_count=0
+                        )
+                    final_sales.grade_sales_summary = grade_sales_data
+                    final_sales.save(update_fields=['grade_sales_summary'])
+                    grade_sales_count = len(grade_sales_data)
+
+                    message_parts = [f'뮤지컬 회차별 + Seat details 저장 (max_no={max_no})']
+                    if missing_open_seats:
+                        missing_txt = ', '.join(missing_open_seats[:5])
+                        if len(missing_open_seats) > 5:
+                            missing_txt += ' 외'
+                        message_parts.append(f'오픈 좌석 수 미입력 등급: {missing_txt}')
+                    if seat_details_warning:
+                        message_parts.append(seat_details_warning)
+                    upload_log.message = ' | '.join(message_parts)
+                else:
+                    if seat_details_warning:
+                        upload_log.message = f'뮤지컬 회차별 데이터 저장 (max_no={max_no}) | {seat_details_warning}'
+                upload_log.grade_sales_count = grade_sales_count
+                upload_log.save(update_fields=['message', 'grade_sales_count'])
 
             delete_url = reverse('data_management:performance_sales_upload_log_delete', args=[performance.id, upload_log.id])
             download_url = reverse('data_management:performance_sales_upload_log_download', args=[performance.id, upload_log.id])
@@ -1418,7 +1581,7 @@ def upload_sales_excel(request, performance_id):
                 'success': True,
                 'message': '엑셀 업로드가 완료되었습니다.',
                 'daily_sales_count': 0,
-                'grade_sales_count': 0,
+                'grade_sales_count': grade_sales_count,
                 'date_count': len({row['show_date'] for row in rows}),
                 'file_name': excel_file.name,
                 'sheet_name': sheet_name,
@@ -1430,6 +1593,7 @@ def upload_sales_excel(request, performance_id):
                 'musical_type': 'episode_sales',
                 'max_no': max_no,
                 'saved_count': result.get('saved_count', 0),
+                'seat_grade_count': len(seat_grade_names),
             })
         elif report_sheet and not has_daily_sheet:
             parsed = _parse_final_sales_excel(xls, report_sheet)
