@@ -286,7 +286,8 @@ function updateSummaryCards() {
         } else {
             ticketsBar.style.width = '0%';
         }
-        ticketsText.textContent = formatNumber(totalTickets) + '매';
+        const openSeatsText = totalSeats > 0 ? formatNumber(totalSeats) + '매' : '-';
+        ticketsText.textContent = formatNumber(totalTickets) + '매/' + openSeatsText;
     }
     
     if (totalTicketsEl) {
@@ -642,6 +643,8 @@ function renderGradeSales() {
         const paidOccupancyRate = (data.paid_occupancy_rate || 0) * 100;
         const totalOccupancyRate = (data.total_occupancy_rate || 0) * 100;
         const totalCount = data.total_count || 0;
+        const seatCount = data.seat_count || 0;
+        const openSeatText = seatCount > 0 ? formatNumber(seatCount) : '-';
         
         row.innerHTML = `
             <td class="px-6 py-4">
@@ -660,7 +663,7 @@ function renderGradeSales() {
                 <span class="text-sm text-black">${totalOccupancyRate.toFixed(1)}%</span>
             </td>
             <td class="px-6 py-4 text-right">
-                <span class="text-sm text-black">${formatNumber(totalCount)}</span>
+                <span class="text-sm text-black">${formatNumber(totalCount)}/${openSeatText}</span>
             </td>
         `;
         

@@ -978,6 +978,7 @@ def get_concert_dashboard_data(request, pk):
                 total_occupancy_rate = total_count / seat_count if seat_count > 0 else 0
 
             grade_sales[grade_name] = {
+                'seat_count': seat_count,
                 'paid_count': paid_count,
                 'unpaid_count': unpaid_count,
                 'free_count': free_count,
