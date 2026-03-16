@@ -172,20 +172,25 @@ function updateSummaryCards(data) {
     }
     
     // 개별 콘서트 리스트 테이블 렌더링
-    renderConcertList(data.concert_list || [], data.total_revenue || 0, data.total_target_revenue || 0);
+    renderConcertList(
+        data.concert_list || [],
+        data.total_revenue || 0,
+        data.total_target_revenue || 0,
+        data.total_break_even_point
+    );
 }
 
 /**
  * 개별 콘서트 리스트 테이블 렌더링
  */
-function renderConcertList(concertList, totalRevenue, totalTargetRevenue) {
+function renderConcertList(concertList, totalRevenue, totalTargetRevenue, totalBreakEvenPoint) {
     const tbody = document.getElementById('concert-list-tbody');
     if (!tbody) return;
     
     tbody.innerHTML = '';
     
     if (concertList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-600">콘서트 데이터가 없습니다</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-600">콘서트 데이터가 없습니다</td></tr>';
         return;
     }
     
@@ -195,10 +200,15 @@ function renderConcertList(concertList, totalRevenue, totalTargetRevenue) {
         
         const title = concert.title || '-';
         const rev = concert.total_revenue || 0;
+        const breakEvenPoint = concert.break_even_point;
+        const hasBreakEvenPoint = breakEvenPoint !== null && breakEvenPoint !== undefined;
         const targetRevenue = concert.target_revenue || 0;
         const achievementRate = concert.achievement_rate || 0;
         
         const progressWidth = targetRevenue > 0 ? Math.min(100, achievementRate) : 0;
+        const breakEvenRate = (targetRevenue > 0 && hasBreakEvenPoint)
+            ? Math.min(100, (breakEvenPoint / targetRevenue) * 100)
+            : null;
         
         row.innerHTML = `
             <td class="px-6 py-4">
@@ -206,6 +216,9 @@ function renderConcertList(concertList, totalRevenue, totalTargetRevenue) {
             </td>
             <td class="px-6 py-4 text-right">
                 <span class="text-sm text-black">${formatNumber(Math.round(rev))}원</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${hasBreakEvenPoint ? formatNumber(Math.round(breakEvenPoint)) + '원' : '-'}</span>
             </td>
             <td class="px-6 py-4 text-right">
                 <span class="text-sm text-black">${targetRevenue > 0 ? formatNumber(Math.round(targetRevenue)) + '원' : '-'}</span>
@@ -220,6 +233,10 @@ function renderConcertList(concertList, totalRevenue, totalTargetRevenue) {
                             class="h-full bg-primary rounded-full transition-all duration-500"
                             style="width: ${progressWidth}%;"
                         ></div>
+                        ${breakEvenRate !== null
+                            ? `<div class="absolute top-[-2px] bottom-[-2px] w-[2px] bg-danger rounded-full" style="left: ${breakEvenRate}%;"></div>`
+                            : ''
+                        }
                     </div>
                 </div>
             </td>
@@ -230,11 +247,16 @@ function renderConcertList(concertList, totalRevenue, totalTargetRevenue) {
 
     const totalRev = totalRevenue != null ? totalRevenue : concertList.reduce((s, c) => s + (c.total_revenue || 0), 0);
     const totalTgt = totalTargetRevenue != null ? totalTargetRevenue : concertList.reduce((s, c) => s + (c.target_revenue || 0), 0);
+    const hasAnyBreakEvenPoint = concertList.some(c => c.break_even_point !== null && c.break_even_point !== undefined);
+    const totalBep = totalBreakEvenPoint != null
+        ? totalBreakEvenPoint
+        : concertList.reduce((s, c) => s + ((c.break_even_point !== null && c.break_even_point !== undefined) ? c.break_even_point : 0), 0);
     const sumRow = document.createElement('tr');
     sumRow.className = 'border-t-2 border-gray-200 font-semibold';
     sumRow.innerHTML = `
         <td class="px-6 py-4 text-sm text-black">합계</td>
         <td class="px-6 py-4 text-right text-sm text-black">${formatNumber(Math.round(totalRev))}원</td>
+        <td class="px-6 py-4 text-right text-sm text-black">${hasAnyBreakEvenPoint ? formatNumber(Math.round(totalBep)) + '원' : '-'}</td>
         <td class="px-6 py-4 text-right text-sm text-black">${totalTgt > 0 ? formatNumber(Math.round(totalTgt)) + '원' : '-'}</td>
         <td class="px-6 py-4"></td>
     `;

@@ -435,6 +435,7 @@ def get_concert_aggregated_summary_data(request):
             
             # 목표액
             target_revenue = float(concert.target_revenue) if concert.target_revenue else 0
+            break_even_point = float(concert.break_even_point) if concert.break_even_point is not None else None
             
             # 달성율 계산
             achievement_rate = 0
@@ -445,6 +446,7 @@ def get_concert_aggregated_summary_data(request):
                 'id': concert.id,
                 'title': concert.title,
                 'target_revenue': target_revenue,
+                'break_even_point': break_even_point,
                 'total_revenue': concert_revenue,
                 'achievement_rate': achievement_rate,
             })
@@ -633,10 +635,12 @@ def get_musical_aggregated_summary_data(request):
 
             target_revenue = float(perf.target_revenue) if perf.target_revenue else 0
             achievement_rate = (perf_revenue / target_revenue * 100) if target_revenue > 0 else 0
+            break_even_point = float(perf.break_even_point) if perf.break_even_point is not None else None
             musical_list.append({
                 'id': perf.id,
                 'title': perf.title,
                 'target_revenue': target_revenue,
+                'break_even_point': break_even_point,
                 'total_revenue': perf_revenue,
                 'achievement_rate': achievement_rate,
             })

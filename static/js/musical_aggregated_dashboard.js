@@ -172,7 +172,12 @@ function updateSummaryCards(data) {
     }
 
     // 개별 뮤지컬 리스트 테이블 렌더링
-    renderMusicalList(data.musical_list || [], data.total_revenue || 0, data.total_target_revenue || 0);
+    renderMusicalList(
+        data.musical_list || [],
+        data.total_revenue || 0,
+        data.total_target_revenue || 0,
+        data.total_break_even_point
+    );
 
     // 매출 데이터 실제 기간으로 기간별 그래프/테이블 기본 날짜 설정 → 총 매출과 기간 합계 일치
     const startInput = document.getElementById('period-start-date');
@@ -197,14 +202,14 @@ function updateSummaryCards(data) {
 /**
  * 개별 뮤지컬 리스트 테이블 렌더링 (합계 행 포함: 상단 총 매출과 일치 표시)
  */
-function renderMusicalList(musicalList, totalRevenue, totalTargetRevenue) {
+function renderMusicalList(musicalList, totalRevenue, totalTargetRevenue, totalBreakEvenPoint) {
     const tbody = document.getElementById('musical-list-tbody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
     if (musicalList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-600">뮤지컬 데이터가 없습니다</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-600">뮤지컬 데이터가 없습니다</td></tr>';
         return;
     }
 
@@ -214,11 +219,16 @@ function renderMusicalList(musicalList, totalRevenue, totalTargetRevenue) {
 
         const title = musical.title || '-';
         const totalRevenueItem = musical.total_revenue || 0;
+        const breakEvenPoint = musical.break_even_point;
+        const hasBreakEvenPoint = breakEvenPoint !== null && breakEvenPoint !== undefined;
         const targetRevenue = musical.target_revenue || 0;
         const achievementRate = musical.achievement_rate || 0;
 
         // 프로그래스 바 너비 계산
         const progressWidth = targetRevenue > 0 ? Math.min(100, achievementRate) : 0;
+        const breakEvenRate = (targetRevenue > 0 && hasBreakEvenPoint)
+            ? Math.min(100, (breakEvenPoint / targetRevenue) * 100)
+            : null;
 
         row.innerHTML = `
             <td class="px-6 py-4">
@@ -226,6 +236,9 @@ function renderMusicalList(musicalList, totalRevenue, totalTargetRevenue) {
             </td>
             <td class="px-6 py-4 text-right">
                 <span class="text-sm text-black">${formatNumber(Math.round(totalRevenueItem))}원</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <span class="text-sm text-black">${hasBreakEvenPoint ? formatNumber(Math.round(breakEvenPoint)) + '원' : '-'}</span>
             </td>
             <td class="px-6 py-4 text-right">
                 <span class="text-sm text-black">${targetRevenue > 0 ? formatNumber(Math.round(targetRevenue)) + '원' : '-'}</span>
@@ -240,6 +253,10 @@ function renderMusicalList(musicalList, totalRevenue, totalTargetRevenue) {
                             class="h-full bg-primary rounded-full transition-all duration-500"
                             style="width: ${progressWidth}%;"
                         ></div>
+                        ${breakEvenRate !== null
+                            ? `<div class="absolute top-[-2px] bottom-[-2px] w-[2px] bg-danger rounded-full" style="left: ${breakEvenRate}%;"></div>`
+                            : ''
+                        }
                     </div>
                 </div>
             </td>
@@ -251,11 +268,16 @@ function renderMusicalList(musicalList, totalRevenue, totalTargetRevenue) {
     // 합계 행: 매출 현황 총 매출·목표액 달성 현황 총 매출과 동일
     const totalRev = totalRevenue != null ? totalRevenue : musicalList.reduce((s, m) => s + (m.total_revenue || 0), 0);
     const totalTgt = totalTargetRevenue != null ? totalTargetRevenue : musicalList.reduce((s, m) => s + (m.target_revenue || 0), 0);
+    const hasAnyBreakEvenPoint = musicalList.some(m => m.break_even_point !== null && m.break_even_point !== undefined);
+    const totalBep = totalBreakEvenPoint != null
+        ? totalBreakEvenPoint
+        : musicalList.reduce((s, m) => s + ((m.break_even_point !== null && m.break_even_point !== undefined) ? m.break_even_point : 0), 0);
     const sumRow = document.createElement('tr');
     sumRow.className = 'border-t-2 border-gray-200 font-semibold';
     sumRow.innerHTML = `
         <td class="px-6 py-4 text-sm text-black">합계</td>
         <td class="px-6 py-4 text-right text-sm text-black">${formatNumber(Math.round(totalRev))}원</td>
+        <td class="px-6 py-4 text-right text-sm text-black">${hasAnyBreakEvenPoint ? formatNumber(Math.round(totalBep)) + '원' : '-'}</td>
         <td class="px-6 py-4 text-right text-sm text-black">${totalTgt > 0 ? formatNumber(Math.round(totalTgt)) + '원' : '-'}</td>
         <td class="px-6 py-4"></td>
     `;
