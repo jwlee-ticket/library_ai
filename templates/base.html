@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, max-video-preview:0">
     <meta name="color-scheme" content="light">
     <title>{% block title %}Library Sales{% endblock %}</title>
     
@@ -37,7 +38,7 @@
                     <li>
                         <details {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'concert_overview' or request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'musical_overview' or request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' %}open{% endif %}>
                             <summary class="px-4 py-3 rounded-xl text-black font-medium hover:bg-white transition-colors duration-200">장르별 대시보드</summary>
-                            <ul class="ml-3 mt-1 border-l border-gray-200 pl-3">
+                            <ul class="ml-3 mt-1 pl-3">
                                 <li><a href="{% url 'dashboard:concert_overview' %}" class="{% if request.resolver_match.url_name == 'concert_overview' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">콘서트</a></li>
                                 <li><a href="{% url 'dashboard:musical_overview' %}" class="{% if request.resolver_match.url_name == 'musical_overview' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">뮤지컬</a></li>
                                 <li><a href="{% url 'dashboard:theater_overview' %}" class="{% if request.resolver_match.url_name == 'theater_overview' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">연극</a></li>
@@ -56,7 +57,7 @@
                     <li>
                         <details {% if request.resolver_match.app_name == 'performance' or request.resolver_match.app_name == 'data_management' %}open{% endif %}>
                             <summary class="px-4 py-3 rounded-xl text-black font-medium hover:bg-white transition-colors duration-200">데이터 관리</summary>
-                            <ul class="ml-3 mt-1 border-l border-gray-200 pl-3">
+                            <ul class="ml-3 mt-1 pl-3">
                                 <li><a href="{% url 'performance:list' %}" class="{% if request.resolver_match.app_name == 'performance' and request.resolver_match.url_name == 'list' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">공연 관리</a></li>
                                 <li><a href="{% url 'data_management:performance_list' %}" class="{% if request.resolver_match.app_name == 'data_management' and request.resolver_match.url_name == 'performance_list' or request.resolver_match.url_name == 'performance_sales_detail' or request.resolver_match.url_name == 'performance_sales_create' or request.resolver_match.url_name == 'performance_sales_update' or request.resolver_match.url_name == 'performance_sales_delete' %}bg-primary text-white font-medium{% else %}text-black hover:bg-white{% endif %}">공연 매출 관리</a></li>
                             </ul>
