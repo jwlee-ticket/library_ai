@@ -376,17 +376,15 @@
                 rows="3"
                 placeholder="예: 광고 시작, 20% 할인 이벤트 시작 등"
             ></textarea>
+            <div class="flex justify-end mt-2">
+                <button id="save-memo-btn" type="button" class="btn btn-primary btn-sm">저장</button>
+            </div>
         </div>
 
         <!-- 등록된 메모 목록 (메모가 있을 때만 JS로 표시) -->
-        <div id="memo-list-wrapper" style="display:none;" class="mb-2">
+        <div id="memo-list-wrapper" style="display:none;">
             <p class="text-sm font-medium text-gray-700 mb-2">등록된 메모</p>
             <div id="memo-list-container"></div>
-        </div>
-
-        <div class="flex justify-end gap-2 mt-4">
-            <button type="button" id="memo-cancel-btn" class="btn btn-ghost btn-sm">닫기</button>
-            <button id="save-memo-btn" type="button" class="btn btn-primary btn-sm">저장</button>
         </div>
     </div>
 {% endblock %}

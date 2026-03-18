@@ -575,9 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const memoCloseBtn = document.getElementById('memo-close-btn');
-    const memoCancelBtn = document.getElementById('memo-cancel-btn');
     if (memoCloseBtn) memoCloseBtn.addEventListener('click', closeMemoModal);
-    if (memoCancelBtn) memoCancelBtn.addEventListener('click', closeMemoModal);
 
     const memoBackdrop = document.getElementById('memo-backdrop');
     if (memoBackdrop) memoBackdrop.addEventListener('click', closeMemoModal);

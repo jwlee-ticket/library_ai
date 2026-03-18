@@ -1691,9 +1691,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 모달 닫기 버튼
     const memoCloseBtn = document.getElementById('memo-close-btn');
-    const memoCancelBtn = document.getElementById('memo-cancel-btn');
     if (memoCloseBtn) memoCloseBtn.addEventListener('click', closeMemoModal);
-    if (memoCancelBtn) memoCancelBtn.addEventListener('click', closeMemoModal);
 
     // backdrop 클릭 시 닫기
     const memoBackdrop = document.getElementById('memo-backdrop');
