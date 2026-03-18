@@ -1,8 +1,10 @@
 let performanceId = null;
 let dataUrl = null;
+let memosUrl = null;
 let currentData = null;
 let chartData = null;
 let dailyChart = null;
+let marketingMemos = {};
 const chartYAxisWidth = 84;
 const NOL_TICKET_COLOR = '#4154FF';
 const TICKET_LINE_COLOR = '#16a34a';  /* success - 판매 매수 라인 */
@@ -191,9 +193,19 @@ function renderDailyChart() {
                         title: (items) => items[0] ? labels[items[0].dataIndex] : '',
                         label: (context) => {
                             const i = context.dataIndex;
-                            return `매출: ${formatNumber(Math.round(revenueValues[i]))}원  |  판매 매수: ${formatNumber(ticketValues[i])}매`;
+                            const date = dates[i];
+                            const memos = marketingMemos[date] || [];
+                            const lines = [`매출: ${formatNumber(Math.round(revenueValues[i]))}원  |  판매 매수: ${formatNumber(ticketValues[i])}매`];
+                            if (memos.length) {
+                                lines.push('');
+                                memos.forEach(m => lines.push('📌 ' + m.content));
+                            }
+                            return lines;
                         },
                     },
+                },
+                annotation: {
+                    annotations: buildMemoAnnotations(),
                 },
             },
             scales: {
@@ -241,6 +253,275 @@ function renderDailyChart() {
     });
 }
 
+/**
+ * 마케팅 메모 로드
+ */
+async function loadMarketingMemos() {
+    if (!memosUrl) return;
+    try {
+        const response = await fetch(memosUrl);
+        if (!response.ok) return;
+        const result = await response.json();
+        if (result.success) {
+            marketingMemos = result.data?.memos || {};
+            if (dailyChart) {
+                dailyChart.options.plugins.annotation.annotations = buildMemoAnnotations();
+                dailyChart.update();
+            }
+        }
+    } catch (e) {
+        console.error('마케팅 메모 로드 실패:', e);
+    }
+}
+
+/**
+ * 마케팅 메모 annotation 객체 생성
+ */
+function buildMemoAnnotations() {
+    const data = chartData || currentData;
+    if (!data) return {};
+    const annotations = {};
+    (data.dates || []).forEach((date) => {
+        const memos = marketingMemos[date];
+        if (!memos || !memos.length) return;
+        const first = memos[0].content;
+        const truncated = first.length > 12 ? first.slice(0, 12) + '…' : first;
+        const label = memos.length > 1 ? `${truncated} 외 ${memos.length - 1}개` : truncated;
+        const formattedDate = formatDate(date);
+        annotations[`memo_${date.replace(/-/g, '_')}`] = {
+            type: 'line',
+            xMin: formattedDate,
+            xMax: formattedDate,
+            borderColor: 'rgba(220, 38, 38, 0.75)',
+            borderWidth: 2,
+            borderDash: [4, 4],
+            label: {
+                display: true,
+                content: label,
+                position: 'start',
+                yAdjust: -8,
+                color: '#dc2626',
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                font: { size: 11, weight: 'normal' },
+                padding: { x: 5, y: 3 },
+                borderRadius: 3,
+            },
+            click: function() {
+                openMemoModal(date);
+            },
+        };
+    });
+    return annotations;
+}
+
+function openMemoModal(date) {
+    const modal = document.getElementById('memo-modal');
+    const backdrop = document.getElementById('memo-backdrop');
+    if (!modal) return;
+    const dateInput = document.getElementById('memo-date-input');
+    if (dateInput) dateInput.value = date || '';
+    renderMemoList(date);
+    modal.classList.remove('hidden');
+    if (backdrop) backdrop.classList.remove('hidden');
+}
+
+function closeMemoModal() {
+    const modal = document.getElementById('memo-modal');
+    const backdrop = document.getElementById('memo-backdrop');
+    if (modal) modal.classList.add('hidden');
+    if (backdrop) backdrop.classList.add('hidden');
+}
+
+function renderMemoList(date) {
+    const wrapper = document.getElementById('memo-list-wrapper');
+    const container = document.getElementById('memo-list-container');
+    if (!container || !wrapper) return;
+    const rawMemos = (date && marketingMemos[date]) ? marketingMemos[date] : [];
+    if (!rawMemos.length) {
+        wrapper.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+    wrapper.style.display = '';
+
+    // 최신순 정렬 (created_at 내림차순)
+    const memos = [...rawMemos].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    container.innerHTML = '';
+    memos.forEach(m => {
+        const row = document.createElement('div');
+        row.className = 'py-3 border-b border-gray-100';
+        row.dataset.memoId = m.id;
+
+        const viewArea = document.createElement('div');
+        viewArea.className = 'flex items-start justify-between gap-2';
+
+        const textEl = document.createElement('p');
+        textEl.className = 'text-sm text-black break-words flex-1';
+        textEl.textContent = m.content;
+
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'flex gap-1 flex-shrink-0';
+
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.title = '수정';
+        editBtn.className = 'p-1 text-gray-400 hover:text-black transition-colors';
+        editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>`;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.title = '삭제';
+        deleteBtn.className = 'p-1 text-gray-400 hover:text-red-500 transition-colors';
+        deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+
+        btnGroup.appendChild(editBtn);
+        btnGroup.appendChild(deleteBtn);
+        viewArea.appendChild(textEl);
+        viewArea.appendChild(btnGroup);
+
+        const editArea = document.createElement('div');
+        editArea.style.display = 'none';
+        editArea.className = 'mt-2';
+
+        const textarea = document.createElement('textarea');
+        textarea.className = 'w-full border border-gray-300 rounded-lg p-2 text-sm resize-none focus:outline-none focus:border-gray-500';
+        textarea.rows = 2;
+        textarea.value = m.content;
+
+        const editBtnRow = document.createElement('div');
+        editBtnRow.className = 'flex justify-end gap-2 mt-2';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.textContent = '취소';
+        cancelBtn.className = 'px-3 py-1 text-sm text-gray-600 hover:text-black transition-colors';
+
+        const saveBtn = document.createElement('button');
+        saveBtn.type = 'button';
+        saveBtn.textContent = '저장';
+        saveBtn.className = 'px-3 py-1 text-sm bg-primary text-white rounded-lg hover:opacity-90 transition-opacity';
+
+        editBtnRow.appendChild(cancelBtn);
+        editBtnRow.appendChild(saveBtn);
+        editArea.appendChild(textarea);
+        editArea.appendChild(editBtnRow);
+
+        const metaEl = document.createElement('p');
+        metaEl.className = 'text-xs text-gray-400 mt-1';
+        metaEl.textContent = m.created_at;
+
+        row.appendChild(viewArea);
+        row.appendChild(editArea);
+        row.appendChild(metaEl);
+        container.appendChild(row);
+
+        editBtn.addEventListener('click', () => {
+            viewArea.style.display = 'none';
+            editArea.style.display = '';
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            textarea.value = m.content;
+            editArea.style.display = 'none';
+            viewArea.style.display = '';
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            const newContent = textarea.value.trim();
+            await updateMemo(m.id, newContent, date);
+        });
+
+        deleteBtn.addEventListener('click', async () => {
+            await deleteMemo(m.id, date);
+        });
+    });
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function saveMemo() {
+    if (!memosUrl) return;
+    const dateInput = document.getElementById('memo-date-input');
+    const contentInput = document.getElementById('memo-content-input');
+    const date = dateInput ? dateInput.value.trim() : '';
+    const content = contentInput ? contentInput.value.trim() : '';
+    if (!date || !content) { alert('날짜와 내용을 모두 입력해주세요.'); return; }
+    try {
+        const response = await fetch(memosUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({ date, content }),
+        });
+        const result = await response.json();
+        if (result.success) {
+            if (!marketingMemos[date]) marketingMemos[date] = [];
+            marketingMemos[date].push(result.data);
+            if (contentInput) contentInput.value = '';
+            renderMemoList(date);
+            if (dailyChart) {
+                dailyChart.options.plugins.annotation.annotations = buildMemoAnnotations();
+                dailyChart.update();
+            }
+        } else { alert(result.error || '저장 중 오류가 발생했습니다.'); }
+    } catch (e) { console.error('메모 저장 오류:', e); alert('저장 중 오류가 발생했습니다.'); }
+}
+
+async function updateMemo(memoId, newContent, date) {
+    if (!memosUrl || !newContent) { alert('내용을 입력해주세요.'); return; }
+    try {
+        const response = await fetch(`${memosUrl}${memoId}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({ content: newContent }),
+        });
+        const result = await response.json();
+        if (result.success) {
+            if (marketingMemos[date]) {
+                const idx = marketingMemos[date].findIndex(m => String(m.id) === String(memoId));
+                if (idx !== -1) marketingMemos[date][idx].content = result.data.content;
+            }
+            renderMemoList(date);
+            if (dailyChart) {
+                dailyChart.options.plugins.annotation.annotations = buildMemoAnnotations();
+                dailyChart.update();
+            }
+        } else { alert(result.error || '수정 중 오류가 발생했습니다.'); }
+    } catch (e) { console.error('메모 수정 오류:', e); alert('수정 중 오류가 발생했습니다.'); }
+}
+
+async function deleteMemo(memoId, date) {
+    if (!memosUrl) return;
+    if (!confirm('이 메모를 삭제하시겠습니까?')) return;
+    try {
+        const response = await fetch(`${memosUrl}${memoId}/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCsrfToken() },
+        });
+        const result = await response.json();
+        if (result.success) {
+            if (marketingMemos[date]) {
+                marketingMemos[date] = marketingMemos[date].filter(m => String(m.id) !== String(memoId));
+                if (!marketingMemos[date].length) delete marketingMemos[date];
+            }
+            renderMemoList(date);
+            if (dailyChart) {
+                dailyChart.options.plugins.annotation.annotations = buildMemoAnnotations();
+                dailyChart.update();
+            }
+        } else { alert(result.error || '삭제 중 오류가 발생했습니다.'); }
+    } catch (e) { console.error('메모 삭제 오류:', e); alert('삭제 중 오류가 발생했습니다.'); }
+}
+
+function getCsrfToken() {
+    const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+    return cookie ? cookie.trim().split('=')[1] : '';
+}
+
 function renderCharts() {
     renderDailyChart();
 }
@@ -281,10 +562,35 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data) {
             performanceId = data.performanceId;
             dataUrl = data.dataUrl;
+            memosUrl = data.memosUrl || null;
         }
     }
 
+    loadMarketingMemos();
     loadDashboardData();
+
+    const addMemoBtn = document.getElementById('add-memo-btn');
+    if (addMemoBtn) {
+        addMemoBtn.addEventListener('click', function() { openMemoModal(''); });
+    }
+
+    const memoCloseBtn = document.getElementById('memo-close-btn');
+    const memoCancelBtn = document.getElementById('memo-cancel-btn');
+    if (memoCloseBtn) memoCloseBtn.addEventListener('click', closeMemoModal);
+    if (memoCancelBtn) memoCancelBtn.addEventListener('click', closeMemoModal);
+
+    const memoBackdrop = document.getElementById('memo-backdrop');
+    if (memoBackdrop) memoBackdrop.addEventListener('click', closeMemoModal);
+
+    const memoDateInput = document.getElementById('memo-date-input');
+    if (memoDateInput) {
+        memoDateInput.addEventListener('change', function() { renderMemoList(this.value); });
+    }
+
+    const saveMemoBtn = document.getElementById('save-memo-btn');
+    if (saveMemoBtn) {
+        saveMemoBtn.addEventListener('click', saveMemo);
+    }
 
     const applyBtn = document.getElementById('filter-apply-btn');
     const startDateInput = document.getElementById('filter-start-date');

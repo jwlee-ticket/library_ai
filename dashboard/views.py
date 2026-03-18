@@ -5,9 +5,10 @@ from django.db.models import Q, Sum, Min, Max, Avg, OuterRef, Subquery
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
+import json
 import re
 from collections import defaultdict
-from performance.models import Performance
+from performance.models import Performance, MarketingMemo
 from data_management.models import PerformanceDailySales, PerformanceDailySalesGrade, PerformanceFinalSales, PerformanceSalesUploadLog, MusicalEpisodeSales
 
 
@@ -1175,4 +1176,90 @@ def get_musical_dashboard_data(request, pk):
             'total_ticket_count': total_ticket_count,
             'episode_rows': table_rows,
         }
+    })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def marketing_memos(request, pk):
+    """공연별 마케팅 메모 목록 조회 및 생성 API"""
+    performance = get_object_or_404(Performance, pk=pk)
+
+    if request.method == "GET":
+        memos_qs = MarketingMemo.objects.filter(performance=performance).order_by('date', '-created_at').values(
+            'id', 'date', 'content', 'created_at'
+        )
+        memo_by_date = defaultdict(list)
+        for m in memos_qs:
+            memo_by_date[m['date'].strftime('%Y-%m-%d')].append({
+                'id': m['id'],
+                'content': m['content'],
+                'created_at': m['created_at'].strftime('%Y-%m-%d %H:%M'),
+            })
+        return JsonResponse({'success': True, 'data': {'memos': dict(memo_by_date)}})
+
+    # POST: 메모 생성
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': '잘못된 요청입니다.'}, status=400)
+
+    date_str = body.get('date', '').strip()
+    content = body.get('content', '').strip()
+    if not date_str or not content:
+        return JsonResponse({'success': False, 'error': '날짜와 내용을 입력해주세요.'}, status=400)
+
+    try:
+        memo = MarketingMemo.objects.create(
+            performance=performance,
+            date=date_str,
+            content=content,
+            created_by=request.user,
+        )
+    except Exception:
+        return JsonResponse({'success': False, 'error': '메모 저장 중 오류가 발생했습니다.'}, status=500)
+
+    return JsonResponse({
+        'success': True,
+        'data': {
+            'id': memo.id,
+            'date': str(memo.date),
+            'content': memo.content,
+            'created_at': memo.created_at.strftime('%Y-%m-%d %H:%M'),
+        },
+    })
+
+
+@login_required
+@require_http_methods(["PATCH", "DELETE"])
+def marketing_memo_detail(request, pk, memo_id):
+    """마케팅 메모 수정/삭제 API"""
+    performance = get_object_or_404(Performance, pk=pk)
+    memo = get_object_or_404(MarketingMemo, pk=memo_id, performance=performance)
+
+    if request.method == "DELETE":
+        memo.delete()
+        return JsonResponse({'success': True})
+
+    # PATCH: 메모 수정
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': '잘못된 요청입니다.'}, status=400)
+
+    content = body.get('content', '').strip()
+    if not content:
+        return JsonResponse({'success': False, 'error': '내용을 입력해주세요.'}, status=400)
+
+    memo.content = content
+    memo.save(update_fields=['content', 'updated_at'])
+
+    return JsonResponse({
+        'success': True,
+        'data': {
+            'id': memo.id,
+            'date': str(memo.date),
+            'content': memo.content,
+            'created_at': memo.created_at.strftime('%Y-%m-%d %H:%M'),
+        },
     })
