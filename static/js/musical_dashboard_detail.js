@@ -5,6 +5,7 @@ let currentData = null;
 let chartData = null;
 let dailyChart = null;
 let marketingMemos = {};
+let dailyChartYMax = 0;
 const chartYAxisWidth = 84;
 const NOL_TICKET_COLOR = '#4154FF';
 const TICKET_LINE_COLOR = '#16a34a';  /* success - 판매 매수 라인 */
@@ -161,6 +162,7 @@ function renderDailyChart() {
 
     const revenueMax = Math.max(1, ...revenueValues);
     const ticketMax = Math.max(1, ...ticketValues);
+    dailyChartYMax = revenueMax;
 
     if (dailyChart) dailyChart.destroy();
     dailyChart = new Chart(ctx, {
@@ -277,39 +279,82 @@ async function loadMarketingMemos() {
 /**
  * 마케팅 메모 annotation 객체 생성
  */
+/**
+ * 긴 텍스트를 maxWidth 기준으로 줄 배열로 분할
+ */
+function wrapMemoText(text, maxWidth) {
+    if (text.length <= maxWidth) return [text];
+    const lines = [];
+    let remaining = text;
+    while (remaining.length > maxWidth) {
+        let breakAt = remaining.lastIndexOf(' ', maxWidth);
+        if (breakAt <= 0) breakAt = maxWidth;
+        lines.push(remaining.slice(0, breakAt));
+        remaining = remaining.slice(breakAt).trim();
+    }
+    if (remaining) lines.push(remaining);
+    return lines;
+}
+
+/**
+ * 마케팅 메모 annotation 객체 생성
+ * - 세로 점선(line) + 데이터 Y값 기반 레이블(label)로 분리
+ * - 날짜 순서마다 시작 Y 레벨을 3단계 순환해 인접 날짜 레이블 겹침 방지
+ */
 function buildMemoAnnotations() {
     const data = chartData || currentData;
     if (!data) return {};
     const annotations = {};
-    (data.dates || []).forEach((date) => {
+
+    // Y축 최댓값 기준으로 레이블 간격 계산
+    const yStep = dailyChartYMax * 0.14;
+    // 날짜별 시작 Y 레벨 3단계: 95% / 77% / 59%
+    const yLevels = [
+        dailyChartYMax * 0.95,
+        dailyChartYMax * 0.77,
+        dailyChartYMax * 0.59,
+    ];
+
+    // 메모가 있는 날짜만 추출해 날짜 인덱스 부여 (인접 날짜 순환용)
+    const memoDates = (data.dates || []).filter(d => marketingMemos[d] && marketingMemos[d].length > 0);
+
+    memoDates.forEach((date, dateIdx) => {
         const memos = marketingMemos[date];
-        if (!memos || !memos.length) return;
-        const first = memos[0].content;
-        const truncated = first.length > 12 ? first.slice(0, 12) + '…' : first;
-        const label = memos.length > 1 ? `${truncated} 외 ${memos.length - 1}개` : truncated;
         const formattedDate = formatDate(date);
-        annotations[`memo_${date.replace(/-/g, '_')}`] = {
+        const dateKey = date.replace(/-/g, '_');
+
+        // 세로 점선 (날짜당 1개)
+        annotations[`line_${dateKey}`] = {
             type: 'line',
             xMin: formattedDate,
             xMax: formattedDate,
             borderColor: 'rgba(220, 38, 38, 0.75)',
             borderWidth: 2,
             borderDash: [4, 4],
-            label: {
-                display: true,
-                content: label,
-                position: 'start',
-                yAdjust: -8,
+            click: function() { openMemoModal(date); },
+        };
+
+        // 날짜 인덱스 % 3 으로 시작 Y 레벨 순환
+        const yStart = yLevels[dateIdx % yLevels.length];
+
+        // 최신순 정렬 후 레이블 배치
+        const sorted = [...memos].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        sorted.forEach((memo, idx) => {
+            annotations[`memo_${dateKey}_${idx}`] = {
+                type: 'label',
+                xValue: formattedDate,
+                yValue: yStart - idx * yStep,
+                yScaleID: 'yRevenue',
+                content: wrapMemoText(memo.content, 16),
                 color: '#dc2626',
-                backgroundColor: 'rgba(255,255,255,0.9)',
+                backgroundColor: 'rgba(255,255,255,0.92)',
                 font: { size: 11, weight: 'normal' },
                 padding: { x: 5, y: 3 },
                 borderRadius: 3,
-            },
-            click: function() {
-                openMemoModal(date);
-            },
-        };
+                xAdjust: 6,
+                click: function() { openMemoModal(date); },
+            };
+        });
     });
     return annotations;
 }
