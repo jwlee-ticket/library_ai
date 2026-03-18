@@ -19,5 +19,7 @@ urlpatterns = [
     path('theater-overview/', views.TheaterOverviewDashboardView.as_view(), name='theater_overview'),
     path('musical-overview/summary/', views.get_musical_aggregated_summary_data, name='musical_aggregated_summary'),
     path('musical-overview/period-revenue/', views.get_musical_period_revenue_data, name='musical_period_revenue'),
+    path('dashboard-performance/<int:pk>/memos/', views.marketing_memos, name='marketing_memos'),
+    path('dashboard-performance/<int:pk>/memos/<int:memo_id>/', views.marketing_memo_detail, name='marketing_memo_detail'),
 ]
 

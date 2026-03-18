@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.conf import settings
 
 
 class SeatGrade(models.Model):
@@ -196,3 +197,33 @@ class Performance(models.Model):
     
     def __str__(self):
         return self.title
+
+
+class MarketingMemo(models.Model):
+    """공연별 일자별 마케팅 전략 메모"""
+
+    performance = models.ForeignKey(
+        'Performance',
+        on_delete=models.CASCADE,
+        related_name='marketing_memos',
+        verbose_name='공연',
+    )
+    date = models.DateField(verbose_name='날짜')
+    content = models.TextField(verbose_name='내용')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='작성자',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일시')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='수정일시')
+
+    class Meta:
+        verbose_name = '마케팅 메모'
+        verbose_name_plural = '마케팅 메모들'
+        ordering = ['date', 'created_at']
+
+    def __str__(self):
+        return f'{self.performance.title} - {self.date} - {self.content[:20]}'
