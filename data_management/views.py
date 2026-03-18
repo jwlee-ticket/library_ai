@@ -855,6 +855,8 @@ def _open_excel_file(file_obj, original_filename=''):
         except Exception as exc:
             raise ValueError('.xlsb 처리를 위한 pyxlsb 패키지가 필요해요') from exc
         return pd.ExcelFile(file_obj, engine='pyxlsb')
+    if filename.endswith('.xls'):
+        return pd.ExcelFile(file_obj, engine='xlrd')
     return pd.ExcelFile(file_obj)
 
 
@@ -1256,10 +1258,23 @@ def _parse_daily_sales_sheet(xls, sheet_name):
     df = pd.read_excel(xls, sheet_name=sheet_name, header=None)
 
     header_row_idx = None
+    alt_format = False  # DATE 키워드가 없는 대안 형식 ('daily sales' 등)
+
+    # 표준 형식: DATE 키워드로 헤더 행 탐지
     for idx in range(min(10, len(df))):
         if any(_normalize_text(value) == 'DATE' for value in df.iloc[idx].tolist()):
             header_row_idx = idx
             break
+
+    # 대안 형식: '유료합계' 또는 '유료 계' 키워드로 헤더 행 탐지
+    if header_row_idx is None:
+        for idx in range(min(10, len(df))):
+            row_labels = [_normalize_text(v) for v in df.iloc[idx].tolist()]
+            if any(v in ['유료합계', '유료 계'] for v in row_labels):
+                header_row_idx = idx
+                alt_format = True
+                break
+
     if header_row_idx is None:
         raise ValueError('일일 판매 시트에서 DATE 헤더를 찾을 수 없어요')
 
@@ -1270,17 +1285,27 @@ def _parse_daily_sales_sheet(xls, sheet_name):
     last_label = ''
     for value in group_row_raw:
         label = _normalize_text(value)
+        # 대안 형식의 '유료합계'를 표준 키워드 '유료 계'로 통일
+        if label == '유료합계':
+            label = '유료 계'
         if label:
             last_label = label
         group_row.append(last_label)
 
-    date_idx = None
-    for idx, value in enumerate(group_row_raw):
-        if _normalize_text(value) == 'DATE':
-            date_idx = idx
-            break
-    if date_idx is None:
-        raise ValueError('일일 판매 시트에서 DATE 컬럼을 찾을 수 없어요')
+    if alt_format:
+        # 대안 형식: 날짜는 col 1에 위치 (DATE 키워드 없음)
+        date_idx = 1
+    else:
+        date_idx = None
+        for idx, value in enumerate(group_row_raw):
+            if _normalize_text(value) == 'DATE':
+                date_idx = idx
+                break
+        if date_idx is None:
+            raise ValueError('일일 판매 시트에서 DATE 컬럼을 찾을 수 없어요')
+
+    # 유효한 count 서브 라벨: 표준은 '매수', 대안 형식은 'TOTAL'도 허용
+    count_labels = ['매수', 'TOTAL'] if alt_format else ['매수']
 
     booking_site_columns = {}
     for idx, (group_label, sub_label) in enumerate(zip(group_row, sub_row)):
@@ -1291,15 +1316,16 @@ def _parse_daily_sales_sheet(xls, sheet_name):
 
         if group_label in ['초대', '합계']:
             booking_site_columns.setdefault(group_label, {})
-            booking_site_columns[group_label]['count'] = idx
+            if 'count' not in booking_site_columns[group_label]:
+                booking_site_columns[group_label]['count'] = idx
             continue
 
-        if sub_label not in ['매수', '금액']:
+        if sub_label not in count_labels + ['금액']:
             continue
 
         booking_site_columns.setdefault(group_label, {})
         # 동일 예매처에 같은 서브 라벨이 반복되면(빈 컬럼 전파 오버라이드 방지) 첫 번째 컬럼만 사용
-        if sub_label == '매수' and 'count' not in booking_site_columns[group_label]:
+        if sub_label in count_labels and 'count' not in booking_site_columns[group_label]:
             booking_site_columns[group_label]['count'] = idx
         elif sub_label == '금액' and 'amount' not in booking_site_columns[group_label]:
             booking_site_columns[group_label]['amount'] = idx
@@ -1345,10 +1371,20 @@ def _parse_seat_details_sheet(xls, sheet_name, excel_file, performance):
     df = pd.read_excel(xls, sheet_name=sheet_name, header=None)
 
     header_row_idx = None
+    date_idx = 1  # 기본값: 표준 Seat details 형식
     for idx in range(min(15, len(df))):
         row = df.iloc[idx].tolist()
-        if _normalize_text(row[0]) == 'No.' and _normalize_text(row[1]) == 'Date':
+        row_normalized = [_normalize_text(v) for v in row]
+        # 표준 형식: col[0]='No.', col[1]='Date'
+        if row_normalized[0] == 'No.' and row_normalized[1] == 'Date':
             header_row_idx = idx
+            date_idx = 1
+            break
+        # 대안 형식: 행 어딘가에 'No' 또는 'No.'이 있고 'Date'도 있는 경우 (show sales 등)
+        if any(v in ['No.', 'No'] for v in row_normalized) and 'Date' in row_normalized:
+            header_row_idx = idx
+            # 'Date' 키워드가 있는 컬럼을 date_idx로 사용
+            date_idx = row_normalized.index('Date')
             break
     if header_row_idx is None:
         raise ValueError('Seat details 시트에서 No./Date 헤더를 찾을 수 없어요')
@@ -1363,8 +1399,6 @@ def _parse_seat_details_sheet(xls, sheet_name, excel_file, performance):
         if label:
             last_label = label
         group_row.append(last_label)
-
-    date_idx = 1
     grade_sales = {}
     seat_grade_names = set()
     
@@ -1441,10 +1475,10 @@ def _parse_seat_details_sheet(xls, sheet_name, excel_file, performance):
 
 def _parse_sales_excel(excel_file, performance):
     excel_file.seek(0)
-    xls = pd.ExcelFile(excel_file)
+    xls = _open_excel_file(excel_file, getattr(excel_file, 'name', ''))
 
-    daily_sheet_candidates = ['일일 판매', '일일판매', 'Daily Sales']
-    seat_details_candidates = ['Seat details', 'Seat Details']
+    daily_sheet_candidates = ['일일 판매', '일일판매', 'Daily Sales', 'daily sales']
+    seat_details_candidates = ['Seat details', 'Seat Details', 'show sales', 'Show Sales']
 
     daily_sheet = next((name for name in daily_sheet_candidates if name in xls.sheet_names), None)
     if not daily_sheet:
@@ -1488,7 +1522,7 @@ def upload_sales_excel(request, performance_id):
         prepared_excel, _ = _decrypt_excel_if_needed(excel_file, excel_password)
         xls = _open_excel_file(prepared_excel, excel_file.name)
         report_sheet = _find_report_sheet(xls.sheet_names)
-        daily_sheet_candidates = ['일일 판매', '일일판매', 'Daily Sales']
+        daily_sheet_candidates = ['일일 판매', '일일판매', 'Daily Sales', 'daily sales']
         has_daily_sheet = any(name in xls.sheet_names for name in daily_sheet_candidates)
         musical_sheet = _find_musical_episode_sheet(xls.sheet_names)
 
@@ -1602,7 +1636,9 @@ def upload_sales_excel(request, performance_id):
             parsed = _parse_sales_excel(prepared_excel, performance)
     except ValueError as exc:
         return JsonResponse({'success': False, 'error': str(exc)}, status=400)
-    
+    except Exception as exc:
+        return JsonResponse({'success': False, 'error': f'파일 처리 중 오류가 발생했어요: {exc}'}, status=400)
+
     if 'daily_sales' not in parsed:
         discount_sales = parsed.get('discount_sales', {})
         discount_sales_count = parsed.get('discount_sales_count', 0)
