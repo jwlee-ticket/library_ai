@@ -427,12 +427,17 @@ def get_concert_aggregated_summary_data(request):
         concert_list = []
         for concert in concerts:
             # 각 콘서트의 총 매출 계산
-            concert_sales = PerformanceDailySales.objects.filter(performance=concert)
-            concert_revenue_result = concert_sales.aggregate(
-                total_paid=Sum('paid_revenue'),
-                total_unpaid=Sum('unpaid_revenue')
+            # 공연별 대시보드와 동일하게 '유료 계' 행 우선 사용, 없으면 전체 paid+unpaid 폴백
+            paid_qs = PerformanceDailySales.objects.filter(
+                performance=concert,
+                booking_site__name='유료 계'
             )
-            concert_revenue = float(concert_revenue_result['total_paid'] or 0) + float(concert_revenue_result['total_unpaid'] or 0)
+            if paid_qs.exists():
+                concert_revenue = float(paid_qs.aggregate(total=Sum('paid_revenue'))['total'] or 0)
+            else:
+                all_sales = PerformanceDailySales.objects.filter(performance=concert)
+                result = all_sales.aggregate(paid=Sum('paid_revenue'), unpaid=Sum('unpaid_revenue'))
+                concert_revenue = float(result['paid'] or 0) + float(result['unpaid'] or 0)
             
             # 목표액
             target_revenue = float(concert.target_revenue) if concert.target_revenue else 0
