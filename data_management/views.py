@@ -1195,9 +1195,10 @@ def _parse_daily_sales_sheet(xls, sheet_name):
             continue
 
         booking_site_columns.setdefault(group_label, {})
-        if sub_label == '매수':
+        # 동일 예매처에 같은 서브 라벨이 반복되면(빈 컬럼 전파 오버라이드 방지) 첫 번째 컬럼만 사용
+        if sub_label == '매수' and 'count' not in booking_site_columns[group_label]:
             booking_site_columns[group_label]['count'] = idx
-        elif sub_label == '금액':
+        elif sub_label == '금액' and 'amount' not in booking_site_columns[group_label]:
             booking_site_columns[group_label]['amount'] = idx
 
     daily_sales = {}
