@@ -11,7 +11,26 @@
 
 {% block content %}
     <div class="mb-14">
-        <h1 class="text-3xl font-semibold text-black">{{ performance.title }}</h1>
+        <h1 class="text-3xl font-semibold text-black mb-3">{{ performance.title }}</h1>
+        <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
+            <span>
+                <span class="font-medium text-gray-700">공연 기간</span>
+                &nbsp;
+                {{ performance.performance_start|date:"Y. m. d." }}
+                {% if performance.performance_end %}
+                    ~ {{ performance.performance_end|date:"Y. m. d." }}
+                {% endif %}
+            </span>
+            {% if performance.sales_start or performance.sales_end %}
+            <span>
+                <span class="font-medium text-gray-700">판매 기간</span>
+                &nbsp;
+                {% if performance.sales_start %}{{ performance.sales_start|date:"Y. m. d." }}{% else %}-{% endif %}
+                ~
+                {% if performance.sales_end %}{{ performance.sales_end|date:"Y. m. d." }}{% else %}-{% endif %}
+            </span>
+            {% endif %}
+        </div>
     </div>
     
     <!-- 요약 카드 섹션 -->
